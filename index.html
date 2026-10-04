@@ -2582,7 +2582,7 @@
         try{
             const res=await apiCall(editId?'updateLateAttendance':'addLateAttendance',{id:editId||('LATE_'+Date.now()),date,employeeId,employeeName:emp.name,division:emp.division,durationText,reason});
             if(!res.success)throw new Error(res.error||'Gagal menyimpan keterlambatan.');
-            refreshData(true).catch(()=>{}); resetLateForm(); renderLateAttendance(); showMessage(editId?'Keterlambatan diperbarui.':'Keterlambatan tersimpan.','success');
+            await refreshData(true); resetLateForm(); renderLateAttendance(); showMessage(editId?'Keterlambatan diperbarui.':'Keterlambatan tersimpan.','success');
         }catch(e){showMessage(e.message||'Gagal menyimpan keterlambatan.','error');}
     };
 
@@ -2594,7 +2594,7 @@
     window.deleteLateAttendance = async (id) => {
         const r=(state.lateAttendance||[]).find(x=>String(x.id)===String(id)); if(!r)return;
         if(!confirm(`Hapus catatan keterlambatan ${r.employeeName} tanggal ${window.normalizeDateStr(r.date)}?`))return;
-        try{const res=await apiCall('deleteLateAttendance',{id});if(!res.success)throw new Error(res.error||'Gagal menghapus.');refreshData(true).catch(()=>{});renderLateAttendance();showMessage('Catatan keterlambatan dihapus.','success');}catch(e){showMessage(e.message||'Gagal menghapus keterlambatan.','error');}
+        try{const res=await apiCall('deleteLateAttendance',{id});if(!res.success)throw new Error(res.error||'Gagal menghapus.');await refreshData(true);renderLateAttendance();showMessage('Catatan keterlambatan dihapus.','success');}catch(e){showMessage(e.message||'Gagal menghapus keterlambatan.','error');}
     };
 
     function renderTodayAttendance() {
@@ -2766,7 +2766,7 @@
             await apiCall('addEmployee', newEmp);
             logActivity("Tambah Karyawan", `Karyawan baru: ${name}`);
             refreshData(true).catch(()=>{}); showMessage("Karyawan ditambahkan!", "success"); closeModal('addEmployeeModal'); e.target.reset();
-        } catch (error) { if (!state.isMockMode) refreshData(true).catch(()=>{}); showMessage(error.message || "Gagal menambah karyawan.", "error"); } finally { submitBtn.innerText = "Simpan"; }
+        } catch (error) { if (!state.isMockMode) await refreshData(true).catch(()=>{}); showMessage(error.message || "Gagal menambah karyawan.", "error"); } finally { submitBtn.innerText = "Simpan"; }
     });
 
     window.deleteEmployee = async (id) => {
@@ -2782,7 +2782,7 @@
             await apiCall('deleteEmployee', { id });
             logActivity("Hapus Karyawan", `Menghapus data karyawan: ${empName}`);
             refreshData(true).catch(()=>{}); showMessage("Karyawan dihapus.", "success");
-        } catch (error) { if (!state.isMockMode) refreshData(true).catch(()=>{}); showMessage(error.message || "Gagal menghapus.", "error"); }
+        } catch (error) { if (!state.isMockMode) await refreshData(true).catch(()=>{}); showMessage(error.message || "Gagal menghapus.", "error"); }
     };
     
     window.handleEmployeeChange = () => {
@@ -2884,7 +2884,7 @@
             document.getElementById('attEmployee').value = ''; document.getElementById('attSession1').value = '-'; document.getElementById('attSession2').value = '-';
             document.getElementById('attLemburJam').value = ''; document.getElementById('attLemburKet').value = ''; document.getElementById('attResi1').value = ''; document.getElementById('attGMV1').value = ''; document.getElementById('attResi2').value = ''; document.getElementById('attGMV2').value = '';
             toggleReasonField();
-        } catch (error) { if (!state.isMockMode) refreshData(true).catch(()=>{}); showMessage(error.message || "Gagal menyimpan data.", "error"); } finally { submitBtn.disabled = false; submitBtn.innerText = "Simpan Data"; }
+        } catch (error) { if (!state.isMockMode) await refreshData(true).catch(()=>{}); showMessage(error.message || "Gagal menyimpan data.", "error"); } finally { submitBtn.disabled = false; submitBtn.innerText = "Simpan Data"; }
     });
 
     window.deleteAttendance = async (id) => {
@@ -2901,7 +2901,7 @@
 
             await apiCall('deleteAttendance', { id });
             logActivity("Hapus Kehadiran", `Menghapus data absensi: ${attDetails}`); refreshData(true).catch(()=>{}); showMessage("Data dihapus.", "success");
-        } catch (error) { if (!state.isMockMode) refreshData(true).catch(()=>{}); showMessage(error.message || "Gagal menghapus.", "error"); }
+        } catch (error) { if (!state.isMockMode) await refreshData(true).catch(()=>{}); showMessage(error.message || "Gagal menghapus.", "error"); }
     };
     
     window.toggleSelectAllReports = (el) => {
@@ -2930,7 +2930,7 @@
 
             await Promise.all(Array.from(checkboxes).map(cb => apiCall('deleteAttendance', { id: cb.value })));
             logActivity("Hapus Massal", `Menghapus ${checkboxes.length} data kehadiran.`); refreshData(true).catch(()=>{}); showMessage(`${checkboxes.length} data berhasil dihapus.`, "success");
-        } catch(e) { if (!state.isMockMode) refreshData(true).catch(()=>{}); showMessage(e.message || "Gagal menghapus beberapa data.", "error"); } finally { btn.innerHTML = `<i class="ph ph-trash mr-2"></i> Hapus Terpilih (<span class="bulkDeleteCountValue">0</span>)`; btn.disabled = false; }
+        } catch(e) { if (!state.isMockMode) await refreshData(true).catch(()=>{}); showMessage(e.message || "Gagal menghapus beberapa data.", "error"); } finally { btn.innerHTML = `<i class="ph ph-trash mr-2"></i> Hapus Terpilih (<span class="bulkDeleteCountValue">0</span>)`; btn.disabled = false; }
     };
 
     window.openEditAttendance = (id) => {
@@ -2978,7 +2978,7 @@
             await apiCall('updateAttendance', data);
             logActivity("Edit Kehadiran", `Mengubah data absensi ${existingData.empName || document.getElementById('editAttEmpName').value} pada tanggal ${data.date}`);
             refreshData(true).catch(()=>{}); showMessage("Perubahan disimpan!", "success"); closeModal('editAttendanceModal');
-        } catch (error) { if (!state.isMockMode) refreshData(true).catch(()=>{}); showMessage(error.message || "Gagal menyimpan perubahan.", "error"); } finally { submitBtn.innerText = "Simpan Perubahan"; submitBtn.disabled = false; }
+        } catch (error) { if (!state.isMockMode) await refreshData(true).catch(()=>{}); showMessage(error.message || "Gagal menyimpan perubahan.", "error"); } finally { submitBtn.innerText = "Simpan Perubahan"; submitBtn.disabled = false; }
     });
 
     document.getElementById('attDate').addEventListener('change', () => {
@@ -3314,6 +3314,7 @@
     }
     window.addEventListener('beforeunload', persistCurrentView);
     window.addEventListener('pagehide', persistCurrentView);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') persistCurrentView(); });
 
     window.openModal = (id) => { const m=document.getElementById(id), c=m.querySelector('div.transform'); m.classList.remove('hidden'); void m.offsetWidth; m.classList.remove('opacity-0'); c.classList.remove('scale-95'); c.classList.add('scale-100'); };
     window.closeModal = (id) => { const m=document.getElementById(id), c=m.querySelector('div.transform'); m.classList.add('opacity-0'); c.classList.remove('scale-100'); c.classList.add('scale-95'); setTimeout(() => m.classList.add('hidden'), 300); };
