@@ -294,6 +294,23 @@
             <!-- 1. Dashboard View -->
             <div id="dashboardView" class="view-section fade-in">
                 
+                <!-- GANTI AKUN / KEMBALI KE LOGIN -->
+                <div class="mb-6 bg-white rounded-2xl border border-blue-100 shadow-sm p-4 md:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
+                            <i class="ph ph-user-switch text-2xl text-blue-700"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-800">Ingin masuk dengan akun lain?</h3>
+                            <p class="text-sm text-gray-500">Kembali ke halaman login untuk mengganti email dan password tanpa mengganti perangkat.</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="handleLogout()" class="shrink-0 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white font-bold shadow-sm hover:bg-blue-700 active:scale-[0.98] transition-all">
+                        <i class="ph ph-arrow-square-out text-lg"></i>
+                        <span>Kembali ke Login / Ganti Akun</span>
+                    </button>
+                </div>
+                
                 <!-- ============================================== -->
                 <!-- NEW BRIGHT & MODERN WELCOME BANNER (MOVING WALLPAPER) -->
                 <!-- ============================================== -->
@@ -1970,7 +1987,9 @@
             const userDisplay=document.getElementById('currentUserDisplay'); if(userDisplay)userDisplay.innerText=savedEmail;
             applyUserAccessUI(savedEmail);
             const localDate=new Date(new Date().getTime()-new Date().getTimezoneOffset()*60000).toISOString().split('T')[0]; if(document.getElementById('attDate'))document.getElementById('attDate').value=localDate;
-            const savedTab=localStorage.getItem('gloria_current_tab')||'dashboard'; window.switchTab(savedTab); renderEmployees(); updateEmployeeDropdown(); updateDashboard(); renderActiveUsers();
+            const savedTab = localStorage.getItem('gloria_current_tab') || localStorage.getItem('gloria_last_view') || state.currentTab || 'dashboard';
+            window.switchTab(savedTab);
+            renderEmployees(); updateEmployeeDropdown(); updateDashboard(); renderActiveUsers();
             if(state.user.email.toLowerCase()==='mohammadziky2@gmail.com'&&typeof window.renderAllowedUsers==='function')window.renderAllowedUsers();
         } catch(e) {
             // Hanya keluarkan pengguna jika sesi benar-benar ditolak/berakhir.
@@ -2007,7 +2026,7 @@
             document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('mainApp').classList.remove('hidden');
             const localDate=new Date(new Date().getTime()-new Date().getTimezoneOffset()*60000).toISOString().split('T')[0]; document.getElementById('attDate').value=localDate;
             state.employees.sort((a,b)=>a.name.localeCompare(b.name)); state.attendance.sort((a,b)=>new Date(window.normalizeDateStr(b.date))-new Date(window.normalizeDateStr(a.date)));
-            renderEmployees(); updateEmployeeDropdown(); updateDashboard(); renderActiveUsers(); if(email==='mohammadziky2@gmail.com'&&typeof window.renderAllowedUsers==='function')window.renderAllowedUsers(); window.switchTab(localStorage.getItem('gloria_current_tab')||'dashboard');
+            renderEmployees(); updateEmployeeDropdown(); updateDashboard(); renderActiveUsers(); if(email==='mohammadziky2@gmail.com'&&typeof window.renderAllowedUsers==='function')window.renderAllowedUsers(); window.switchTab(localStorage.getItem('gloria_current_tab')||localStorage.getItem('gloria_last_view')||'dashboard');
             await apiCall('logActiveUser',{email:email}); showMessage('Login berhasil.','success');
         } catch(error) { state.authToken=''; localStorage.removeItem('gloria_auth_token'); localStorage.removeItem('gloria_logged_in_user'); showMessage(error.message||'Gagal masuk ke sistem.','error'); }
         finally { btnText.innerText='Otorisasi Masuk'; loader.classList.add('hidden'); }
@@ -2027,6 +2046,7 @@
         localStorage.removeItem('gloria_auth_token');
         state.authToken = '';
         localStorage.removeItem('gloria_current_tab');
+        localStorage.removeItem('gloria_last_view');
     };
 
     async function refreshData(silent = false) {
@@ -2109,7 +2129,7 @@
 
             await apiCall('editEmployeeBank', { id, bankName, bankAccount, bankAccountName });
             logActivity("Edit Rekening", `Memperbarui data rekening karyawan: ${document.getElementById('editBankEmpName').value}`);
-            await refreshData();
+            refreshData(true).catch(()=>{});
             showMessage("Data rekening berhasil disimpan!", "success");
             closeModal('editBankModal');
             if(state.currentTab === 'bankAccount') window.renderBankAccountList();
@@ -2313,7 +2333,7 @@
             state.activeUsers = state.activeUsers.filter(u => u.email.toLowerCase() !== email.toLowerCase());
             localStorage.setItem('gloria_blocked_users', JSON.stringify(state.blockedUsers)); localStorage.setItem('gloria_active_users', JSON.stringify(state.activeUsers));
             await apiCall('blockUser', { email: email.toLowerCase() });
-            logActivity("Otorisasi", `Pemblokiran akun: ${email}`); await refreshData(); showMessage(`Akun diblokir!`, "success");
+            logActivity("Otorisasi", `Pemblokiran akun: ${email}`); refreshData(true).catch(()=>{}); showMessage(`Akun diblokir!`, "success");
         } catch (error) { showMessage("Gagal memblokir akun.", "error"); }
     };
 
@@ -2323,7 +2343,7 @@
             state.blockedUsers = state.blockedUsers.filter(e => e !== email.toLowerCase());
             localStorage.setItem('gloria_blocked_users', JSON.stringify(state.blockedUsers));
             await apiCall('unblockUser', { email: email.toLowerCase() });
-            logActivity("Otorisasi", `Pemulihan akun: ${email}`); await refreshData(); showMessage(`Akses dipulihkan!`, "success");
+            logActivity("Otorisasi", `Pemulihan akun: ${email}`); refreshData(true).catch(()=>{}); showMessage(`Akses dipulihkan!`, "success");
         } catch (error) { showMessage("Gagal memulihkan akun.", "error"); }
     };
 
@@ -2562,7 +2582,7 @@
         try{
             const res=await apiCall(editId?'updateLateAttendance':'addLateAttendance',{id:editId||('LATE_'+Date.now()),date,employeeId,employeeName:emp.name,division:emp.division,durationText,reason});
             if(!res.success)throw new Error(res.error||'Gagal menyimpan keterlambatan.');
-            await refreshData(true); resetLateForm(); renderLateAttendance(); showMessage(editId?'Keterlambatan diperbarui.':'Keterlambatan tersimpan.','success');
+            refreshData(true).catch(()=>{}); resetLateForm(); renderLateAttendance(); showMessage(editId?'Keterlambatan diperbarui.':'Keterlambatan tersimpan.','success');
         }catch(e){showMessage(e.message||'Gagal menyimpan keterlambatan.','error');}
     };
 
@@ -2574,7 +2594,7 @@
     window.deleteLateAttendance = async (id) => {
         const r=(state.lateAttendance||[]).find(x=>String(x.id)===String(id)); if(!r)return;
         if(!confirm(`Hapus catatan keterlambatan ${r.employeeName} tanggal ${window.normalizeDateStr(r.date)}?`))return;
-        try{const res=await apiCall('deleteLateAttendance',{id});if(!res.success)throw new Error(res.error||'Gagal menghapus.');await refreshData(true);renderLateAttendance();showMessage('Catatan keterlambatan dihapus.','success');}catch(e){showMessage(e.message||'Gagal menghapus keterlambatan.','error');}
+        try{const res=await apiCall('deleteLateAttendance',{id});if(!res.success)throw new Error(res.error||'Gagal menghapus.');refreshData(true).catch(()=>{});renderLateAttendance();showMessage('Catatan keterlambatan dihapus.','success');}catch(e){showMessage(e.message||'Gagal menghapus keterlambatan.','error');}
     };
 
     function renderTodayAttendance() {
@@ -2745,8 +2765,8 @@
 
             await apiCall('addEmployee', newEmp);
             logActivity("Tambah Karyawan", `Karyawan baru: ${name}`);
-            await refreshData(); showMessage("Karyawan ditambahkan!", "success"); closeModal('addEmployeeModal'); e.target.reset();
-        } catch (error) { if (!state.isMockMode) await refreshData(true).catch(()=>{}); showMessage(error.message || "Gagal menambah karyawan.", "error"); } finally { submitBtn.innerText = "Simpan"; }
+            refreshData(true).catch(()=>{}); showMessage("Karyawan ditambahkan!", "success"); closeModal('addEmployeeModal'); e.target.reset();
+        } catch (error) { if (!state.isMockMode) refreshData(true).catch(()=>{}); showMessage(error.message || "Gagal menambah karyawan.", "error"); } finally { submitBtn.innerText = "Simpan"; }
     });
 
     window.deleteEmployee = async (id) => {
@@ -2761,8 +2781,8 @@
 
             await apiCall('deleteEmployee', { id });
             logActivity("Hapus Karyawan", `Menghapus data karyawan: ${empName}`);
-            await refreshData(); showMessage("Karyawan dihapus.", "success");
-        } catch (error) { if (!state.isMockMode) await refreshData(true).catch(()=>{}); showMessage(error.message || "Gagal menghapus.", "error"); }
+            refreshData(true).catch(()=>{}); showMessage("Karyawan dihapus.", "success");
+        } catch (error) { if (!state.isMockMode) refreshData(true).catch(()=>{}); showMessage(error.message || "Gagal menghapus.", "error"); }
     };
     
     window.handleEmployeeChange = () => {
@@ -2860,11 +2880,11 @@
                 logActivity("Input Kehadiran", `Menyimpan absensi ${data.empName} (Status: ${data.status})`);
                 showMessage("Data kehadiran disimpan!", "success");
             }
-            await refreshData();
+            refreshData(true).catch(()=>{});
             document.getElementById('attEmployee').value = ''; document.getElementById('attSession1').value = '-'; document.getElementById('attSession2').value = '-';
             document.getElementById('attLemburJam').value = ''; document.getElementById('attLemburKet').value = ''; document.getElementById('attResi1').value = ''; document.getElementById('attGMV1').value = ''; document.getElementById('attResi2').value = ''; document.getElementById('attGMV2').value = '';
             toggleReasonField();
-        } catch (error) { if (!state.isMockMode) await refreshData(true).catch(()=>{}); showMessage(error.message || "Gagal menyimpan data.", "error"); } finally { submitBtn.disabled = false; submitBtn.innerText = "Simpan Data"; }
+        } catch (error) { if (!state.isMockMode) refreshData(true).catch(()=>{}); showMessage(error.message || "Gagal menyimpan data.", "error"); } finally { submitBtn.disabled = false; submitBtn.innerText = "Simpan Data"; }
     });
 
     window.deleteAttendance = async (id) => {
@@ -2880,8 +2900,8 @@
             if(state.currentTab === 'reports') renderMonthlyReport();
 
             await apiCall('deleteAttendance', { id });
-            logActivity("Hapus Kehadiran", `Menghapus data absensi: ${attDetails}`); await refreshData(); showMessage("Data dihapus.", "success");
-        } catch (error) { if (!state.isMockMode) await refreshData(true).catch(()=>{}); showMessage(error.message || "Gagal menghapus.", "error"); }
+            logActivity("Hapus Kehadiran", `Menghapus data absensi: ${attDetails}`); refreshData(true).catch(()=>{}); showMessage("Data dihapus.", "success");
+        } catch (error) { if (!state.isMockMode) refreshData(true).catch(()=>{}); showMessage(error.message || "Gagal menghapus.", "error"); }
     };
     
     window.toggleSelectAllReports = (el) => {
@@ -2908,9 +2928,9 @@
             if (state.isMockMode) localStorage.setItem('gloria_mock_att', JSON.stringify(state.attendance));
             renderMonthlyReport();
 
-            for(let cb of checkboxes) await apiCall('deleteAttendance', { id: cb.value });
-            logActivity("Hapus Massal", `Menghapus ${checkboxes.length} data kehadiran.`); await refreshData(); showMessage(`${checkboxes.length} data berhasil dihapus.`, "success");
-        } catch(e) { if (!state.isMockMode) await refreshData(true).catch(()=>{}); showMessage(e.message || "Gagal menghapus beberapa data.", "error"); } finally { btn.innerHTML = `<i class="ph ph-trash mr-2"></i> Hapus Terpilih (<span class="bulkDeleteCountValue">0</span>)`; btn.disabled = false; }
+            await Promise.all(Array.from(checkboxes).map(cb => apiCall('deleteAttendance', { id: cb.value })));
+            logActivity("Hapus Massal", `Menghapus ${checkboxes.length} data kehadiran.`); refreshData(true).catch(()=>{}); showMessage(`${checkboxes.length} data berhasil dihapus.`, "success");
+        } catch(e) { if (!state.isMockMode) refreshData(true).catch(()=>{}); showMessage(e.message || "Gagal menghapus beberapa data.", "error"); } finally { btn.innerHTML = `<i class="ph ph-trash mr-2"></i> Hapus Terpilih (<span class="bulkDeleteCountValue">0</span>)`; btn.disabled = false; }
     };
 
     window.openEditAttendance = (id) => {
@@ -2957,8 +2977,8 @@
 
             await apiCall('updateAttendance', data);
             logActivity("Edit Kehadiran", `Mengubah data absensi ${existingData.empName || document.getElementById('editAttEmpName').value} pada tanggal ${data.date}`);
-            await refreshData(); showMessage("Perubahan disimpan!", "success"); closeModal('editAttendanceModal');
-        } catch (error) { if (!state.isMockMode) await refreshData(true).catch(()=>{}); showMessage(error.message || "Gagal menyimpan perubahan.", "error"); } finally { submitBtn.innerText = "Simpan Perubahan"; submitBtn.disabled = false; }
+            refreshData(true).catch(()=>{}); showMessage("Perubahan disimpan!", "success"); closeModal('editAttendanceModal');
+        } catch (error) { if (!state.isMockMode) refreshData(true).catch(()=>{}); showMessage(error.message || "Gagal menyimpan perubahan.", "error"); } finally { submitBtn.innerText = "Simpan Perubahan"; submitBtn.disabled = false; }
     });
 
     document.getElementById('attDate').addEventListener('change', () => {
@@ -3238,6 +3258,7 @@
 
         state.currentTab = tabId;
         localStorage.setItem('gloria_current_tab', tabId);
+        localStorage.setItem('gloria_last_view', tabId);
         
         document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
         document.querySelectorAll('.nav-btn').forEach(btn => { btn.classList.remove('bg-blue-50', 'text-blue-700', 'font-semibold'); btn.classList.add('text-gray-700'); });
@@ -3284,6 +3305,15 @@
             window.renderHostRanking();
         }
     };
+
+    // PERSISTENSI HALAMAN TERAKHIR: tetap di menu terakhir setelah refresh/reopen.
+    function persistCurrentView() {
+        const tab = state.currentTab || localStorage.getItem('gloria_current_tab') || localStorage.getItem('gloria_last_view') || 'dashboard';
+        localStorage.setItem('gloria_current_tab', tab);
+        localStorage.setItem('gloria_last_view', tab);
+    }
+    window.addEventListener('beforeunload', persistCurrentView);
+    window.addEventListener('pagehide', persistCurrentView);
 
     window.openModal = (id) => { const m=document.getElementById(id), c=m.querySelector('div.transform'); m.classList.remove('hidden'); void m.offsetWidth; m.classList.remove('opacity-0'); c.classList.remove('scale-95'); c.classList.add('scale-100'); };
     window.closeModal = (id) => { const m=document.getElementById(id), c=m.querySelector('div.transform'); m.classList.add('opacity-0'); c.classList.remove('scale-100'); c.classList.add('scale-95'); setTimeout(() => m.classList.add('hidden'), 300); };
@@ -3381,7 +3411,7 @@
             if (state.isMockMode) localStorage.setItem('gloria_mock_att', JSON.stringify(state.attendance));
 
             await apiCall('addAttendance', data); logActivity("Input Cepat Libur", `Menandai ${empName} libur pada ${dateInput}`);
-            await refreshData(); showMessage(`${empName} berhasil ditandai Libur!`, "success"); empSelect.value = '';
+            refreshData(true).catch(()=>{}); showMessage(`${empName} berhasil ditandai Libur!`, "success"); empSelect.value = '';
         } catch (error) { showMessage("Gagal menyimpan data libur.", "error"); } finally { btn.disabled = false; btn.innerHTML = `<i class="ph ph-calendar-minus mr-2"></i> Simpan Status Libur`; }
     };
 
