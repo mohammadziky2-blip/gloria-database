@@ -1852,9 +1852,6 @@
             if (!res.ok) throw new Error("Gagal terhubung ke server (HTTP " + res.status + ")");
             const json = await res.json();
             if (!json.success) {
-                if (/sesi|session/i.test(String(json.error || ''))) {
-                    state.authToken = ''; localStorage.removeItem('gloria_auth_token'); localStorage.removeItem('gloria_logged_in_user');
-                }
                 throw new Error(json.error || 'Operasi server gagal.');
             }
             const badge = document.getElementById('serverStatusBadge');
@@ -1970,90 +1967,49 @@
         });
     }
 
-    // ===== PERSISTENT SESSION + LAST VIEW RESTORE (PRODUCTION FIX) =====
-    // Restore login/session BEFORE rendering the application. Network errors do not
-    // destroy a valid local session; only an explicit server session rejection does.
+    // ===== PERSISTENT SESSION + LAST VIEW RESTORE (PRODUCTION FIX V3) =====
+    // Restore the persistent session from Script Properties before loading data.
+    // CacheService is only a speed layer; the persistent Script Property is the source of truth.
     window.addEventListener('DOMContentLoaded', async () => {
         const savedEmail = String(localStorage.getItem('gloria_logged_in_user') || '').trim().toLowerCase();
         const savedToken = String(localStorage.getItem('gloria_auth_token') || '').trim();
         const savedTab = String(localStorage.getItem('gloria_current_tab') || localStorage.getItem('gloria_last_view') || 'dashboard').trim() || 'dashboard';
         if (!savedEmail || !savedToken) return;
-
         state.authToken = savedToken;
         try {
+            const refreshed = await apiCall('refreshSession', { refreshToken: savedToken });
+            if (!refreshed || !refreshed.success || !refreshed.authToken) throw new Error((refreshed && refreshed.error) || 'Sesi tidak dapat dipulihkan.');
+            state.authToken = refreshed.authToken;
+            localStorage.setItem('gloria_auth_token', state.authToken);
+            if (refreshed.user && refreshed.user.email) localStorage.setItem('gloria_logged_in_user', String(refreshed.user.email).trim().toLowerCase());
             const res = await apiCall('getData');
             if (!res || res.success === false) throw new Error((res && res.error) || 'Sesi tidak valid.');
-
             const serverUser = res.user || {};
-            state.user = {
-                email: String(serverUser.email || savedEmail).toLowerCase(),
-                role: serverUser.role || (savedEmail === 'mohammadziky2@gmail.com' ? 'MASTER' : 'ADMIN')
-            };
-            state.employees = res.employees || [];
-            state.attendance = res.attendance || [];
-            state.lateAttendance = res.lateAttendance || [];
-            state.activeUsers = res.activeUsers || [];
-            state.blockedUsers = res.blockedUsers || [];
-            state.allowedUsers = res.allowedUsers || [];
-            state.historyLog = res.historyLog || [];
-
-            const currentEmail = state.user.email.toLowerCase();
-            if (state.blockedUsers.map(String).map(x => x.toLowerCase()).includes(currentEmail)) {
-                throw new Error('Akun diblokir.');
-            }
-            if (currentEmail !== 'mohammadziky2@gmail.com' && !state.allowedUsers.map(String).map(x => x.toLowerCase()).includes(currentEmail)) {
-                throw new Error('Akses akun tidak lagi tersedia.');
-            }
-
-            // Keep the saved credentials synchronized with the server-confirmed identity.
-            localStorage.setItem('gloria_logged_in_user', currentEmail);
-            localStorage.setItem('gloria_auth_token', state.authToken);
-
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('mainApp').classList.remove('hidden');
-            const userDisplay = document.getElementById('currentUserDisplay');
-            if (userDisplay) userDisplay.innerText = currentEmail;
+            state.user = { email:String(serverUser.email || savedEmail).toLowerCase(), role:serverUser.role || (savedEmail === 'mohammadziky2@gmail.com' ? 'MASTER' : 'ADMIN') };
+            state.employees=res.employees||[]; state.attendance=res.attendance||[]; state.lateAttendance=res.lateAttendance||[]; state.activeUsers=res.activeUsers||[]; state.blockedUsers=res.blockedUsers||[]; state.allowedUsers=res.allowedUsers||[]; state.historyLog=res.historyLog||[];
+            const currentEmail=state.user.email.toLowerCase();
+            if(state.blockedUsers.map(String).map(x=>x.toLowerCase()).includes(currentEmail)) throw new Error('Akun diblokir.');
+            if(currentEmail!=='mohammadziky2@gmail.com'&&!state.allowedUsers.map(String).map(x=>x.toLowerCase()).includes(currentEmail)) throw new Error('Akses akun tidak lagi tersedia.');
+            localStorage.setItem('gloria_logged_in_user',currentEmail);
+            document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('mainApp').classList.remove('hidden');
+            const userDisplay=document.getElementById('currentUserDisplay'); if(userDisplay) userDisplay.innerText=currentEmail;
             applyUserAccessUI(currentEmail);
-
-            const attDate = document.getElementById('attDate');
-            if (attDate) {
-                attDate.value = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
-            }
-
-            renderEmployees();
-            updateEmployeeDropdown();
-            updateDashboard();
-            renderActiveUsers();
-            if (currentEmail === 'mohammadziky2@gmail.com' && typeof window.renderAllowedUsers === 'function') {
-                window.renderAllowedUsers();
-            }
-
-            // Validate the requested tab against existing views. Never fall back to
-            // an arbitrary menu when the saved tab is still present.
-            const target = document.getElementById(savedTab + 'View');
-            const restoreTab = target ? savedTab : 'dashboard';
-            window.switchTab(restoreTab);
-        } catch (e) {
-            const msg = String(e && e.message || e || '');
-            const isAuthFailure = /sesi tidak ditemukan|sesi telah berakhir|sesi tidak valid|akun diblokir|akses akun tidak lagi tersedia|akses.*tersedia/i.test(msg);
-            if (isAuthFailure) {
-                localStorage.removeItem('gloria_auth_token');
-                localStorage.removeItem('gloria_logged_in_user');
-                state.authToken = '';
-                state.user = null;
-                document.getElementById('loginScreen').classList.remove('hidden');
-                document.getElementById('mainApp').classList.add('hidden');
-                showMessage(msg || 'Sesi tidak valid. Silakan login kembali.', 'error');
-            } else {
-                // Do NOT destroy the saved session for a temporary network/CORS error.
-                // Keep the app usable if the page was already authenticated.
-                document.getElementById('loginScreen').classList.add('hidden');
-                document.getElementById('mainApp').classList.remove('hidden');
-                state.user = { email: savedEmail, role: savedEmail === 'mohammadziky2@gmail.com' ? 'MASTER' : 'ADMIN' };
-                applyUserAccessUI(savedEmail);
-                const target = document.getElementById(savedTab + 'View');
-                window.switchTab(target ? savedTab : 'dashboard');
-                console.warn('Gloria session restore: server sementara tidak dapat dihubungi; sesi lokal dipertahankan.', e);
+            const attDate=document.getElementById('attDate'); if(attDate) attDate.value=new Date(new Date().getTime()-new Date().getTimezoneOffset()*60000).toISOString().split('T')[0];
+            renderEmployees(); updateEmployeeDropdown(); updateDashboard(); renderActiveUsers();
+            if(currentEmail==='mohammadziky2@gmail.com'&&typeof window.renderAllowedUsers==='function') window.renderAllowedUsers();
+            const target=document.getElementById(savedTab+'View'); window.switchTab(target?savedTab:'dashboard');
+        } catch(e) {
+            const msg=String(e&&e.message||e||'');
+            const isAuthFailure=/sesi tidak ditemukan|sesi telah berakhir|sesi tidak valid|sesi tidak dapat dipulihkan|akun diblokir|akses akun tidak lagi tersedia|akses.*tersedia/i.test(msg);
+            if(isAuthFailure){
+                state.authToken=''; state.user=null; localStorage.removeItem('gloria_auth_token'); localStorage.removeItem('gloria_logged_in_user');
+                document.getElementById('loginScreen').classList.remove('hidden'); document.getElementById('mainApp').classList.add('hidden');
+                showMessage(msg||'Sesi tidak valid. Silakan login kembali.','error');
+            }else{
+                document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('mainApp').classList.remove('hidden');
+                state.user={email:savedEmail,role:savedEmail==='mohammadziky2@gmail.com'?'MASTER':'ADMIN'}; applyUserAccessUI(savedEmail);
+                const target=document.getElementById(savedTab+'View'); window.switchTab(target?savedTab:'dashboard');
+                console.warn('Gloria session restore: server sementara tidak dapat dihubungi; kredensial lokal dipertahankan.',e);
             }
         }
     });
