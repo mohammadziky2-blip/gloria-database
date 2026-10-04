@@ -1841,28 +1841,74 @@
 
     async function apiCall(action, data = {}) {
         if (state.isMockMode) return mockApiCall(action, data);
-        try {
-            if (GAS_URL.endsWith('/dev')) throw new Error("URL berakhiran /dev otomatis diblokir oleh CORS.");
-            if (action !== 'login' && action !== 'healthCheck' && !state.authToken) throw new Error('Sesi login tidak ditemukan. Silakan login kembali.');
-            const res = await fetch(GAS_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action, data, authToken: state.authToken || '' }),
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-            });
-            if (!res.ok) throw new Error("Gagal terhubung ke server (HTTP " + res.status + ")");
-            const json = await res.json();
-            if (!json.success) {
-                throw new Error(json.error || 'Operasi server gagal.');
+
+        const retryableActions = new Set(['login','healthCheck','refreshSession','getData']);
+        const maxAttempts = retryableActions.has(action) ? 2 : 1;
+        let lastError = null;
+
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+            let timer = null;
+            try {
+                if (GAS_URL.endsWith('/dev')) throw new Error("URL berakhiran /dev. Gunakan URL deployment /exec.");
+                if (action !== 'login' && action !== 'healthCheck' && action !== 'refreshSession' && !state.authToken) {
+                    throw new Error('Sesi login tidak ditemukan. Silakan login kembali.');
+                }
+
+                const controller = new AbortController();
+                timer = setTimeout(() => controller.abort(), 25000);
+                const res = await fetch(GAS_URL, {
+                    method: 'POST',
+                    redirect: 'follow',
+                    cache: 'no-store',
+                    signal: controller.signal,
+                    // text/plain keeps the request a simple CORS request and avoids
+                    // an OPTIONS preflight for standalone HTML deployments.
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action, data, authToken: state.authToken || '' })
+                });
+                clearTimeout(timer);
+                timer = null;
+
+                const raw = await res.text();
+                let json = null;
+                try { json = raw ? JSON.parse(raw) : null; } catch (_) {}
+
+                if (!res.ok) {
+                    throw new Error(`Server HTTP ${res.status}${raw ? ': ' + raw.slice(0, 180) : ''}`);
+                }
+                if (!json) {
+                    throw new Error('Server tidak mengembalikan JSON. Pastikan deployment Apps Script menggunakan /exec dan akses Web App mengizinkan pengguna aplikasi.');
+                }
+                if (!json.success) throw new Error(json.error || 'Operasi server gagal.');
+
+                const badge = document.getElementById('serverStatusBadge');
+                if (badge) {
+                    badge.textContent = 'Server OK';
+                    badge.className = 'ml-2 px-2 py-0.5 text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full font-medium';
+                }
+                return json;
+            } catch (e) {
+                if (timer) clearTimeout(timer);
+                lastError = e;
+                const msg = String(e?.message || e || '');
+                const networkFailure = e?.name === 'AbortError' || /Failed to fetch|NetworkError|Load failed|CORS|fetch/i.test(msg);
+                if (networkFailure) {
+                    lastError = new Error('Tidak dapat terhubung ke Web App Google Apps Script. Jika HTML dibuka sebagai file lokal (file://), host-kan HTML melalui Apps Script/GitHub Pages/hosting HTTPS dan pastikan deployment backend memakai URL /exec, bukan /dev.');
+                }
+                if (attempt < maxAttempts) {
+                    await new Promise(r => setTimeout(r, 700 * attempt));
+                    continue;
+                }
             }
-            const badge = document.getElementById('serverStatusBadge');
-            if (badge) { badge.textContent = 'Server OK'; badge.className = 'ml-2 px-2 py-0.5 text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full font-medium'; }
-            return json;
-        } catch(e) {
-            console.error("Gloria API error:", e);
-            const badge = document.getElementById('serverStatusBadge');
-            if (badge) { badge.textContent = 'Server Error'; badge.className = 'ml-2 px-2 py-0.5 text-[10px] bg-red-500/20 text-red-300 border border-red-500/30 rounded-full font-medium'; }
-            throw e;
         }
+
+        console.error('Gloria API error:', lastError);
+        const badge = document.getElementById('serverStatusBadge');
+        if (badge) {
+            badge.textContent = 'Server Error';
+            badge.className = 'ml-2 px-2 py-0.5 text-[10px] bg-red-500/20 text-red-300 border border-red-500/30 rounded-full font-medium';
+        }
+        throw lastError || new Error('Gagal terhubung ke server.');
     }
 
     async function mockApiCall(action, data) {
@@ -2006,9 +2052,13 @@
                 document.getElementById('loginScreen').classList.remove('hidden'); document.getElementById('mainApp').classList.add('hidden');
                 showMessage(msg||'Sesi tidak valid. Silakan login kembali.','error');
             }else{
+                // Keep the last screen available for inspection, but explicitly mark it offline.
                 document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('mainApp').classList.remove('hidden');
                 state.user={email:savedEmail,role:savedEmail==='mohammadziky2@gmail.com'?'MASTER':'ADMIN'}; applyUserAccessUI(savedEmail);
                 const target=document.getElementById(savedTab+'View'); window.switchTab(target?savedTab:'dashboard');
+                const badge=document.getElementById('serverStatusBadge');
+                if(badge){badge.textContent='Offline / Server gagal dihubungi';badge.className='ml-2 px-2 py-0.5 text-[10px] bg-red-500/20 text-red-300 border border-red-500/30 rounded-full font-medium';}
+                showMessage('Server belum dapat dihubungi. Data lokal hanya ditampilkan sebagai cache; perubahan baru tidak dijamin tersimpan sampai koneksi kembali.','error');
                 console.warn('Gloria session restore: server sementara tidak dapat dihubungi; kredensial lokal dipertahankan.',e);
             }
         }
