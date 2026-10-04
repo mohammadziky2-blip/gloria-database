@@ -1970,35 +1970,90 @@
         });
     }
 
+    // ===== PERSISTENT SESSION + LAST VIEW RESTORE (PRODUCTION FIX) =====
+    // Restore login/session BEFORE rendering the application. Network errors do not
+    // destroy a valid local session; only an explicit server session rejection does.
     window.addEventListener('DOMContentLoaded', async () => {
-        const savedEmail = localStorage.getItem('gloria_logged_in_user');
-        const savedToken = localStorage.getItem('gloria_auth_token');
+        const savedEmail = String(localStorage.getItem('gloria_logged_in_user') || '').trim().toLowerCase();
+        const savedToken = String(localStorage.getItem('gloria_auth_token') || '').trim();
+        const savedTab = String(localStorage.getItem('gloria_current_tab') || localStorage.getItem('gloria_last_view') || 'dashboard').trim() || 'dashboard';
         if (!savedEmail || !savedToken) return;
+
         state.authToken = savedToken;
         try {
             const res = await apiCall('getData');
-            if (!res.success) throw new Error(res.error || 'Sesi tidak valid.');
-            state.user = { email: savedEmail };
-            state.employees = res.employees || []; state.attendance = res.attendance || []; state.lateAttendance = res.lateAttendance || [];
-            state.activeUsers = res.activeUsers || []; state.blockedUsers = res.blockedUsers || []; state.allowedUsers = res.allowedUsers || []; state.historyLog = res.historyLog || [];
-            if (state.blockedUsers.includes(savedEmail.toLowerCase())) throw new Error('Akun diblokir.');
-            if (savedEmail.toLowerCase() !== 'mohammadziky2@gmail.com' && !state.allowedUsers.includes(savedEmail.toLowerCase())) throw new Error('Akses akun tidak lagi tersedia.');
-            document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('mainApp').classList.remove('hidden');
-            const userDisplay=document.getElementById('currentUserDisplay'); if(userDisplay)userDisplay.innerText=savedEmail;
-            applyUserAccessUI(savedEmail);
-            const localDate=new Date(new Date().getTime()-new Date().getTimezoneOffset()*60000).toISOString().split('T')[0]; if(document.getElementById('attDate'))document.getElementById('attDate').value=localDate;
-            const savedTab = localStorage.getItem('gloria_current_tab') || localStorage.getItem('gloria_last_view') || state.currentTab || 'dashboard';
-            window.switchTab(savedTab);
-            renderEmployees(); updateEmployeeDropdown(); updateDashboard(); renderActiveUsers();
-            if(state.user.email.toLowerCase()==='mohammadziky2@gmail.com'&&typeof window.renderAllowedUsers==='function')window.renderAllowedUsers();
-        } catch(e) {
-            // Hanya keluarkan pengguna jika sesi benar-benar ditolak/berakhir.
-            // Gangguan jaringan sementara tidak menghapus sesi yang tersimpan.
+            if (!res || res.success === false) throw new Error((res && res.error) || 'Sesi tidak valid.');
+
+            const serverUser = res.user || {};
+            state.user = {
+                email: String(serverUser.email || savedEmail).toLowerCase(),
+                role: serverUser.role || (savedEmail === 'mohammadziky2@gmail.com' ? 'MASTER' : 'ADMIN')
+            };
+            state.employees = res.employees || [];
+            state.attendance = res.attendance || [];
+            state.lateAttendance = res.lateAttendance || [];
+            state.activeUsers = res.activeUsers || [];
+            state.blockedUsers = res.blockedUsers || [];
+            state.allowedUsers = res.allowedUsers || [];
+            state.historyLog = res.historyLog || [];
+
+            const currentEmail = state.user.email.toLowerCase();
+            if (state.blockedUsers.map(String).map(x => x.toLowerCase()).includes(currentEmail)) {
+                throw new Error('Akun diblokir.');
+            }
+            if (currentEmail !== 'mohammadziky2@gmail.com' && !state.allowedUsers.map(String).map(x => x.toLowerCase()).includes(currentEmail)) {
+                throw new Error('Akses akun tidak lagi tersedia.');
+            }
+
+            // Keep the saved credentials synchronized with the server-confirmed identity.
+            localStorage.setItem('gloria_logged_in_user', currentEmail);
+            localStorage.setItem('gloria_auth_token', state.authToken);
+
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            const userDisplay = document.getElementById('currentUserDisplay');
+            if (userDisplay) userDisplay.innerText = currentEmail;
+            applyUserAccessUI(currentEmail);
+
+            const attDate = document.getElementById('attDate');
+            if (attDate) {
+                attDate.value = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
+            }
+
+            renderEmployees();
+            updateEmployeeDropdown();
+            updateDashboard();
+            renderActiveUsers();
+            if (currentEmail === 'mohammadziky2@gmail.com' && typeof window.renderAllowedUsers === 'function') {
+                window.renderAllowedUsers();
+            }
+
+            // Validate the requested tab against existing views. Never fall back to
+            // an arbitrary menu when the saved tab is still present.
+            const target = document.getElementById(savedTab + 'View');
+            const restoreTab = target ? savedTab : 'dashboard';
+            window.switchTab(restoreTab);
+        } catch (e) {
             const msg = String(e && e.message || e || '');
-            if (/sesi|session|akun diblokir|akses akun tidak lagi tersedia|akses.*tersedia/i.test(msg)) {
-                localStorage.removeItem('gloria_auth_token'); localStorage.removeItem('gloria_logged_in_user');
-                state.authToken=''; state.user=null;
-                document.getElementById('loginScreen').classList.remove('hidden'); document.getElementById('mainApp').classList.add('hidden');
+            const isAuthFailure = /sesi tidak ditemukan|sesi telah berakhir|sesi tidak valid|akun diblokir|akses akun tidak lagi tersedia|akses.*tersedia/i.test(msg);
+            if (isAuthFailure) {
+                localStorage.removeItem('gloria_auth_token');
+                localStorage.removeItem('gloria_logged_in_user');
+                state.authToken = '';
+                state.user = null;
+                document.getElementById('loginScreen').classList.remove('hidden');
+                document.getElementById('mainApp').classList.add('hidden');
+                showMessage(msg || 'Sesi tidak valid. Silakan login kembali.', 'error');
+            } else {
+                // Do NOT destroy the saved session for a temporary network/CORS error.
+                // Keep the app usable if the page was already authenticated.
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                state.user = { email: savedEmail, role: savedEmail === 'mohammadziky2@gmail.com' ? 'MASTER' : 'ADMIN' };
+                applyUserAccessUI(savedEmail);
+                const target = document.getElementById(savedTab + 'View');
+                window.switchTab(target ? savedTab : 'dashboard');
+                console.warn('Gloria session restore: server sementara tidak dapat dihubungi; sesi lokal dipertahankan.', e);
             }
         }
     });
