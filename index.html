@@ -131,14 +131,15 @@
             <p class="text-slate-400 text-xs mt-2 font-medium">Sistem Manajemen Eksekutif</p>
         </div>
         
-        <form id="loginForm" class="space-y-5 text-left">
+        <form id="loginForm" class="space-y-5 text-left" autocomplete="off" novalidate>
             <div>
                 <label class="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">Email Akses</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <i class="ph ph-envelope text-amber-500 text-lg"></i>
                     </div>
-                    <input type="email" id="loginEmail" class="input-premium pl-12 w-full p-3.5 rounded-xl" placeholder="admin@gloria.com" required>
+                    <input type="email" id="loginEmail" name="gloria_login_email" class="input-premium pl-12 w-full p-3.5 rounded-xl" placeholder="admin@gloria.com" autocomplete="off" autocapitalize="none" spellcheck="false" required>
+                    <div id="loginEmailHint" class="text-xs mt-2 text-slate-400">Gunakan email yang sudah terdaftar.</div>
                 </div>
             </div>
             
@@ -148,11 +149,11 @@
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <i class="ph ph-lock-key text-amber-500 text-lg"></i>
                     </div>
-                    <input type="password" id="loginPassword" class="input-premium pl-12 w-full p-3.5 rounded-xl" placeholder="••••••••" required>
+                    <input type="password" id="loginPassword" name="gloria_login_password" class="input-premium pl-12 w-full p-3.5 rounded-xl" placeholder="••••••••" autocomplete="new-password" required disabled>
                 </div>
             </div>
             
-            <button type="submit" id="loginBtn" class="btn-premium w-full py-4 px-4 rounded-xl flex justify-center items-center mt-6 shadow-lg">
+            <button type="submit" id="loginBtn" class="btn-premium w-full py-4 px-4 rounded-xl flex justify-center items-center mt-6 shadow-lg" disabled>
                 <span id="loginBtnText">Otorisasi Masuk</span>
                 <div id="loginLoader" class="loader hidden ml-3 border-t-slate-900 border-2 w-5 h-5"></div>
             </button>
@@ -2036,55 +2037,41 @@
         });
     }
 
-    // ===== PERSISTENT SESSION + LAST VIEW RESTORE (PRODUCTION FIX V3) =====
-    // Restore the persistent session from Script Properties before loading data.
-    // CacheService is only a speed layer; the persistent Script Property is the source of truth.
-    window.addEventListener('DOMContentLoaded', async () => {
-        const savedEmail = String(localStorage.getItem('gloria_logged_in_user') || '').trim().toLowerCase();
-        const savedToken = String(localStorage.getItem('gloria_auth_token') || '').trim();
-        const savedTab = String(localStorage.getItem('gloria_current_tab') || localStorage.getItem('gloria_last_view') || 'dashboard').trim() || 'dashboard';
-        if (!savedEmail || !savedToken) return;
-        state.authToken = savedToken;
-        try {
-            const refreshed = await apiCall('refreshSession', { refreshToken: savedToken });
-            if (!refreshed || !refreshed.success || !refreshed.authToken) throw new Error((refreshed && refreshed.error) || 'Sesi tidak dapat dipulihkan.');
-            state.authToken = refreshed.authToken;
-            localStorage.setItem('gloria_auth_token', state.authToken);
-            if (refreshed.user && refreshed.user.email) localStorage.setItem('gloria_logged_in_user', String(refreshed.user.email).trim().toLowerCase());
-            const res = await apiCall('getData');
-            if (!res || res.success === false) throw new Error((res && res.error) || 'Sesi tidak valid.');
-            const serverUser = res.user || {};
-            state.user = { email:String(serverUser.email || savedEmail).toLowerCase(), role:serverUser.role || (savedEmail === 'mohammadziky2@gmail.com' ? 'MASTER' : 'ADMIN') };
-            state.employees=res.employees||[]; state.attendance=res.attendance||[]; state.lateAttendance=res.lateAttendance||[]; state.activeUsers=res.activeUsers||[]; state.blockedUsers=res.blockedUsers||[]; state.allowedUsers=res.allowedUsers||[]; state.historyLog=res.historyLog||[];
-            const currentEmail=state.user.email.toLowerCase();
-            if(state.blockedUsers.map(String).map(x=>x.toLowerCase()).includes(currentEmail)) throw new Error('Akun diblokir.');
-            if(currentEmail!=='mohammadziky2@gmail.com'&&!state.allowedUsers.map(String).map(x=>x.toLowerCase()).includes(currentEmail)) throw new Error('Akses akun tidak lagi tersedia.');
-            localStorage.setItem('gloria_logged_in_user',currentEmail);
-            document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('mainApp').classList.remove('hidden');
-            const userDisplay=document.getElementById('currentUserDisplay'); if(userDisplay) userDisplay.innerText=currentEmail;
-            applyUserAccessUI(currentEmail);
-            const attDate=document.getElementById('attDate'); if(attDate) attDate.value=new Date(new Date().getTime()-new Date().getTimezoneOffset()*60000).toISOString().split('T')[0];
-            renderEmployees(); updateEmployeeDropdown(); updateDashboard(); renderActiveUsers();
-            if(currentEmail==='mohammadziky2@gmail.com'&&typeof window.renderAllowedUsers==='function') window.renderAllowedUsers();
-            const target=document.getElementById(savedTab+'View'); window.switchTab(target?savedTab:'dashboard');
-        } catch(e) {
-            const msg=String(e&&e.message||e||'');
-            const isAuthFailure=/sesi tidak ditemukan|sesi telah berakhir|sesi tidak valid|sesi tidak dapat dipulihkan|akun diblokir|akses akun tidak lagi tersedia|akses.*tersedia/i.test(msg);
-            if(isAuthFailure){
-                state.authToken=''; state.user=null; localStorage.removeItem('gloria_auth_token'); localStorage.removeItem('gloria_logged_in_user');
-                document.getElementById('loginScreen').classList.remove('hidden'); document.getElementById('mainApp').classList.add('hidden');
-                showMessage(msg||'Sesi tidak valid. Silakan login kembali.','error');
-            }else{
-                // Keep the last screen available for inspection, but explicitly mark it offline.
-                document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('mainApp').classList.remove('hidden');
-                state.user={email:savedEmail,role:savedEmail==='mohammadziky2@gmail.com'?'MASTER':'ADMIN'}; applyUserAccessUI(savedEmail);
-                const target=document.getElementById(savedTab+'View'); window.switchTab(target?savedTab:'dashboard');
-                const badge=document.getElementById('serverStatusBadge');
-                if(badge){badge.textContent='Offline / Server gagal dihubungi';badge.className='ml-2 px-2 py-0.5 text-[10px] bg-red-500/20 text-red-300 border border-red-500/30 rounded-full font-medium';}
-                showMessage('Server belum dapat dihubungi. Data lokal hanya ditampilkan sebagai cache; perubahan baru tidak dijamin tersimpan sampai koneksi kembali.','error');
-                console.warn('Gloria session restore: server sementara tidak dapat dihubungi; kredensial lokal dipertahankan.',e);
+    // ===== SECURE LOGIN GATE =====
+    // Security rule: opening/refreshing the HTML must NEVER restore a logged-in session automatically.
+    // A user must explicitly submit BOTH a registered email and password.
+    // Existing database, features, and backend session validation remain unchanged.
+    window.addEventListener('DOMContentLoaded', () => {
+        // Always start at the login gate. Do not call refreshSession/getData here.
+        // Clear only the client-side session token so a shared link/device cannot bypass login.
+        state.authToken = '';
+        state.user = null;
+        localStorage.removeItem('gloria_auth_token');
+        localStorage.removeItem('gloria_logged_in_user');
+        document.getElementById('loginScreen').classList.remove('hidden');
+        document.getElementById('mainApp').classList.add('hidden');
+
+        const emailEl = document.getElementById('loginEmail');
+        const passEl = document.getElementById('loginPassword');
+        const btn = document.getElementById('loginBtn');
+        const emailHint = document.getElementById('loginEmailHint');
+
+        const updateLoginGate = () => {
+            const email = String(emailEl?.value || '').trim();
+            const pass = String(passEl?.value || '');
+            const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+            if (passEl) passEl.disabled = !emailValid;
+            const ready = emailValid && pass.length > 0;
+            if (btn) btn.disabled = !ready;
+            if (emailHint) {
+                emailHint.textContent = email && !emailValid ? 'Masukkan alamat email yang valid.' : (emailValid ? 'Email siap diverifikasi.' : 'Gunakan email yang sudah terdaftar.');
+                emailHint.className = 'text-xs mt-2 ' + (email && !emailValid ? 'text-red-400' : 'text-slate-400');
             }
-        }
+        };
+        emailEl?.addEventListener('input', updateLoginGate);
+        emailEl?.addEventListener('change', updateLoginGate);
+        passEl?.addEventListener('input', updateLoginGate);
+        updateLoginGate();
     });
 
     function applyUserAccessUI(email) {
@@ -2096,24 +2083,55 @@
 
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const email=document.getElementById('loginEmail').value.trim().toLowerCase(); const pass=document.getElementById('loginPassword').value;
-        const btnText=document.getElementById('loginBtnText'); const loader=document.getElementById('loginLoader'); btnText.innerText='Memverifikasi...'; loader.classList.remove('hidden');
+        const emailEl=document.getElementById('loginEmail');
+        const passEl=document.getElementById('loginPassword');
+        const email=String(emailEl?.value||'').trim().toLowerCase();
+        const pass=String(passEl?.value||'');
+        const btn=document.getElementById('loginBtn');
+        const btnText=document.getElementById('loginBtnText');
+        const loader=document.getElementById('loginLoader');
+
+        // Client-side gate: both fields are mandatory before any server request.
+        if(!email){ showMessage('Email wajib diisi.','error'); emailEl?.focus(); return; }
+        if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ showMessage('Format email tidak valid.','error'); emailEl?.focus(); return; }
+        if(!pass){ showMessage('Password wajib diisi.','error'); passEl?.focus(); return; }
+
+        if(btn) btn.disabled=true;
+        if(btnText) btnText.innerText='Memverifikasi...';
+        if(loader) loader.classList.remove('hidden');
         try {
+            // The server remains the final authority for password, blocked status, and allowed email.
             const loginRes=await apiCall('login',{email:email,password:pass});
-            if(!loginRes.success)throw new Error(loginRes.error||'Login gagal.');
-            state.authToken=loginRes.authToken||''; if(!state.authToken)throw new Error('Token sesi tidak diterima server.');
-            state.user=loginRes.user||{email:email}; localStorage.setItem('gloria_auth_token',state.authToken); localStorage.setItem('gloria_logged_in_user',email);
-            const res=await apiCall('getData'); state.employees=res.employees||[]; state.attendance=res.attendance||[]; state.lateAttendance=res.lateAttendance||[]; state.activeUsers=res.activeUsers||[]; state.blockedUsers=res.blockedUsers||[]; state.allowedUsers=res.allowedUsers||[];
-            if(state.blockedUsers.includes(email))throw new Error('Akun diblokir.');
-            if(email!=='mohammadziky2@gmail.com'&&!state.allowedUsers.includes(email))throw new Error('Email belum terdaftar.');
+            if(!loginRes || !loginRes.success) throw new Error((loginRes&&loginRes.error)||'Login gagal.');
+            state.authToken=String(loginRes.authToken||'');
+            if(!state.authToken) throw new Error('Token sesi tidak diterima server.');
+            state.user=loginRes.user||{email:email};
+            localStorage.setItem('gloria_auth_token',state.authToken);
+            localStorage.setItem('gloria_logged_in_user',email);
+
+            const res=await apiCall('getData');
+            if(!res || res.success===false) throw new Error((res&&res.error)||'Data tidak dapat dimuat.');
+            state.employees=res.employees||[]; state.attendance=res.attendance||[]; state.lateAttendance=res.lateAttendance||[]; state.activeUsers=res.activeUsers||[]; state.blockedUsers=res.blockedUsers||[]; state.allowedUsers=res.allowedUsers||[];
+            if(state.blockedUsers.map(String).map(x=>x.toLowerCase()).includes(email)) throw new Error('Akun diblokir.');
+            if(email!=='mohammadziky2@gmail.com'&&!state.allowedUsers.map(String).map(x=>x.toLowerCase()).includes(email)) throw new Error('Email belum terdaftar.');
+
             const userDisplay=document.getElementById('currentUserDisplay'); if(userDisplay)userDisplay.innerText=email; applyUserAccessUI(email);
             document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('mainApp').classList.remove('hidden');
-            const localDate=new Date(new Date().getTime()-new Date().getTimezoneOffset()*60000).toISOString().split('T')[0]; document.getElementById('attDate').value=localDate;
-            state.employees.sort((a,b)=>a.name.localeCompare(b.name)); state.attendance.sort((a,b)=>new Date(window.normalizeDateStr(b.date))-new Date(window.normalizeDateStr(a.date)));
+            const localDate=new Date(new Date().getTime()-new Date().getTimezoneOffset()*60000).toISOString().split('T')[0]; const attDate=document.getElementById('attDate'); if(attDate)attDate.value=localDate;
+            state.employees.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''))); state.attendance.sort((a,b)=>new Date(window.normalizeDateStr(b.date))-new Date(window.normalizeDateStr(a.date)));
             renderEmployees(); updateEmployeeDropdown(); updateDashboard(); renderActiveUsers(); if(email==='mohammadziky2@gmail.com'&&typeof window.renderAllowedUsers==='function')window.renderAllowedUsers(); window.switchTab(localStorage.getItem('gloria_current_tab')||localStorage.getItem('gloria_last_view')||'dashboard');
             await apiCall('logActiveUser',{email:email}); showMessage('Login berhasil.','success');
-        } catch(error) { state.authToken=''; localStorage.removeItem('gloria_auth_token'); localStorage.removeItem('gloria_logged_in_user'); showMessage(error.message||'Gagal masuk ke sistem.','error'); }
-        finally { btnText.innerText='Otorisasi Masuk'; loader.classList.add('hidden'); }
+        } catch(error) {
+            state.authToken=''; state.user=null;
+            localStorage.removeItem('gloria_auth_token'); localStorage.removeItem('gloria_logged_in_user');
+            document.getElementById('loginScreen').classList.remove('hidden'); document.getElementById('mainApp').classList.add('hidden');
+            showMessage(error.message||'Gagal masuk ke sistem.','error');
+        } finally {
+            if(btnText) btnText.innerText='Otorisasi Masuk';
+            if(loader) loader.classList.add('hidden');
+            const emailValid=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(emailEl?.value||'').trim());
+            if(btn) btn.disabled=!(emailValid && String(passEl?.value||'').length>0);
+        }
     });
 
     window.handleLogout = () => {
