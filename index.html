@@ -2074,11 +2074,80 @@
         updateLoginGate();
     });
 
+    // ===== AKSES KHUSUS DEWI =====
+    // dewi@gmail.com hanya dapat mengakses:
+    // 1. Input Kehadiran Harian
+    // 2. Manajemen Keterlambatan
+    // 3. Backup/Rekap Bulanan (tab reports)
+    const LIMITED_USER_EMAIL = 'dewi@gmail.com';
+    const LIMITED_ALLOWED_TABS = ['attendance', 'lateAttendance', 'reports'];
+
+    function isLimitedUser(email) {
+        return String(email || '').trim().toLowerCase() === LIMITED_USER_EMAIL;
+    }
+
+    function canAccessTab(tabId) {
+        if (!state.user) return false;
+        const email = String(state.user.email || '').trim().toLowerCase();
+        if (email === LIMITED_USER_EMAIL) {
+            return LIMITED_ALLOWED_TABS.includes(tabId);
+        }
+        return true;
+    }
+
+    function enforceLimitedUserMenu(email) {
+        const limited = isLimitedUser(email);
+
+        // Sembunyikan seluruh menu/tab selain 3 menu yang diizinkan.
+        if (!limited) return;
+
+        document.querySelectorAll('.nav-btn[data-tab]').forEach(btn => {
+            const tab = btn.getAttribute('data-tab');
+            if (!LIMITED_ALLOWED_TABS.includes(tab)) {
+                btn.classList.add('hidden');
+            } else {
+                btn.classList.remove('hidden');
+            }
+        });
+
+        // Sembunyikan tombol aksi Dashboard/fitur lain yang dapat membuka menu terlarang.
+        const dashboardActionTabs = ['dashboard','employees','salary','schedule','hostSalary','hostReport','hostRanking','bankAccount'];
+        document.querySelectorAll('[onclick]').forEach(el => {
+            const onclick = el.getAttribute('onclick') || '';
+            const match = onclick.match(/switchTab\(['"]([^'"]+)['"]\)/);
+            if (match && dashboardActionTabs.includes(match[1])) {
+                el.classList.add('hidden');
+            }
+        });
+
+        // Jangan menampilkan panel owner/host untuk akun terbatas.
+        ['masterControlPanel','sidebarBankAuth','mobileBankAuth','dashboardBankAuth',
+         'dashboardHostAuth','sidebarHostAuth','mobileHostAuth'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el && limited) {
+                el.classList.add('hidden');
+                el.classList.remove('flex');
+            }
+        });
+
+        // Untuk Dewi, menu bulanan ditampilkan sebagai Backup Bulanan.
+        document.querySelectorAll('[data-tab="reports"]').forEach(btn => {
+            if (!limited) return;
+            const textNodes = Array.from(btn.childNodes).filter(n => n.nodeType === Node.TEXT_NODE);
+            textNodes.forEach(n => {
+                if (n.textContent.includes('Rekap Bulanan')) {
+                    n.textContent = n.textContent.replace('Rekap Bulanan', 'Backup Bulanan');
+                }
+            });
+        });
+    }
+
     function applyUserAccessUI(email) {
         const isOwner = String(email||'').toLowerCase() === 'mohammadziky2@gmail.com';
         ['masterControlPanel','sidebarBankAuth','mobileBankAuth','dashboardBankAuth'].forEach(id=>{const el=document.getElementById(id);if(!el)return;if(isOwner){el.classList.remove('hidden');if(id!=='masterControlPanel')el.classList.add('flex');}else{el.classList.add('hidden');el.classList.remove('flex');}});
         const authorizedHostEmails=['bettyartanita@gmail.com','mohammadziky2@gmail.com','ysdd@gmail.com']; const isHost=authorizedHostEmails.includes(String(email||'').toLowerCase());
         ['dashboardHostAuth','sidebarHostAuth','mobileHostAuth'].forEach(id=>{const el=document.getElementById(id);if(!el)return;if(isHost){el.classList.remove('hidden');el.classList.add('flex');}else{el.classList.add('hidden');el.classList.remove('flex');}});
+        enforceLimitedUserMenu(email);
     }
 
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -2119,7 +2188,9 @@
             document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('mainApp').classList.remove('hidden');
             const localDate=new Date(new Date().getTime()-new Date().getTimezoneOffset()*60000).toISOString().split('T')[0]; const attDate=document.getElementById('attDate'); if(attDate)attDate.value=localDate;
             state.employees.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''))); state.attendance.sort((a,b)=>new Date(window.normalizeDateStr(b.date))-new Date(window.normalizeDateStr(a.date)));
-            renderEmployees(); updateEmployeeDropdown(); updateDashboard(); renderActiveUsers(); if(email==='mohammadziky2@gmail.com'&&typeof window.renderAllowedUsers==='function')window.renderAllowedUsers(); window.switchTab(localStorage.getItem('gloria_current_tab')||localStorage.getItem('gloria_last_view')||'dashboard');
+            renderEmployees(); updateEmployeeDropdown(); updateDashboard(); renderActiveUsers(); if(email==='mohammadziky2@gmail.com'&&typeof window.renderAllowedUsers==='function')window.renderAllowedUsers();
+            const savedTab = isLimitedUser(email) ? 'attendance' : (localStorage.getItem('gloria_current_tab')||localStorage.getItem('gloria_last_view')||'dashboard');
+            window.switchTab(savedTab);
             await apiCall('logActiveUser',{email:email}); showMessage('Login berhasil.','success');
         } catch(error) {
             state.authToken=''; state.user=null;
@@ -2159,6 +2230,11 @@
             renderEmployees(); updateEmployeeDropdown(); renderTodayAttendance(); if(state.currentTab==='lateAttendance' && typeof renderLateAttendance==='function') renderLateAttendance(); renderMonthlyReport(); updateDashboard(); renderActiveUsers();
             if(state.user&&state.user.email.toLowerCase()==='mohammadziky2@gmail.com'&&typeof window.renderAllowedUsers==='function')window.renderAllowedUsers();
             renderHistoryLog(); if(typeof window.renderBlockedUsers==='function')window.renderBlockedUsers(); if(typeof window.renderScheduleTracker==='function')window.renderScheduleTracker(); if(typeof window.renderHostMonthlyReport==='function')window.renderHostMonthlyReport(); if(typeof window.renderHostRanking==='function')window.renderHostRanking(); if(state.currentTab==='bankAccount'&&typeof window.renderBankAccountList==='function')window.renderBankAccountList();
+            if (state.user && isLimitedUser(state.user.email) && !LIMITED_ALLOWED_TABS.includes(state.currentTab)) {
+                window.switchTab('attendance');
+            } else if (state.user) {
+                enforceLimitedUserMenu(state.user.email);
+            }
             if(!silent)showMessage('Data berhasil diperbarui.','success'); return res;
         } catch(error) { if(!silent)showMessage(error.message||'Gagal memperbarui data.','error'); throw error; }
     }
@@ -3357,6 +3433,13 @@
     };
 
     window.switchTab = (tabId) => {
+        // Hard client-side navigation gate untuk dewi@gmail.com.
+        // Akun lain tidak terpengaruh.
+        if (!canAccessTab(tabId)) {
+            showMessage("Akses Ditolak: akun ini hanya dapat mengakses Input Kehadiran Harian, Manajemen Keterlambatan, dan Backup Bulanan.", "error");
+            return;
+        }
+
         if (tabId === 'hostSalary') {
             const authorizedHostEmails = ['bettyartanita@gmail.com', 'mohammadziky2@gmail.com', 'ysdd@gmail.com'];
             if (!state.user || !authorizedHostEmails.includes(state.user.email.toLowerCase())) { showMessage("Akses Ditolak: Halaman terkunci khusus Owner.", "error"); return; }
