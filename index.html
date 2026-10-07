@@ -2182,7 +2182,14 @@
             if(!res || res.success===false) throw new Error((res&&res.error)||'Data tidak dapat dimuat.');
             state.employees=res.employees||[]; state.attendance=res.attendance||[]; state.lateAttendance=res.lateAttendance||[]; state.activeUsers=res.activeUsers||[]; state.blockedUsers=res.blockedUsers||[]; state.allowedUsers=res.allowedUsers||[];
             if(state.blockedUsers.map(String).map(x=>x.toLowerCase()).includes(email)) throw new Error('Akun diblokir.');
-            if(email!=='mohammadziky2@gmail.com'&&!state.allowedUsers.map(String).map(x=>x.toLowerCase()).includes(email)) throw new Error('Email belum terdaftar.');
+            // Login sudah diverifikasi server melalui authenticate_().
+            // Untuk Dewi, backend sengaja tidak mengirim allowedUsers demi keamanan,
+            // sehingga jangan melakukan pemeriksaan allowedUsers kedua di browser.
+            // Pemeriksaan daftar allowedUsers tetap dipakai untuk pengguna biasa sebagai
+            // lapisan kompatibilitas, sedangkan Dewi mengikuti hasil autentikasi server.
+            if(!isLimitedUser(email) && email!=='mohammadziky2@gmail.com'&&!state.allowedUsers.map(String).map(x=>x.toLowerCase()).includes(email)) {
+                throw new Error('Email belum terdaftar.');
+            }
 
             const userDisplay=document.getElementById('currentUserDisplay'); if(userDisplay)userDisplay.innerText=email; applyUserAccessUI(email);
             document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('mainApp').classList.remove('hidden');
