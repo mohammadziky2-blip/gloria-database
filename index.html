@@ -450,28 +450,42 @@
 
                 <h3 class="text-lg font-bold text-gray-800 mb-4">Aksi Cepat</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <button onclick="switchTab('attendance')" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-xl shadow hover:shadow-lg transition-all text-left flex justify-between items-center group">
+                    <button id="quickAttendanceCard" onclick="switchTab('attendance')" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-xl shadow hover:shadow-lg transition-all text-left flex justify-between items-center group">
                         <div>
                             <h4 class="font-bold text-lg">Input Kehadiran Baru</h4>
                             <p class="text-blue-100 text-sm mt-1">Manual atau menggunakan AI Kamera</p>
                         </div>
                         <i class="ph ph-arrow-right text-2xl transform group-hover:translate-x-2 transition-transform"></i>
                     </button>
-                    <button onclick="switchTab('reports')" class="bg-white border border-gray-200 text-gray-800 p-6 rounded-xl shadow-sm hover:border-blue-400 transition-all text-left flex justify-between items-center group">
+                    <button id="quickReportsCard" onclick="switchTab('reports')" class="bg-white border border-gray-200 text-gray-800 p-6 rounded-xl shadow-sm hover:border-blue-400 transition-all text-left flex justify-between items-center group">
                         <div>
                             <h4 class="font-bold text-lg">Lihat Rekap Bulanan</h4>
                             <p class="text-gray-500 text-sm mt-1">Export atau hapus massal data bulan ini</p>
                         </div>
                         <i class="ph ph-chart-line-up text-2xl text-blue-500 transform group-hover:scale-110 transition-transform"></i>
                     </button>
-                    <button onclick="switchTab('employees'); setTimeout(() => openModal('addEmployeeModal'), 300)" class="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-6 rounded-xl shadow hover:shadow-lg transition-all text-left flex justify-between items-center group">
+                    <button id="quickLateCard" onclick="switchTab('lateAttendance')" class="bg-gradient-to-r from-amber-500 to-orange-500 text-white p-6 rounded-xl shadow hover:shadow-lg transition-all text-left flex justify-between items-center group">
+                        <div>
+                            <h4 class="font-bold text-lg">Manajemen Keterlambatan</h4>
+                            <p class="text-amber-100 text-sm mt-1">Catat, edit, dan pantau keterlambatan karyawan</p>
+                        </div>
+                        <i class="ph ph-clock-warning text-2xl transform group-hover:scale-110 transition-transform"></i>
+                    </button>
+                    <button id="quickBulkAttendanceCard" onclick="switchTab('attendance'); setTimeout(() => openBulkEmployeePicker(), 200)" class="bg-gradient-to-r from-cyan-600 to-blue-600 text-white p-6 rounded-xl shadow hover:shadow-lg transition-all text-left flex justify-between items-center group">
+                        <div>
+                            <h4 class="font-bold text-lg">Input Kehadiran Massal</h4>
+                            <p class="text-cyan-100 text-sm mt-1">Pilih beberapa Admin, Packing, atau Host sekaligus</p>
+                        </div>
+                        <i class="ph ph-check-square-offset text-2xl transform group-hover:scale-110 transition-transform"></i>
+                    </button>
+                    <button id="quickEmployeeCard" onclick="switchTab('employees'); setTimeout(() => openModal('addEmployeeModal'), 300)" class="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-6 rounded-xl shadow hover:shadow-lg transition-all text-left flex justify-between items-center group">
                         <div>
                             <h4 class="font-bold text-lg">Tambah Karyawan Baru</h4>
                             <p class="text-purple-100 text-sm mt-1">Daftarkan anggota tim ke sistem</p>
                         </div>
                         <i class="ph ph-user-plus text-2xl transform group-hover:scale-110 transition-transform"></i>
                     </button>
-                    <button onclick="switchTab('salary')" class="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-6 rounded-xl shadow hover:shadow-lg transition-all text-left flex justify-between items-center group border-2 border-green-300 animate-pulse">
+                    <button id="quickSalaryCard" onclick="switchTab('salary')" class="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-6 rounded-xl shadow hover:shadow-lg transition-all text-left flex justify-between items-center group border-2 border-green-300 animate-pulse">
                         <div>
                             <h4 class="font-bold text-lg">Slip Gaji & Performa</h4>
                             <p class="text-green-100 text-sm mt-1">Kalkulasi 1 bulan, lembur & total data individu</p>
@@ -487,7 +501,7 @@
                         <i class="ph ph-currency-circle-dollar text-4xl transform group-hover:scale-110 transition-transform"></i>
                     </button>
                     
-                    <button onclick="switchTab('schedule')" class="bg-gradient-to-r from-teal-500 to-cyan-600 text-white p-6 rounded-xl shadow hover:shadow-lg transition-all text-left flex justify-between items-center group border-2 border-teal-300 hover:border-teal-400 md:col-span-2">
+                    <button id="quickScheduleCard" onclick="switchTab('schedule')" class="bg-gradient-to-r from-teal-500 to-cyan-600 text-white p-6 rounded-xl shadow hover:shadow-lg transition-all text-left flex justify-between items-center group border-2 border-teal-300 hover:border-teal-400 md:col-span-2">
                         <div>
                             <h4 class="font-bold text-lg flex items-center"><i class="ph-fill ph-calendar-star mr-2 text-yellow-300"></i> Jadwal Kerja & Monitoring Host</h4>
                             <p class="text-teal-100 text-sm mt-1">Upload foto jadwal sebagai referensi visual dan pantau sinkronisasi kehadiran host dari database secara real-time.</p>
@@ -495,7 +509,7 @@
                         <i class="ph ph-scan text-4xl transform group-hover:scale-110 transition-transform"></i>
                     </button>
 
-                    <button onclick="switchTab('hostReport')" class="bg-gradient-to-r from-indigo-500 to-violet-600 text-white p-6 rounded-xl shadow hover:shadow-lg transition-all text-left flex justify-between items-center group border-2 border-indigo-300 md:col-span-2">
+                    <button id="quickHostReportCard" onclick="switchTab('hostReport')" class="bg-gradient-to-r from-indigo-500 to-violet-600 text-white p-6 rounded-xl shadow hover:shadow-lg transition-all text-left flex justify-between items-center group border-2 border-indigo-300 md:col-span-2">
                         <div>
                             <h4 class="font-bold text-lg flex items-center"><i class="ph-fill ph-chart-polar mr-2 text-yellow-300"></i> Laporan Performa Host (Bulanan)</h4>
                             <p class="text-indigo-100 text-sm mt-1">Rekap tabel spreadsheet komprehensif tanggal 1 s/d selesai untuk seluruh perolehan Resi dan GMV Host Live.</p>
@@ -503,7 +517,7 @@
                         <i class="ph ph-table text-4xl transform group-hover:scale-110 transition-transform"></i>
                     </button>
 
-                    <button onclick="switchTab('hostRanking')" class="bg-gradient-to-r from-rose-500 to-pink-600 text-white p-6 rounded-xl shadow hover:shadow-lg transition-all text-left flex justify-between items-center group border-2 border-rose-300 hover:border-rose-400 md:col-span-2 animate-pulse">
+                    <button id="quickHostRankingCard" onclick="switchTab('hostRanking')" class="bg-gradient-to-r from-rose-500 to-pink-600 text-white p-6 rounded-xl shadow hover:shadow-lg transition-all text-left flex justify-between items-center group border-2 border-rose-300 hover:border-rose-400 md:col-span-2 animate-pulse">
                         <div>
                             <h4 class="font-bold text-lg flex items-center"><i class="ph-fill ph-medal mr-2 text-yellow-300"></i> Peringkat Performa Host</h4>
                             <p class="text-rose-100 text-sm mt-1">Pantau Top 5 dan Bottom 5 Host Live berdasarkan perolehan total resi/GMV bulan ini dengan grafik visual interaktif.</p>
@@ -522,7 +536,7 @@
                 </div>
 
                 <!-- Gloria AI Assistant Real-time -->
-                <div class="mt-8 bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 rounded-2xl shadow-xl p-6 text-white border border-indigo-500/30">
+                <div id="dashboardAISection" class="mt-8 bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 rounded-2xl shadow-xl p-6 text-white border border-indigo-500/30">
                     <div class="flex items-center justify-between mb-4 border-b border-indigo-800/60 pb-3">
                         <div class="flex items-center space-x-3">
                             <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-400 to-amber-600 flex items-center justify-center shadow-lg text-slate-950 font-black text-lg">
@@ -559,7 +573,7 @@
                 </div>
 
                 <!-- Log Akses Pengguna -->
-                <div class="mt-8 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <div id="dashboardAccessLogSection" class="mt-8 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-bold text-gray-800 flex items-center"><i class="ph-fill ph-users-three mr-2 text-blue-600"></i> Log Akses Pengguna</h3>
                         <span id="ownerBadge" class="hidden bg-red-100 text-red-700 text-xs font-bold px-2 py-1 rounded border border-red-200"><i class="ph-fill ph-shield-check mr-1"></i> Mode Pemilik</span>
@@ -734,10 +748,38 @@
                         <form id="attendanceForm" class="space-y-5">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Pilih Karyawan</label>
-                                    <select id="attEmployee" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white" required onchange="handleEmployeeChange()">
+                                    <div class="flex items-center justify-between gap-2 mb-1">
+                                        <label class="block text-sm font-medium text-gray-700">Pilih Karyawan</label>
+                                        <button type="button" id="bulkPickerToggleBtn" onclick="toggleBulkEmployeePicker()" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 text-xs font-bold hover:bg-blue-100">
+                                            <i class="ph ph-check-square-offset"></i> Pilih Banyak
+                                        </button>
+                                    </div>
+                                    <select id="attEmployee" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white" onchange="handleEmployeeChange()">
                                         <option value="">-- Pilih --</option>
                                     </select>
+                                    <div id="bulkEmployeePanel" class="hidden mt-3 border border-blue-200 rounded-xl bg-blue-50/60 p-3">
+                                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-3">
+                                            <div>
+                                                <p class="text-xs font-black text-blue-900 uppercase tracking-wider">Input Kehadiran Massal</p>
+                                                <p class="text-xs text-blue-700 mt-0.5">Pilih satu divisi per proses. Data sesi/performa yang diisi akan diterapkan ke semua pilihan.</p>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <select id="bulkDivisionFilter" class="text-xs border border-blue-200 rounded-lg bg-white px-2.5 py-2" onchange="renderBulkEmployeePicker()">
+                                                    <option value="Admin">Admin</option>
+                                                    <option value="Packing">Packing</option>
+                                                    <option value="Host Live">Host Live</option>
+                                                </select>
+                                                <label class="inline-flex items-center gap-1.5 text-xs font-bold text-blue-800 cursor-pointer">
+                                                    <input type="checkbox" id="bulkSelectAll" onchange="toggleBulkSelectAll(this.checked)" class="rounded text-blue-600 focus:ring-blue-500"> Semua
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div id="bulkEmployeeList" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 max-h-56 overflow-y-auto pr-1"></div>
+                                        <div class="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                            <span id="bulkSelectedSummary" class="text-xs font-bold text-blue-900">0 karyawan dipilih</span>
+                                            <button type="button" onclick="clearBulkEmployeeSelection()" class="text-xs font-bold text-red-600 hover:text-red-700">Bersihkan pilihan</button>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Status Kehadiran</label>
@@ -1249,7 +1291,7 @@
                         <div class="md:col-span-2 bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-900">
                             <div class="font-bold mb-1">Ketentuan otomatis</div>
                             <div>GMV: &lt; Rp150 jt = 0,5% · Rp150–&lt;250 jt = 1% · Rp250–&lt;400 jt = 1,5% · ≥ Rp400 jt = 2%.</div>
-                            <div>Resi: &lt;2.500 = Rp500/resi · 2.500–&lt;3.500 = Rp700/resi · ≥3.500 = Rp1.000/resi.</div>
+                            <div>Resi: target awal 1.300; &lt;2.500 = Rp500/resi · 2.500–&lt;3.500 = Rp700/resi · ≥3.500 = Rp1.000/resi.</div>
                         </div>
                     </div>
 
@@ -1778,8 +1820,8 @@
 
 <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwNbLwFj1FvdCZ49E7P8codKkGjTj_OgmMWkiaAkLRuydUUscF43LecWglLXBuTMHAIiQ/exec";
-    const EXPECTED_BACKEND_BUILD_ID = 'GLORIA-2026.10.08.02';
-    const EXPECTED_BACKEND_SCHEMA = '2026.10.2'; 
+    const EXPECTED_BACKEND_BUILD_ID = 'GLORIA-2026.10.08.04';
+    const EXPECTED_BACKEND_SCHEMA = '2026.10.4'; 
     
     let state = {
         user: null,
@@ -1799,6 +1841,7 @@
         allowedUsers: JSON.parse(localStorage.getItem('gloria_allowed_users') || '["mohammadziky2@gmail.com"]'), // MASTER OWNER DEFAULT
         currentTab: 'dashboard',
         currentFilter: 'all',
+        bulkSelectedEmployeeIds: [],
         ocrWorker: null,
         isMockMode: GAS_URL === "" || GAS_URL.endsWith('/dev')
     };
@@ -2018,7 +2061,7 @@
                     const totalResi = rows.reduce((n,a)=>n+(Number(a.resi1)||0)+(Number(a.resi2)||0),0);
                     const totalGMV = rows.reduce((n,a)=>n+(Number(a.gmv1)||0)+(Number(a.gmv2)||0),0);
                     let rateLabel,tier,commission;
-                    if(String(data.method||'GMV').toUpperCase()==='RESI'){ if(totalResi<2500){rateLabel='Rp500 / resi';tier='< 2.500 resi';commission=totalResi*500;} else if(totalResi<3500){rateLabel='Rp700 / resi';tier='2.500 – < 3.500 resi';commission=totalResi*700;} else {rateLabel='Rp1.000 / resi';tier='≥ 3.500 resi';commission=totalResi*1000;} }
+                    if(String(data.method||'GMV').toUpperCase()==='RESI'){ if(totalResi<2500){rateLabel='Rp500 / resi';tier='< 2.500 resi (target awal 1.300)';commission=totalResi*500;} else if(totalResi<3500){rateLabel='Rp700 / resi';tier='2.500 – < 3.500 resi';commission=totalResi*700;} else {rateLabel='Rp1.000 / resi';tier='≥ 3.500 resi';commission=totalResi*1000;} }
                     else { if(totalGMV<150000000){rateLabel='0,5%';tier='< Rp150 juta';commission=totalGMV*0.005;} else if(totalGMV<250000000){rateLabel='1%';tier='Rp150 juta – < Rp250 juta';commission=totalGMV*0.01;} else if(totalGMV<400000000){rateLabel='1,5%';tier='Rp250 juta – < Rp400 juta';commission=totalGMV*0.015;} else {rateLabel='2%';tier='≥ Rp400 juta';commission=totalGMV*0.02;} }
                     resolve({success:true,data:{employeeId:data.employeeId,employeeName:emp?.name||'',division:emp?.division||'',totalResi,totalGMV,rateLabel,tier,commission:Math.round(commission||0)}});
                 }
@@ -2078,7 +2121,11 @@
             state.user = session.user || { email: savedEmail };
             localStorage.setItem('gloria_auth_token', state.authToken);
             localStorage.setItem('gloria_logged_in_user', String(state.user.email || savedEmail).toLowerCase());
-            await refreshData(true);
+            const boot=session.bootstrap;
+            if(boot){
+                if(String(boot.backendBuildId||'')!==EXPECTED_BACKEND_BUILD_ID) throw new Error('Backend belum diperbarui ke build '+EXPECTED_BACKEND_BUILD_ID+'.');
+                applyServerData(boot);
+            }else{ await refreshData(true); }
             const email = String(state.user.email || savedEmail).toLowerCase();
             const userDisplay = document.getElementById('currentUserDisplay');
             if (userDisplay) userDisplay.innerText = email;
@@ -2088,9 +2135,8 @@
             const localDate = new Date(new Date().getTime() - new Date().getTimezoneOffset()*60000).toISOString().split('T')[0];
             const attDate = document.getElementById('attDate');
             if (attDate && !attDate.value) attDate.value = localDate;
-            const savedTab = isLimitedUser(email) ? 'attendance' : (localStorage.getItem('gloria_current_tab') || localStorage.getItem('gloria_last_view') || 'dashboard');
+            const savedTab = isLimitedUser(email) ? 'dashboard' : (localStorage.getItem('gloria_current_tab') || localStorage.getItem('gloria_last_view') || 'dashboard');
             window.switchTab(savedTab);
-            await apiCall('logActiveUser', {});
             return true;
         } catch (error) {
             console.warn('restoreServerSession:', error);
@@ -2134,7 +2180,7 @@
     // 2. Manajemen Keterlambatan
     // 3. Backup/Rekap Bulanan (tab reports)
     const LIMITED_USER_EMAIL = 'dewi@gmail.com';
-    const LIMITED_ALLOWED_TABS = ['attendance', 'lateAttendance', 'reports'];
+    const LIMITED_ALLOWED_TABS = ['dashboard', 'attendance', 'lateAttendance', 'reports'];
 
     function isLimitedUser(email) {
         return String(email || '').trim().toLowerCase() === LIMITED_USER_EMAIL;
@@ -2150,50 +2196,13 @@
     }
 
     function enforceLimitedUserMenu(email) {
-        const limited = isLimitedUser(email);
-
-        // Sembunyikan seluruh menu/tab selain 3 menu yang diizinkan.
-        if (!limited) return;
-
-        document.querySelectorAll('.nav-btn[data-tab]').forEach(btn => {
-            const tab = btn.getAttribute('data-tab');
-            if (!LIMITED_ALLOWED_TABS.includes(tab)) {
-                btn.classList.add('hidden');
-            } else {
-                btn.classList.remove('hidden');
-            }
-        });
-
-        // Sembunyikan tombol aksi Dashboard/fitur lain yang dapat membuka menu terlarang.
-        const dashboardActionTabs = ['dashboard','employees','salary','schedule','hostSalary','hostReport','hostRanking','bankAccount'];
-        document.querySelectorAll('[onclick]').forEach(el => {
-            const onclick = el.getAttribute('onclick') || '';
-            const match = onclick.match(/switchTab\(['"]([^'"]+)['"]\)/);
-            if (match && dashboardActionTabs.includes(match[1])) {
-                el.classList.add('hidden');
-            }
-        });
-
-        // Jangan menampilkan panel owner/host untuk akun terbatas.
-        ['masterControlPanel','sidebarBankAuth','mobileBankAuth','dashboardBankAuth',
-         'dashboardHostAuth','sidebarHostAuth','mobileHostAuth'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el && limited) {
-                el.classList.add('hidden');
-                el.classList.remove('flex');
-            }
-        });
-
-        // Untuk Dewi, menu bulanan ditampilkan sebagai Backup Bulanan.
-        document.querySelectorAll('[data-tab="reports"]').forEach(btn => {
-            if (!limited) return;
-            const textNodes = Array.from(btn.childNodes).filter(n => n.nodeType === Node.TEXT_NODE);
-            textNodes.forEach(n => {
-                if (n.textContent.includes('Rekap Bulanan')) {
-                    n.textContent = n.textContent.replace('Rekap Bulanan', 'Backup Bulanan');
-                }
-            });
-        });
+        const limited=isLimitedUser(email);
+        if(!limited){ document.querySelectorAll('.nav-btn[data-tab]').forEach(btn=>btn.classList.remove('hidden')); return; }
+        document.querySelectorAll('.nav-btn[data-tab]').forEach(btn=>{ const tab=btn.getAttribute('data-tab'); btn.classList.toggle('hidden',!LIMITED_ALLOWED_TABS.includes(tab)); });
+        ['masterControlPanel','sidebarBankAuth','mobileBankAuth','dashboardBankAuth','dashboardHostAuth','sidebarHostAuth','mobileHostAuth',
+         'quickEmployeeCard','quickSalaryCard','quickScheduleCard','quickHostReportCard','quickHostRankingCard','quickBulkAttendanceCard','dashboardAISection','dashboardAccessLogSection'].forEach(id=>{const el=document.getElementById(id);if(el){el.classList.add('hidden');el.classList.remove('flex');}});
+        ['quickAttendanceCard','quickLateCard','quickReportsCard'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('hidden');});
+        document.querySelectorAll('[onclick]').forEach(el=>{const match=(el.getAttribute('onclick')||'').match(/switchTab\(['"]([^'"]+)['"]\)/);if(match && !LIMITED_ALLOWED_TABS.includes(match[1]))el.classList.add('hidden');});
     }
 
     function applyUserAccessUI(email) {
@@ -2202,6 +2211,8 @@
         const geminiKey=document.getElementById('geminiApiKey'); if(geminiKey&&geminiKey.parentElement){geminiKey.parentElement.classList.toggle('hidden',!isOwner); geminiKey.parentElement.classList.toggle('md:flex',isOwner);}
         const authorizedHostEmails=['bettyartanita@gmail.com','mohammadziky2@gmail.com','ysdd@gmail.com']; const isHost=authorizedHostEmails.includes(String(email||'').toLowerCase());
         ['dashboardHostAuth','sidebarHostAuth','mobileHostAuth'].forEach(id=>{const el=document.getElementById(id);if(!el)return;if(isHost){el.classList.remove('hidden');el.classList.add('flex');}else{el.classList.add('hidden');el.classList.remove('flex');}});
+        ['quickScheduleCard','quickHostReportCard','quickHostRankingCard'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.toggle('hidden',!isHost);});
+        document.querySelectorAll('.nav-btn[data-tab="schedule"],.nav-btn[data-tab="hostReport"],.nav-btn[data-tab="hostRanking"],.nav-btn[data-tab="hostSalary"]').forEach(btn=>{btn.classList.toggle('hidden',!isHost);});
         enforceLimitedUserMenu(email);
     }
 
@@ -2233,7 +2244,11 @@
             localStorage.setItem('gloria_auth_token',state.authToken);
             localStorage.setItem('gloria_logged_in_user',email);
 
-            const res=await refreshData(true);
+            const res=loginRes.bootstrap;
+            if(res){
+                if(String(res.backendBuildId||'')!==EXPECTED_BACKEND_BUILD_ID) throw new Error('Backend belum diperbarui ke build '+EXPECTED_BACKEND_BUILD_ID+'.');
+                applyServerData(res);
+            }else{ await refreshData(true); }
             if(!res || res.success===false) throw new Error((res&&res.error)||'Data tidak dapat dimuat.');
             if(state.blockedUsers.map(String).map(x=>x.toLowerCase()).includes(email)) throw new Error('Akun diblokir.');
 
@@ -2242,9 +2257,9 @@
             const localDate=new Date(new Date().getTime()-new Date().getTimezoneOffset()*60000).toISOString().split('T')[0]; const attDate=document.getElementById('attDate'); if(attDate)attDate.value=localDate;
             state.employees.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''))); state.attendance.sort((a,b)=>new Date(window.normalizeDateStr(b.date))-new Date(window.normalizeDateStr(a.date)));
             renderEmployees(); updateEmployeeDropdown(); updateDashboard(); renderActiveUsers(); if(email==='mohammadziky2@gmail.com'&&typeof window.renderAllowedUsers==='function')window.renderAllowedUsers();
-            const savedTab = isLimitedUser(email) ? 'attendance' : (localStorage.getItem('gloria_current_tab')||localStorage.getItem('gloria_last_view')||'dashboard');
+            const savedTab = isLimitedUser(email) ? 'dashboard' : (localStorage.getItem('gloria_current_tab')||localStorage.getItem('gloria_last_view')||'dashboard');
             window.switchTab(savedTab);
-            await apiCall('logActiveUser',{email:email}); showMessage('Login berhasil.','success');
+            showMessage('Login berhasil.','success');
         } catch(error) {
             state.authToken=''; state.user=null;
             localStorage.removeItem('gloria_auth_token'); localStorage.removeItem('gloria_logged_in_user');
@@ -2282,41 +2297,32 @@
         }
     };
 
+    function applyServerData(res) {
+        state.employees=res.employees||[]; state.attendance=res.attendance||[]; state.lateAttendance=res.lateAttendance||[];
+        state.hostPerformance=res.hostPerformance||[]; state.hostSchedule=res.hostSchedule||[]; state.salary=res.salary||[]; state.settings=res.settings||{};
+        state.auditLog=res.auditLog||res.historyLog||[]; state.historyLog=state.auditLog; state.activeUsers=res.activeUsers||[]; state.blockedUsers=res.blockedUsers||[]; state.allowedUsers=res.allowedUsers||[];
+        state.employees.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''))); state.attendance.sort((a,b)=>new Date(window.normalizeDateStr(b.date))-new Date(window.normalizeDateStr(a.date)));
+        renderEmployees(); updateEmployeeDropdown(); renderTodayAttendance(); updateDashboard(); renderActiveUsers();
+        if(state.currentTab==='lateAttendance' && typeof renderLateAttendance==='function') renderLateAttendance();
+        if(state.currentTab==='reports') renderMonthlyReport();
+        if(state.user&&state.user.email.toLowerCase()==='mohammadziky2@gmail.com'&&typeof window.renderAllowedUsers==='function')window.renderAllowedUsers();
+        renderHistoryLog(); if(typeof window.renderBlockedUsers==='function')window.renderBlockedUsers();
+        if(state.currentTab==='schedule'&&typeof window.renderScheduleTracker==='function')window.renderScheduleTracker();
+        if(state.currentTab==='hostReport'&&typeof window.renderHostMonthlyReport==='function')window.renderHostMonthlyReport();
+        if(state.currentTab==='hostRanking'&&typeof window.renderHostRanking==='function')window.renderHostRanking();
+        if(state.currentTab==='bankAccount'&&typeof window.renderBankAccountList==='function')window.renderBankAccountList();
+        if(state.user) enforceLimitedUserMenu(state.user.email);
+    }
+
     async function refreshData(silent = false) {
         try {
             const res=await apiCall('getData');
-            if (!state.isMockMode) {
-                if (String(res.backendBuildId||'') !== EXPECTED_BACKEND_BUILD_ID) {
-                    throw new Error('Frontend dan backend berbeda versi/build. Deployment Apps Script wajib diperbarui ke build '+EXPECTED_BACKEND_BUILD_ID+' sebelum aplikasi digunakan.');
-                }
-                if (String(res.schemaVersion||'') !== EXPECTED_BACKEND_SCHEMA && String(res.schemaVersion||'') !== EXPECTED_BACKEND_SCHEMA+'-dewi') {
-                    throw new Error('Schema backend tidak kompatibel. Ditemukan '+String(res.schemaVersion||'-')+', diharapkan '+EXPECTED_BACKEND_SCHEMA+'.');
-                }
+            if(!state.isMockMode){
+                if(String(res.backendBuildId||'')!==EXPECTED_BACKEND_BUILD_ID) throw new Error('Frontend dan backend berbeda versi/build. Deployment Apps Script wajib diperbarui ke build '+EXPECTED_BACKEND_BUILD_ID+'.');
+                if(String(res.schemaVersion||'')!==EXPECTED_BACKEND_SCHEMA && String(res.schemaVersion||'')!==EXPECTED_BACKEND_SCHEMA+'-dewi') throw new Error('Schema backend tidak kompatibel. Ditemukan '+String(res.schemaVersion||'-')+', diharapkan '+EXPECTED_BACKEND_SCHEMA+'.');
             }
-            state.employees=res.employees||[];
-            state.attendance=res.attendance||[];
-            state.lateAttendance=res.lateAttendance||[];
-            state.hostPerformance=res.hostPerformance||[];
-            state.hostSchedule=res.hostSchedule||[];
-            state.salary=res.salary||[];
-            state.settings=res.settings||{};
-            state.auditLog=res.auditLog||res.historyLog||[];
-            state.historyLog=state.auditLog;
-            state.activeUsers=res.activeUsers||[];
-            state.blockedUsers=res.blockedUsers||[];
-            state.allowedUsers=res.allowedUsers||[];
-            state.employees.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));
-            state.attendance.sort((a,b)=>new Date(window.normalizeDateStr(b.date))-new Date(window.normalizeDateStr(a.date)));
-            renderEmployees(); updateEmployeeDropdown(); renderTodayAttendance(); if(state.currentTab==='lateAttendance' && typeof renderLateAttendance==='function') renderLateAttendance(); if(state.currentTab==='reports') renderMonthlyReport(); updateDashboard(); renderActiveUsers();
-            if(state.user&&state.user.email.toLowerCase()==='mohammadziky2@gmail.com'&&typeof window.renderAllowedUsers==='function')window.renderAllowedUsers();
-            renderHistoryLog(); if(typeof window.renderBlockedUsers==='function')window.renderBlockedUsers(); if(state.currentTab==='schedule'&&typeof window.renderScheduleTracker==='function')window.renderScheduleTracker(); if(state.currentTab==='hostReport'&&typeof window.renderHostMonthlyReport==='function')window.renderHostMonthlyReport(); if(state.currentTab==='hostRanking'&&typeof window.renderHostRanking==='function')window.renderHostRanking(); if(state.currentTab==='bankAccount'&&typeof window.renderBankAccountList==='function')window.renderBankAccountList();
-            if (state.user && isLimitedUser(state.user.email) && !LIMITED_ALLOWED_TABS.includes(state.currentTab)) {
-                window.switchTab('attendance');
-            } else if (state.user) {
-                enforceLimitedUserMenu(state.user.email);
-            }
-            if(!silent)showMessage('Data berhasil diperbarui.','success'); return res;
-        } catch(error) { if(!silent)showMessage(error.message||'Gagal memperbarui data.','error'); throw error; }
+            applyServerData(res); if(!silent) showMessage('Data berhasil diperbarui.','success'); return res;
+        }catch(error){if(!silent)showMessage(error.message||'Gagal memperbarui data.','error');throw error;}
     }
 
     function renderEmployees() {
@@ -2398,6 +2404,14 @@
             btn.innerText = "Simpan Rekening"; btn.disabled = false;
         }
     });
+
+    function getSelectedBulkEmployeeIds(){return Array.from(document.querySelectorAll('#bulkEmployeeList input[type=checkbox]:checked')).map(x=>String(x.value));}
+    window.openBulkEmployeePicker=()=>{const p=document.getElementById('bulkEmployeePanel');if(!p)return;p.classList.remove('hidden');renderBulkEmployeePicker();p.scrollIntoView({behavior:'smooth',block:'nearest'});};
+    window.toggleBulkEmployeePicker=()=>{const p=document.getElementById('bulkEmployeePanel');if(!p)return;if(p.classList.contains('hidden'))window.openBulkEmployeePicker();else p.classList.add('hidden');};
+    window.clearBulkEmployeeSelection=()=>{state.bulkSelectedEmployeeIds=[];const all=document.getElementById('bulkSelectAll');if(all)all.checked=false;renderBulkEmployeePicker();};
+    window.toggleBulkSelectAll=checked=>{document.querySelectorAll('#bulkEmployeeList input[type=checkbox]').forEach(cb=>cb.checked=checked);state.bulkSelectedEmployeeIds=getSelectedBulkEmployeeIds();updateBulkSelectedSummary();};
+    function updateBulkSelectedSummary(){const ids=getSelectedBulkEmployeeIds();state.bulkSelectedEmployeeIds=ids;const s=document.getElementById('bulkSelectedSummary');if(s)s.textContent=ids.length+' karyawan dipilih';const all=document.getElementById('bulkSelectAll');const boxes=Array.from(document.querySelectorAll('#bulkEmployeeList input[type=checkbox]'));if(all)all.checked=boxes.length>0&&boxes.every(x=>x.checked);}
+    function renderBulkEmployeePicker(){const list=document.getElementById('bulkEmployeeList');if(!list)return;const filter=document.getElementById('bulkDivisionFilter')?.value||'Admin';const selected=new Set(state.bulkSelectedEmployeeIds||[]);const emps=(state.employees||[]).filter(e=>String(e.division)===filter).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));list.innerHTML='';if(!emps.length){list.innerHTML='<div class="col-span-full text-xs text-blue-700 bg-white border border-blue-100 rounded-lg p-3">Belum ada karyawan pada divisi ini.</div>';updateBulkSelectedSummary();return;}const selectedDate=document.getElementById('attDate')?.value||'';emps.forEach(emp=>{const hasRecord=(state.attendance||[]).some(a=>window.normalizeDateStr(a.date)===selectedDate&&String(a.empId)===String(emp.id));const label=document.createElement('label');label.className='flex items-center gap-2 bg-white border border-blue-100 rounded-lg px-3 py-2 cursor-pointer hover:border-blue-300';label.innerHTML=`<input type="checkbox" value="${escapeLateHtml(String(emp.id))}" class="rounded text-blue-600 focus:ring-blue-500 bulk-emp-check" ${selected.has(String(emp.id))?'checked':''}> <span class="text-sm font-semibold text-gray-800">${escapeLateHtml(emp.name)}</span>${hasRecord?' <span class="text-[10px] font-bold text-green-600">Sudah input</span>':''}`;label.querySelector('input').addEventListener('change',updateBulkSelectedSummary);list.appendChild(label);});updateBulkSelectedSummary();}
 
     function updateEmployeeDropdown() {
         const select = document.getElementById('attEmployee');
@@ -2481,6 +2495,7 @@
         if (salarySelect && currentSalEmp) salarySelect.value = currentSalEmp;
         if (hostSalarySelect && currentHostSalEmp) hostSalarySelect.value = currentHostSalEmp;
         if (liburSelect && currentLiburEmp) liburSelect.value = currentLiburEmp;
+        renderBulkEmployeePicker();
     }
 
     function updateDashboard() {
@@ -3084,10 +3099,24 @@
         handleEmployeeChange();
     };
 
+    async function submitBulkAttendance(employeeIds){
+        const dateInput=document.getElementById('attDate').value;if(!dateInput){showMessage('Tanggal wajib diisi.','error');return;}
+        const selectedEmployees=employeeIds.map(id=>state.employees.find(e=>String(e.id)===String(id))).filter(Boolean);if(!selectedEmployees.length){showMessage('Tidak ada karyawan yang dipilih.','error');return;}
+        const divisions=[...new Set(selectedEmployees.map(e=>String(e.division)))];if(divisions.length!==1){showMessage('Input massal harus satu divisi. Pilih Admin, Packing, atau Host Live secara terpisah.','error');return;}
+        const division=divisions[0],status=document.getElementById('attStatus').value,reason=status!=='Hadir'?document.getElementById('attReason').value.trim():'';if(status!=='Hadir'&&!reason){showMessage('Keterangan wajib diisi untuk status selain Hadir.','error');return;}
+        const isHost=division==='Host Live';const base={date:dateInput,status:status,reason:reason,lemburJam:document.getElementById('attLemburJam').value?Number(document.getElementById('attLemburJam').value):'',lemburKet:document.getElementById('attLemburKet').value||'',session1:isHost&&status==='Hadir'?document.getElementById('attSession1').value:'-',session2:isHost&&status==='Hadir'?document.getElementById('attSession2').value:'-',resi1:isHost&&status==='Hadir'&&document.getElementById('attResi1').value?parseInt(document.getElementById('attResi1').value):'',gmv1:isHost&&status==='Hadir'&&document.getElementById('attGMV1').value?parseInt(document.getElementById('attGMV1').value):'',resi2:isHost&&status==='Hadir'&&document.getElementById('attResi2').value?parseInt(document.getElementById('attResi2').value):'',gmv2:isHost&&status==='Hadir'&&document.getElementById('attGMV2').value?parseInt(document.getElementById('attGMV2').value):''};
+        const existingKeys=new Set((state.attendance||[]).filter(a=>window.normalizeDateStr(a.date)===dateInput).map(a=>String(a.empId)));
+        const items=selectedEmployees.filter(e=>!existingKeys.has(String(e.id))).map((e,i)=>({...base,id:'ATT_BULK_'+Date.now()+'_'+i+'_'+String(e.id),empId:e.id,empName:e.name,empDivision:e.division,timestamp:new Date().toISOString()}));if(!items.length){showMessage('Semua karyawan yang dipilih sudah memiliki absensi pada tanggal tersebut.','error');return;}
+        const submitBtn=document.querySelector('#attendanceForm button[type="submit"]');if(submitBtn){submitBtn.disabled=true;submitBtn.innerText='Menyimpan massal...';}
+        try{const r=await apiCall('addAttendanceBulk',{items});const insertedIds=new Set(r.ids||[]);state.attendance=[...(state.attendance||[]),...items.filter(x=>insertedIds.has(x.id))];state.attendance.sort((a,b)=>new Date(window.normalizeDateStr(b.date))-new Date(window.normalizeDateStr(a.date)));renderTodayAttendance();updateDashboard();clearBulkEmployeeSelection();document.getElementById('bulkEmployeePanel')?.classList.add('hidden');showMessage(`${r.inserted||items.length} karyawan berhasil dimasukkan sekaligus.`,'success');document.getElementById('attEmployee').value='';refreshData(true).catch(()=>{});}catch(error){showMessage(error.message||'Gagal menyimpan absensi massal.','error');}finally{if(submitBtn){submitBtn.disabled=false;submitBtn.innerText='Simpan Data';}}
+    }
+
     document.getElementById('attendanceForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const empSelect = document.getElementById('attEmployee'); const empId = empSelect.value;
-        if(!empId) { showMessage("Pilih karyawan terlebih dahulu.", "error"); return; }
+        const bulkIds=getSelectedBulkEmployeeIds();
+        if(bulkIds.length){ await submitBulkAttendance(bulkIds); return; }
+        if(!empId) { showMessage("Pilih karyawan terlebih dahulu, atau gunakan Pilih Banyak.", "error"); return; }
         
         const dateInput = document.getElementById('attDate').value;
         const empDivision = empSelect.options[empSelect.selectedIndex].dataset.division;
@@ -3256,7 +3285,8 @@
     });
 
     document.getElementById('attDate').addEventListener('change', () => {
-        updateEmployeeDropdown(); 
+        updateEmployeeDropdown();
+        renderBulkEmployeePicker();
         renderTodayAttendance();
     });
 
@@ -3429,10 +3459,9 @@
             return;
         }
 
-        if (tabId === 'hostSalary') {
-            const authorizedHostEmails = ['bettyartanita@gmail.com', 'mohammadziky2@gmail.com', 'ysdd@gmail.com'];
-            if (!state.user || !authorizedHostEmails.includes(state.user.email.toLowerCase())) { showMessage("Akses Ditolak: Halaman terkunci khusus Owner.", "error"); return; }
-        }
+        const authorizedHostEmails = ['bettyartanita@gmail.com', 'mohammadziky2@gmail.com', 'ysdd@gmail.com'];
+        const hostOnlyTabs = new Set(['hostSalary','schedule','hostReport','hostRanking']);
+        if (hostOnlyTabs.has(tabId) && (!state.user || !authorizedHostEmails.includes(String(state.user.email||'').toLowerCase()))) { showMessage("Akses Ditolak: fitur Host Live hanya untuk akun yang diotorisasi.", "error"); return; }
         
         if (tabId === 'bankAccount') {
             if (!state.user || state.user.email.toLowerCase() !== 'mohammadziky2@gmail.com') {
