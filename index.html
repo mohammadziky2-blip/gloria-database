@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gloria Database</title>
+    <!-- File konfigurasi deployment: pada Apps Script langsung tidak wajib. -->
+    <script src="./gloria-config.js"></script>
     <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Tesseract.js for OCR/AI Image Reading -->
@@ -142,6 +144,8 @@
                     </div>
                     <input type="email" id="loginEmail" name="gloria_login_email" class="input-premium pl-12 w-full p-3.5 rounded-xl" placeholder="admin@gloria.com" autocomplete="off" autocapitalize="none" spellcheck="false" required>
                     <div id="loginEmailHint" class="text-xs mt-2 text-slate-400">Gunakan email terdaftar dan PIN 5 angka yang ditetapkan Master. Akun lama yang belum dipindahkan perlu menghubungi Master.</div>
+                    <button id="gloriaTestConnection" type="button" onclick="testGloriaConnection()" class="text-xs mt-2 text-amber-300 underline hover:text-amber-100">Uji koneksi server GitHub ↔ Google Sheets</button>
+                    <div id="gloriaConnectionInfo" role="status" aria-live="polite" class="text-[11px] mt-1 text-slate-400"></div>
                 </div>
             </div>
             
@@ -1918,10 +1922,10 @@
     </div>
 
 <script>
-    // Hosting terpadu Apps Script memakai google.script.run, tanpa URL manual.
-    // Untuk hosting HTML eksternal, isi URL /exec dari deployment backend BARU build .02.
-    const GAS_URL = "";
-    const EXPECTED_BACKEND_BUILD_ID = 'GLORIA-2026.10.14.04';
+    // GitHub Pages: URL /exec di gloria-config.js; komunikasi melalui iframe bridge Apps Script.
+    // Hosting langsung Apps Script tetap memakai google.script.run tanpa URL.
+    const GAS_URL = String(window.GLORIA_CONFIG?.gasWebAppUrl || '').trim();
+    const EXPECTED_BACKEND_BUILD_ID = 'GLORIA-2026.10.14.05';
     const EXPECTED_BACKEND_SCHEMA = '2026.10.5'; 
     
     let state = {
@@ -2083,89 +2087,161 @@
     });
     window.resetAccountPassword=(email)=>window.openMasterPinModal(email);
 
+    // Transport GitHub Pages <-> Apps Script via jembatan HTML Service.
+    // Browser tidak memakai fetch langsung ke script.google.com, sehingga tidak terkena CORS.
+    const GLORIA_BRIDGE_CHANNEL = 'GLORIA_GITHUB_BRIDGE_V1';
+    let gloriaBridgePromise = null;
+    let gloriaBridgeEndpoint = null;
+    let gloriaBridgeIframe = null;
+    let gloriaBridgeOrigin = '';
+    let gloriaBridgeCounter = 0;
+    const gloriaPendingRequests = new Map();
+
+    function gloriaGoogleBridgeOrigin(origin) {
+        return /^https:\/\/(?:script\.google\.com|(?:(?:[a-z0-9-]+\.)*script\.googleusercontent\.com|[a-z0-9-]+-script\.googleusercontent\.com))$/.test(String(origin || ''));
+    }
+
+    function gloriaValidGasUrl() {
+        try {
+            const url = new URL(GAS_URL);
+            return !GAS_URL.includes('ISI_ID_DEPLOYMENT_ANDA') && url.protocol === 'https:' && url.hostname === 'script.google.com' &&
+                /^\/macros\/s\/[A-Za-z0-9_-]+\/exec\/?$/.test(url.pathname) &&
+                !url.search && !url.hash;
+        } catch (_) { return false; }
+    }
+
+    function gloriaOnBridgeMessage(event) {
+        const message = event.data;
+        if (!message || message.channel !== GLORIA_BRIDGE_CHANNEL || !gloriaGoogleBridgeOrigin(event.origin)) return;
+        if (message.kind === 'ready') {
+            if (!gloriaBridgePromise || gloriaBridgeEndpoint) return;
+            if (message.buildId !== EXPECTED_BACKEND_BUILD_ID) {
+                // Build lama akan dilaporkan saat menunggu bridge selesai.
+                return;
+            }
+            gloriaBridgeEndpoint = event.source;
+            gloriaBridgeOrigin = event.origin;
+            window.dispatchEvent(new CustomEvent('gloria-bridge-ready'));
+            return;
+        }
+        if (message.kind === 'response' && event.source === gloriaBridgeEndpoint && event.origin === gloriaBridgeOrigin) {
+            const pending = gloriaPendingRequests.get(String(message.id || ''));
+            if (!pending) return;
+            clearTimeout(pending.timeout);
+            gloriaPendingRequests.delete(String(message.id));
+            pending.resolve(message.result);
+        }
+    }
+    window.addEventListener('message', gloriaOnBridgeMessage);
+
+    function getGloriaBridge() {
+        if (gloriaBridgeEndpoint) return Promise.resolve(gloriaBridgeEndpoint);
+        if (!gloriaValidGasUrl()) return Promise.reject(new Error('URL backend belum diisi / tidak valid. Edit file gloria-config.js di GitHub dan isi URL deployment Apps Script yang berakhir /exec.'));
+        if (gloriaBridgePromise) return gloriaBridgePromise;
+        gloriaBridgePromise = new Promise((resolve, reject) => {
+            // Handler ready didaftarkan lebih dulu agar tidak kehilangan pesan cepat.
+            let completed = false;
+            const finish = (error) => {
+                if (completed) return;
+                completed = true;
+                clearTimeout(timeout);
+                window.removeEventListener('gloria-bridge-ready', onReady);
+                if (error) {
+                    gloriaBridgePromise = null;
+                    gloriaBridgeEndpoint = null;
+                    gloriaBridgeOrigin = '';
+                    if (gloriaBridgeIframe) { gloriaBridgeIframe.remove(); gloriaBridgeIframe = null; }
+                    reject(error);
+                } else resolve(gloriaBridgeEndpoint);
+            };
+            const onReady = () => finish(null);
+            window.addEventListener('gloria-bridge-ready', onReady);
+            const timeout = setTimeout(() => finish(new Error('Jembatan Google Apps Script tidak merespons. Periksa deployment /exec, file GloriaBridge.html, izin akses "Anyone", dan kemungkinan iframe diblokir browser.')), 35000);
+            const frame = document.createElement('iframe');
+            gloriaBridgeIframe = frame;
+            frame.src = GAS_URL.replace(/\/$/,'') + '?bridge=1';
+            frame.setAttribute('aria-hidden', 'true');
+            frame.setAttribute('title', 'GLORIA backend transport');
+            frame.referrerPolicy = 'strict-origin-when-cross-origin';
+            frame.style.cssText = 'position:absolute;left:-99999px;top:0;width:1px;height:1px;border:0;opacity:0;pointer-events:none';
+            frame.addEventListener('error', () => finish(new Error('Iframe Google Apps Script gagal dimuat.')));
+            document.body.appendChild(frame);
+        });
+        return gloriaBridgePromise;
+    }
+
+    async function gloriaCallViaBridge(action, data, authToken) {
+        const endpoint = await getGloriaBridge();
+        const id = `gloria_${Date.now()}_${++gloriaBridgeCounter}`;
+        return new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                gloriaPendingRequests.delete(id);
+                reject(new Error('Server tidak merespons permintaan ' + action + '. Coba ulang, lalu periksa Apps Script > Executions.'));
+            }, action === 'backupDatabase' ? 180000 : 90000);
+            gloriaPendingRequests.set(id, {resolve,reject,timeout});
+            try {
+                endpoint.postMessage({channel:GLORIA_BRIDGE_CHANNEL,kind:'request',id,action,data,authToken},gloriaBridgeOrigin);
+            } catch (error) {
+                clearTimeout(timeout);
+                gloriaPendingRequests.delete(id);
+                reject(error);
+            }
+        });
+    }
+
     async function apiCall(action, data = {}) {
         if (state.isMockMode) return mockApiCall(action, data);
-
-        const retryableActions = new Set(['healthCheck','refreshSession','getData']);
-        const maxAttempts = retryableActions.has(action) ? 2 : 1;
-        let lastError = null;
-
-        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-            let timer = null;
+        if (!['login','refreshSession','ping'].includes(action) && !state.authToken) {
+            throw new Error('Sesi login tidak ditemukan. Silakan login kembali.');
+        }
+        const maxAttempts = ['ping','getData','refreshSession'].includes(action) ? 2 : 1;
+        let lastError;
+        for (let i = 0; i < maxAttempts; i++) {
             try {
-                // Dalam hosting Apps Script (Index.html + /exec?app=1), gunakan bridge native.
-                // Ini menghindari kendala CORS yang bisa terjadi pada frontend eksternal.
+                let result;
                 if (window.google?.script?.run) {
-                    const json=await new Promise((resolve,reject)=>{
+                    result = await new Promise((resolve, reject) => {
                         window.google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)
-                          .gloriaApiBridge({action,data,authToken:state.authToken||''});
+                            .gloriaApiBridge({action,data,authToken:state.authToken || ''});
                     });
-                    if(!json||!json.success)throw new Error(json?.error||'Operasi backend gagal.');
-                    const badge=document.getElementById('serverStatusBadge');
-                    if(badge){badge.textContent='Server OK';badge.className='ml-2 px-2 py-0.5 text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full font-medium';}
-                    return json;
+                } else {
+                    result = await gloriaCallViaBridge(action, data, state.authToken || '');
                 }
-                if (!GAS_URL || GAS_URL.endsWith('/dev')) throw new Error('Konfigurasi backend tidak valid. Gunakan URL deployment /exec.');
-                if (action !== 'login' && action !== 'refreshSession' && !state.authToken) {
-                    throw new Error('Sesi login tidak ditemukan. Silakan login kembali.');
-                }
-
-                const controller = new AbortController();
-                timer = setTimeout(() => controller.abort(), 25000);
-                const res = await fetch(GAS_URL, {
-                    method: 'POST',
-                    redirect: 'follow',
-                    cache: 'no-store',
-                    signal: controller.signal,
-                    // text/plain keeps the request a simple CORS request and avoids
-                    // an OPTIONS preflight for standalone HTML deployments.
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action, data, authToken: state.authToken || '' })
-                });
-                clearTimeout(timer);
-                timer = null;
-
-                const raw = await res.text();
-                let json = null;
-                try { json = raw ? JSON.parse(raw) : null; } catch (_) {}
-
-                if (!res.ok) {
-                    throw new Error(`Server HTTP ${res.status}${raw ? ': ' + raw.slice(0, 180) : ''}`);
-                }
-                if (!json) {
-                    throw new Error('Server tidak mengembalikan JSON. Pastikan deployment Apps Script menggunakan /exec dan akses Web App mengizinkan pengguna aplikasi.');
-                }
-                if (!json.success) throw new Error(json.error || 'Operasi server gagal.');
-
+                if (!result || !result.success) throw new Error(result?.error || 'Permintaan backend gagal.');
                 const badge = document.getElementById('serverStatusBadge');
                 if (badge) {
                     badge.textContent = 'Server OK';
                     badge.className = 'ml-2 px-2 py-0.5 text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full font-medium';
                 }
-                return json;
-            } catch (e) {
-                if (timer) clearTimeout(timer);
-                lastError = e;
-                const msg = String(e?.message || e || '');
-                const networkFailure = e?.name === 'AbortError' || /Failed to fetch|NetworkError|Load failed|CORS|fetch/i.test(msg);
-                if (networkFailure) {
-                    lastError = new Error('Tidak dapat terhubung ke Web App Google Apps Script. Jika HTML dibuka sebagai file lokal (file://), host-kan HTML melalui Apps Script/GitHub Pages/hosting HTTPS dan pastikan deployment backend memakai URL /exec, bukan /dev.');
-                }
-                if (attempt < maxAttempts) {
-                    await new Promise(r => setTimeout(r, 700 * attempt));
-                    continue;
-                }
+                return result;
+            } catch (error) {
+                lastError = error;
+                if (i + 1 < maxAttempts) await new Promise(resolve => setTimeout(resolve, 700));
             }
         }
-
-        console.error('Gloria API error:', lastError);
         const badge = document.getElementById('serverStatusBadge');
         if (badge) {
             badge.textContent = 'Server Error';
             badge.className = 'ml-2 px-2 py-0.5 text-[10px] bg-red-500/20 text-red-300 border border-red-500/30 rounded-full font-medium';
         }
-        throw lastError || new Error('Gagal terhubung ke server.');
+        console.error('GLORIA API:', lastError);
+        throw lastError || new Error('Gagal menghubungi server.');
     }
+
+    window.testGloriaConnection = async function() {
+        const status = document.getElementById('gloriaConnectionInfo');
+        const button = document.getElementById('gloriaTestConnection');
+        if (button) button.disabled = true;
+        if (status) { status.textContent = 'Menghubungkan ke Google Apps Script...'; status.className = 'text-[11px] mt-1 text-amber-300'; }
+        try {
+            const result = await apiCall('ping');
+            if (result.backendBuildId !== EXPECTED_BACKEND_BUILD_ID) throw new Error('Versi backend berbeda. Wajib deploy backend build ' + EXPECTED_BACKEND_BUILD_ID + '.');
+            if (result.schemaVersion !== EXPECTED_BACKEND_SCHEMA) throw new Error('Schema backend tidak sesuai.');
+            if (status) { status.textContent = '✓ Koneksi backend berhasil (' + result.backendBuildId + '). Silakan login untuk uji akses database.'; status.className = 'text-[11px] mt-1 text-emerald-300'; }
+        } catch (error) {
+            if (status) { status.textContent = '✕ ' + String(error.message || error); status.className = 'text-[11px] mt-1 text-red-300'; }
+        } finally { if (button) button.disabled = false; }
+    };
 
     async function mockApiCall(action, data) {
         return new Promise(resolve => {
