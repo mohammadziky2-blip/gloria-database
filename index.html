@@ -15,6 +15,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Excel asli (.xlsx) khusus halaman Data Excel Host Live -->
+    <script defer src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 
     <style>
         /* Custom styles for animations and layout */
@@ -139,7 +141,7 @@
                         <i class="ph ph-envelope text-amber-500 text-lg"></i>
                     </div>
                     <input type="email" id="loginEmail" name="gloria_login_email" class="input-premium pl-12 w-full p-3.5 rounded-xl" placeholder="admin@gloria.com" autocomplete="off" autocapitalize="none" spellcheck="false" required>
-                    <div id="loginEmailHint" class="text-xs mt-2 text-slate-400">Gunakan email yang sudah terdaftar.</div>
+                    <div id="loginEmailHint" class="text-xs mt-2 text-slate-400">Gunakan email terdaftar dan PIN 5 angka yang ditetapkan Master. Akun lama yang belum dipindahkan perlu menghubungi Master.</div>
                 </div>
             </div>
             
@@ -149,7 +151,7 @@
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <i class="ph ph-lock-key text-amber-500 text-lg"></i>
                     </div>
-                    <input type="password" id="loginPassword" name="gloria_login_password" class="input-premium pl-12 w-full p-3.5 rounded-xl" placeholder="0000" autocomplete="new-password" inputmode="numeric" minlength="4" maxlength="4" pattern="[0-9]{4}" required disabled>
+                    <input type="password" id="loginPassword" name="gloria_login_password" class="input-premium pl-12 w-full p-3.5 rounded-xl" placeholder="Masukkan PIN 5 angka" autocomplete="current-password" inputmode="numeric" minlength="1" maxlength="128" required disabled>
                 </div>
             </div>
             
@@ -211,6 +213,9 @@
             </button>
             <button onclick="switchTab('hostReport')" class="nav-btn w-full flex items-center p-3 text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-700 transition-colors" data-tab="hostReport">
                 <i class="ph ph-chart-polar text-xl mr-3"></i> Laporan Performa Host
+            </button>
+            <button id="desktopHostExcelAuth" onclick="switchTab('hostExcel')" class="nav-btn hidden w-full flex items-center p-3 text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-700 transition-colors" data-tab="hostExcel">
+                <i class="ph ph-file-xls text-xl mr-3"></i> Data Excel Keseluruhan Host
             </button>
             <button onclick="switchTab('hostRanking')" class="nav-btn w-full flex items-center p-3 text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-700 transition-colors" data-tab="hostRanking">
                 <i class="ph ph-medal text-xl mr-3"></i> Peringkat Performa
@@ -280,6 +285,9 @@
                     <button onclick="switchTab('hostReport'); closeMobileMenu()" class="nav-btn w-full flex items-center p-3 text-gray-700 rounded-lg hover:bg-blue-50">
                         <i class="ph ph-chart-polar mr-3"></i> Laporan Performa Host
                     </button>
+                     <button id="mobileHostExcelAuth" onclick="switchTab('hostExcel'); closeMobileMenu()" class="nav-btn hidden w-full flex items-center p-3 text-gray-700 rounded-lg hover:bg-blue-50">
+                         <i class="ph ph-file-xls mr-3"></i> Data Excel Keseluruhan Host
+                     </button>
                     <button onclick="switchTab('hostRanking'); closeMobileMenu()" class="nav-btn w-full flex items-center p-3 text-gray-700 rounded-lg hover:bg-blue-50">
                         <i class="ph ph-medal mr-3"></i> Peringkat Performa
                     </button>
@@ -307,10 +315,13 @@
                             <p class="text-sm text-gray-500">Kembali ke halaman login untuk mengganti email dan password tanpa mengganti perangkat.</p>
                         </div>
                     </div>
-                    <button type="button" onclick="handleLogout()" class="shrink-0 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white font-bold shadow-sm hover:bg-blue-700 active:scale-[0.98] transition-all">
+                    <div class="flex flex-wrap gap-2">
+                        <button id="masterOwnPinBtn" type="button" onclick="changeOwnPassword()" class="hidden inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 text-slate-950 font-bold hover:bg-amber-600"><i class="ph ph-key"></i> Ganti PIN Master</button>
+                        <button type="button" onclick="handleLogout()" class="shrink-0 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white font-bold shadow-sm hover:bg-blue-700 active:scale-[0.98] transition-all">
                         <i class="ph ph-arrow-square-out text-lg"></i>
                         <span>Kembali ke Login / Ganti Akun</span>
-                    </button>
+                        </button>
+                    </div>
                 </div>
                 
                 <!-- ============================================== -->
@@ -547,6 +558,7 @@
                                     Gloria AI Assistant <span class="ml-2 px-2 py-0.5 text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full font-medium">Real-time</span><span id="serverStatusBadge" class="ml-2 px-2 py-0.5 text-[10px] bg-slate-700/60 text-slate-300 border border-slate-600 rounded-full font-medium">Server</span>
                                 </h4>
                                 <p class="text-xs text-slate-300">Asisten cerdas tingkat lanjut untuk analisis performa & data operasional.</p>
+                                <p class="text-[10px] text-slate-400 mt-1">Saat Anda mengirim pertanyaan, data operasional relevan dikirim ke layanan Gemini Google. Jangan masukkan rahasia atau data pribadi yang tidak diperlukan.</p>
                             </div>
                         </div>
                         <div class="hidden md:flex items-center space-x-2">
@@ -603,11 +615,14 @@
                         
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div class="md:col-span-1 bg-slate-800/80 p-5 rounded-lg border border-slate-700">
-                                <h4 class="text-sm font-bold text-white mb-3 flex items-center"><i class="ph-fill ph-user-plus mr-2 text-amber-500"></i> Tambah Akun Baru</h4>
+                                <h4 class="text-sm font-bold text-white mb-3 flex items-center"><i class="ph-fill ph-user-plus mr-2 text-amber-500"></i> Tambah Akun dan PIN</h4>
                                 <form id="addAllowedUserForm" class="space-y-3">
-                                    <input type="email" id="newAllowedEmail" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-sm text-white placeholder-slate-500 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none transition-all" placeholder="Masukkan alamat email..." required>
+                                    <input type="email" id="newAllowedEmail" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-sm text-white placeholder-slate-500 focus:border-amber-400 focus:ring-1 focus:ring-400 outline-none transition-all" placeholder="Masukkan alamat email..." required>
+                                     <input type="password" id="newAllowedPin" inputmode="numeric" autocomplete="new-password" pattern="[0-9]{5}" minlength="5" maxlength="5" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-sm text-white" placeholder="PIN tepat 5 angka" required>
+                                     <input type="password" id="confirmAllowedPin" inputmode="numeric" autocomplete="new-password" pattern="[0-9]{5}" minlength="5" maxlength="5" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-sm text-white" placeholder="Ulangi PIN 5 angka" required>
+                                     <p class="text-[11px] text-slate-400">Khusus Master. Jangan gunakan PIN berurutan atau berulang. PIN tidak dapat dilihat kembali setelah disimpan.</p>
                                     <button type="submit" class="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-slate-900 font-black py-2.5 rounded-lg text-sm transition-all shadow-lg flex justify-center items-center">
-                                        <i class="ph-bold ph-plus mr-2"></i> Izinkan Akses
+                                        <i class="ph-bold ph-plus mr-2"></i> Buat Akun + PIN
                                     </button>
                                 </form>
                             </div>
@@ -836,7 +851,7 @@
                                     <h4 class="text-sm font-semibold text-purple-700 flex items-center mb-1">
                                         <i class="ph-fill ph-trend-up mr-2"></i> Data Performa Host Live
                                     </h4>
-                                    <p class="text-xs text-gray-500">Isi jumlah resi dan GMV untuk masing-masing sesi hari ini.</p>
+                                    <p class="text-xs text-gray-500">Isi resi dan GMV tiap sesi. Sesi belum diinput (-) tidak dihitung hadir sampai status sesi dilengkapi.</p>
                                 </div>
                                 <div class="bg-blue-50 p-4 rounded-lg border border-blue-100 shadow-sm">
                                     <label class="block text-sm font-bold text-blue-900 mb-3 border-b border-blue-200 pb-1">Performa Sesi 1</label>
@@ -1183,6 +1198,10 @@
                             <p class="text-xs text-amber-800 mt-2">Tier: <span id="slipHostCommissionTier" class="font-bold">-</span> · Tarif: <span id="slipHostCommissionRate" class="font-bold">-</span></p>
                         </div>
                         
+                        <div id="individualHostEvaluation" class="mt-4 bg-indigo-50 border border-indigo-200 p-4 rounded-lg">
+                            <h5 id="individualHostEvaluationTitle" class="font-bold text-indigo-900">Evaluasi Performa Host</h5>
+                            <p id="individualHostEvaluationMessage" class="text-sm text-slate-700 mt-2">-</p>
+                        </div>
                         <div class="mt-6 bg-white p-4 rounded-xl border border-purple-200 shadow-sm" data-html2canvas-ignore="false">
                             <h5 class="text-sm font-bold text-gray-700 mb-2">Grafik Tren Resi & GMV Harian</h5>
                             <div class="relative h-64 w-full">
@@ -1290,8 +1309,8 @@
                         </div>
                         <div class="md:col-span-2 bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-900">
                             <div class="font-bold mb-1">Ketentuan otomatis</div>
-                            <div>GMV: &lt; Rp150 jt = 0,5% · Rp150–&lt;250 jt = 1% · Rp250–&lt;400 jt = 1,5% · ≥ Rp400 jt = 2%.</div>
-                            <div>Resi: target awal 1.300; &lt;2.500 = Rp500/resi · 2.500–&lt;3.500 = Rp700/resi · ≥3.500 = Rp1.000/resi.</div>
+                            <div>GMV: &lt; Rp100 jt = tanpa komisi · Rp100–&lt;150 jt = 0,5% · Rp150–&lt;250 jt = 1% · Rp250–&lt;400 jt = 1,5% · ≥ Rp400 jt = 2%.</div>
+                            <div>Resi: &lt;1.300 = tanpa komisi · 1.300–&lt;2.500 = Rp500/resi · 2.500–&lt;3.500 = Rp700/resi · ≥3.500 = Rp1.000/resi.</div>
                         </div>
                     </div>
 
@@ -1311,6 +1330,12 @@
                         <button onclick="downloadHostSalaryImage()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg font-bold flex items-center transition-colors shadow-sm text-sm"><i class="ph ph-image mr-1.5"></i>PNG</button>
                     </div>
 
+                    <div id="hostSalarySaveActions" class="mb-4 flex flex-col gap-2" data-html2canvas-ignore="true">
+                        <button id="saveHostSalaryDraftBtn" type="button" onclick="saveCurrentHostSalaryDraft()" class="hidden bg-amber-500 hover:bg-amber-600 text-slate-950 px-4 py-3 rounded-lg font-bold">Simpan Draft Gaji Host ke Google Sheets (Master)</button>
+                        <button id="loadHostSalaryDraftsBtn" type="button" onclick="loadHostSalaryDrafts()" class="hidden border border-slate-300 bg-white text-slate-700 px-4 py-2 rounded-lg font-semibold">Lihat 100 Draft Terakhir</button>
+                        <button type="button" onclick="downloadHostSalarySummaryCSV()" class="border border-emerald-300 bg-emerald-50 text-emerald-800 px-4 py-2 rounded-lg font-semibold">Backup Rekap dan Evaluasi (CSV)</button>
+                        <div id="hostSalaryDraftHistory" class="hidden text-xs bg-slate-50 border border-slate-200 rounded-lg p-3 max-h-48 overflow-auto"></div>
+                    </div>
                     <div class="text-center mb-6 border-b border-gray-200 pb-4">
                         <h3 class="text-2xl font-bold text-gray-800 uppercase tracking-wider">SLIP GAJI HOST LIVE</h3>
                         <p class="text-gray-500 mt-2 text-sm" id="calcHostMonthDisplay"></p>
@@ -1370,6 +1395,13 @@
                         <div class="mt-1 text-amber-800">Tarif: <span id="calcHostCommissionRate" class="font-bold">-</span> · Dasar hitung: <span id="calcHostCommissionBasis" class="font-bold">-</span></div>
                     </div>
 
+                    <div id="hostSalaryEvaluation" class="mb-6 bg-indigo-50 border border-indigo-200 rounded-xl p-5" aria-live="polite">
+                        <p class="text-[11px] uppercase tracking-wider font-black text-indigo-600">Evaluasi Otomatis Performa Host Live</p>
+                        <p id="hostEvaluationTitle" class="text-lg font-extrabold text-indigo-900 mt-2">-</p>
+                        <p id="hostEvaluationMessage" class="text-sm text-slate-700 mt-2 whitespace-pre-line">-</p>
+                        <p id="hostEvaluationNext" class="text-xs font-semibold text-indigo-700 mt-3"></p>
+                        <p class="text-[11px] text-slate-500 mt-2">Evaluasi berdasarkan periode performa yang dipilih. Kehadiran tidak mengurangi GMV atau resi yang sudah dicatat.</p>
+                    </div>
                     <div class="bg-gradient-to-r from-green-600 to-emerald-600 text-white p-6 rounded-xl flex justify-between items-center shadow-lg">
                         <span class="font-bold text-xl">TOTAL DITERIMA</span>
                         <span class="font-black text-3xl" id="calcHostTotalDisplay">Rp 0</span>
@@ -1401,14 +1433,14 @@
                         </div>
                         
                         <div class="flex-1 bg-gray-50 border-2 border-dashed border-indigo-200 rounded-xl flex flex-col items-center justify-center p-2 relative hover:bg-indigo-50 transition overflow-hidden group">
-                            <input type="file" id="scheduleImageInput" accept="image/png, image/jpeg, image/jpg" onchange="previewScheduleImage(event)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                            <input type="file" id="scheduleImageInput" accept="image/png, image/jpeg, image/jpg, image/webp" onchange="previewScheduleImage(event)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
                             
                             <div id="scheduleUploadPrompt" class="text-center pointer-events-none">
                                 <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-md mx-auto mb-3">
                                     <i class="ph-fill ph-image text-3xl text-indigo-500 group-hover:scale-110 transition-transform"></i>
                                 </div>
                                 <h4 class="font-bold text-indigo-900">Upload Foto Jadwal (PNG/JPG)</h4>
-                                <p class="text-xs text-indigo-600 mt-1 max-w-xs mx-auto">Klik atau tarik gambar ke sini agar foto jadwal dapat Anda lihat jelas untuk dicocokkan dengan checklist di samping.</p>
+                                <p class="text-xs text-indigo-600 mt-1 max-w-xs mx-auto">Gambar disimpan di Google Drive berdasarkan bulan dari Tanggal Pantauan dan dapat dilihat pengguna Host berizin.</p>
                             </div>
 
                             <img id="scheduleImagePreview" class="hidden w-full h-full object-contain absolute inset-0 z-0 bg-gray-900/5 backdrop-blur-sm" alt="Preview Jadwal">
@@ -1471,7 +1503,7 @@
                     <div class="flex items-center gap-2">
                         <input type="month" id="hostReportMonth" class="border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-indigo-500 bg-white font-bold" onchange="renderHostMonthlyReport()">
                         <button onclick="exportHostReportCSV()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-lg font-bold flex items-center transition-colors shadow-sm">
-                            <i class="ph ph-file-xls mr-2 text-lg"></i> Unduh Excel
+                            <i class="ph ph-file-csv mr-2 text-lg"></i> Unduh CSV
                         </button>
                     </div>
                 </div>
@@ -1505,6 +1537,53 @@
                 </div>
             </div>
 
+            <!-- 8.5 Halaman baru: Data Excel Keseluruhan Host Live. Read-only; data langsung dari getHostPerformance. -->
+            <div id="hostExcelView" class="view-section hidden fade-in space-y-5">
+                <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-4">
+                    <div class="flex items-start gap-3">
+                        <button type="button" onclick="switchTab('dashboard')" class="mt-1 shrink-0 px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-100 font-semibold"><i class="ph ph-arrow-left mr-1"></i> Kembali</button>
+                        <div>
+                            <p class="text-xs font-extrabold tracking-[0.2em] text-indigo-600 uppercase">GLORIA · Rekap Kinerja Bulanan</p>
+                            <h2 class="text-xl md:text-2xl font-extrabold text-slate-900 mt-1">Data Excel Keseluruhan Hasil Kinerja Host Live</h2>
+                            <p class="text-sm text-slate-500 mt-1">Tabel seluruh Host Live sesuai sketsa: tanggal berurutan, dua kolom GMV &amp; Resi per host, dan total akhir bulan.</p>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-2 items-end" data-html2canvas-ignore="true">
+                        <label class="text-xs font-bold text-slate-600 flex flex-col gap-1">Pilih periode bulan
+                            <input type="month" id="hostExcelMonth" aria-label="Bulan laporan seluruh Host" class="px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-800 font-semibold" onchange="loadHostExcelMatrix()">
+                        </label>
+                        <button type="button" onclick="shiftHostExcelMonth(-1)" class="px-3 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 font-semibold" title="Bulan sebelumnya" aria-label="Bulan sebelumnya"><i class="ph ph-caret-left"></i></button>
+                        <button type="button" onclick="shiftHostExcelMonth(1)" class="px-3 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 font-semibold" title="Bulan berikutnya" aria-label="Bulan berikutnya"><i class="ph ph-caret-right"></i></button>
+                        <button type="button" onclick="loadHostExcelMatrix(true)" class="px-3 py-2 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold"><i class="ph ph-arrows-clockwise mr-1"></i> Muat Ulang</button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div class="bg-white border border-slate-200 rounded-xl p-4"><p class="text-xs font-semibold text-slate-500">Jumlah Host Live</p><p id="hostExcelHostCount" class="text-2xl font-black text-indigo-800 mt-1">0</p></div>
+                    <div class="bg-white border border-slate-200 rounded-xl p-4"><p class="text-xs font-semibold text-slate-500">Total GMV Bulanan</p><p id="hostExcelTotalGMV" class="text-xl lg:text-2xl font-black text-emerald-700 mt-1">Rp 0</p></div>
+                    <div class="bg-white border border-slate-200 rounded-xl p-4"><p class="text-xs font-semibold text-slate-500">Total Resi Bulanan</p><p id="hostExcelTotalResi" class="text-2xl font-black text-blue-700 mt-1">0</p></div>
+                    <div class="bg-white border border-slate-200 rounded-xl p-4"><p class="text-xs font-semibold text-slate-500">Hari dalam Periode</p><p id="hostExcelDaysCount" class="text-2xl font-black text-slate-800 mt-1">0</p></div>
+                </div>
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="p-4 md:p-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-slate-50">
+                        <div><h3 class="font-extrabold text-slate-900 flex items-center gap-2"><i class="ph ph-table text-xl text-indigo-600"></i> Matriks Performa Seluruh Host</h3><p id="hostExcelPeriodLabel" class="text-xs text-slate-500 mt-1">Pilih bulan untuk memuat data.</p></div>
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" id="hostExcelXlsxBtn" onclick="downloadHostExcelXlsx()" disabled class="disabled:opacity-40 disabled:cursor-not-allowed px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-white font-bold text-sm"><i class="ph ph-file-xls mr-1"></i> Excel .xlsx</button>
+                            <button type="button" id="hostExcelCsvBtn" onclick="downloadHostExcelCsv()" disabled class="disabled:opacity-40 disabled:cursor-not-allowed px-4 py-2 bg-white border border-slate-300 hover:bg-slate-100 rounded-lg text-slate-700 font-bold text-sm"><i class="ph ph-file-csv mr-1"></i> CSV</button>
+                            <button type="button" id="hostExcelPngBtn" onclick="downloadHostExcelPng()" disabled class="disabled:opacity-40 disabled:cursor-not-allowed px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white font-bold text-sm"><i class="ph ph-image mr-1"></i> Gambar PNG</button>
+                        </div>
+                    </div>
+                    <div id="hostExcelStatus" role="status" aria-live="polite" class="px-5 pt-3 text-sm text-slate-500">Pilih bulan untuk melihat laporan.</div>
+                    <div class="p-4 overflow-x-auto max-h-[73vh] overflow-y-auto" id="hostExcelScrollArea">
+                        <table id="hostExcelTable" class="border-collapse w-max min-w-full text-xs md:text-sm text-right" aria-label="Performa GMV dan resi harian per Host Live">
+                            <thead id="hostExcelThead"></thead>
+                            <tbody id="hostExcelTbody"></tbody>
+                            <tfoot id="hostExcelTfoot"></tfoot>
+                        </table>
+                    </div>
+                    <p class="px-5 pb-4 text-xs text-slate-500">Geser tabel ke samping jika jumlah host banyak. Tanda — berarti tidak ada catatan performa di tanggal tersebut; nilai 0 berarti catatan ada dengan hasil 0. GMV dan resi dijumlahkan dari seluruh sesi tanpa dipotong karena izin/sakit/kehadiran. Unduhan PNG dibagi per 5 host jika tabel sangat lebar.</p>
+                </div>
+            </div>
+
             <!-- 9. Host Ranking View -->
             <div id="hostRankingView" class="view-section hidden fade-in h-full flex flex-col">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 shrink-0" data-html2canvas-ignore="true">
@@ -1527,7 +1606,7 @@
                             <i class="ph ph-image text-xl"></i>
                         </button>
                         <button onclick="exportRankingCSV()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2.5 rounded-lg font-bold flex items-center transition-colors shadow-sm" title="Unduh Excel (CSV)">
-                            <i class="ph ph-file-xls text-xl"></i>
+                            <i class="ph ph-file-csv text-xl"></i>
                         </button>
                     </div>
                 </div>
@@ -1797,6 +1876,26 @@
     </div>
 </div>
 
+
+<!-- Dialog penggantian PIN: hanya Master, backend tetap memvalidasi role. -->
+<div id="masterPinModal" class="hidden fixed inset-0 z-[90] modal-bg flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6" role="dialog" aria-modal="true" aria-labelledby="masterPinModalTitle">
+    <h3 id="masterPinModalTitle" class="font-extrabold text-xl text-slate-900">Atur PIN Akun</h3>
+    <p id="masterPinTarget" class="text-xs text-indigo-700 mt-1 break-all"></p>
+    <form id="masterPinForm" class="space-y-4 mt-5" autocomplete="off">
+      <input type="hidden" id="masterPinEmail">
+      <label class="block text-sm font-semibold">PIN Baru (tepat 5 digit angka)
+        <input type="password" id="masterPinNew" inputmode="numeric" autocomplete="new-password" pattern="[0-9]{5}" maxlength="5" minlength="5" class="w-full mt-1 p-3 border rounded-lg" required>
+      </label>
+      <label class="block text-sm font-semibold">Konfirmasi PIN
+        <input type="password" id="masterPinConfirm" inputmode="numeric" autocomplete="new-password" pattern="[0-9]{5}" maxlength="5" minlength="5" class="w-full mt-1 p-3 border rounded-lg" required>
+      </label>
+      <p class="text-xs text-amber-700">Perubahan langsung mencabut sesi akun tersebut. PIN jangan dibagikan di tempat umum.</p>
+      <div class="flex justify-end gap-2"><button type="button" onclick="closeMasterPinModal()" class="px-4 py-2 bg-slate-100 rounded-lg">Batal</button><button id="masterPinSaveButton" type="submit" class="px-4 py-2 bg-indigo-600 text-white font-bold rounded-lg">Simpan PIN</button></div>
+    </form>
+  </div>
+</div>
+
 <div id="messageBox" class="hidden fixed inset-0 z-50 flex items-start justify-center p-4 pt-20 pointer-events-none">
     <div id="msgBoxContent" class="bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg flex items-center transform -translate-y-4 opacity-0 transition-all duration-300 ease-out">
         <i id="msgIcon" class="ph ph-info mr-3 text-xl"></i>
@@ -1819,13 +1918,15 @@
     </div>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbwNbLwFj1FvdCZ49E7P8codKkGjTj_OgmMWkiaAkLRuydUUscF43LecWglLXBuTMHAIiQ/exec";
-    const EXPECTED_BACKEND_BUILD_ID = 'GLORIA-2026.10.08.04';
-    const EXPECTED_BACKEND_SCHEMA = '2026.10.4'; 
+    // Hosting terpadu Apps Script memakai google.script.run, tanpa URL manual.
+    // Untuk hosting HTML eksternal, isi URL /exec dari deployment backend BARU build .02.
+    const GAS_URL = "";
+    const EXPECTED_BACKEND_BUILD_ID = 'GLORIA-2026.10.14.04';
+    const EXPECTED_BACKEND_SCHEMA = '2026.10.5'; 
     
     let state = {
         user: null,
-        authToken: localStorage.getItem('gloria_auth_token') || '',
+        authToken: sessionStorage.getItem('gloria_auth_token') || '',
         employees: [],
         attendance: [],
         lateAttendance: [],
@@ -1843,7 +1944,7 @@
         currentFilter: 'all',
         bulkSelectedEmployeeIds: [],
         ocrWorker: null,
-        isMockMode: GAS_URL === "" || GAS_URL.endsWith('/dev')
+        isMockMode: false // Mode demo tidak boleh menyamar sebagai server produksi.
     };
 
     const initialEmployees = [
@@ -1879,7 +1980,7 @@
     };
 
     window.formatRupiah = (angka) => {
-        if (!angka || isNaN(angka)) return '-';
+        if (angka === '' || angka === null || angka === undefined || isNaN(Number(angka))) return '-';
         return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
     };
 
@@ -1928,17 +2029,83 @@
         if (clockEl) clockEl.innerHTML = `<i class="ph ph-clock mr-1"></i> ${window.formatDetailedTime(new Date().toISOString())}`;
     }, 1000);
 
+    function handlerKey(value) {
+        return encodeURIComponent(String(value == null ? '' : value)).replace(/[!'()*]/g, ch => '%' + ch.charCodeAt(0).toString(16).toUpperCase());
+    }
+    function csvCell(value) {
+        let s = String(value == null ? '' : value);
+        // Hindari formula spreadsheet saat CSV dibuka oleh Excel/LibreOffice.
+        if (/^[\s]*[=+@-]/.test(s)) s = "'" + s;
+        return '"' + s.replace(/"/g, '""') + '"';
+    }
+    function downloadCsv(filename, csvText) {
+        const blob = new Blob(['\ufeff', csvText], {type:'text/csv;charset=utf-8;'});
+        const href = URL.createObjectURL(blob), link=document.createElement('a');
+        link.href=href; link.download=filename; document.body.appendChild(link); link.click(); link.remove();
+        setTimeout(()=>URL.revokeObjectURL(href),3000);
+    }
+    function isValidMasterPin(pin){return /^\d{5}$/.test(pin)&&!(/^(\d)\1{4}$/.test(pin))&&!['12345','54321','01234','43210'].includes(pin);}
+    async function updateOwnPasswordFlow(currentPassword=null) {
+        if(String(state.user?.email||'').toLowerCase()!=='mohammadziky2@gmail.com') throw new Error('Hanya Master yang dapat mengubah PIN.');
+        const oldPassword=currentPassword==null?window.prompt('Masukkan PIN/password Master saat ini:'):currentPassword;
+        if(oldPassword===null||oldPassword==='')throw new Error('PIN/password sebelumnya wajib diisi.');
+        const newPassword=window.prompt('PIN Master baru (tepat 5 angka, hindari pola mudah):');
+        if(newPassword===null)throw new Error('Penggantian dibatalkan.');
+        if(!isValidMasterPin(newPassword))throw new Error('Gunakan tepat 5 angka, jangan berurutan atau sama semua.');
+        const confirmPin=window.prompt('Ulangi PIN baru:');
+        if(newPassword!==confirmPin)throw new Error('Konfirmasi PIN tidak sama.');
+        const r=await apiCall('changePassword',{currentPassword:oldPassword,newPassword});
+        if(r.authToken){state.authToken=r.authToken;sessionStorage.setItem('gloria_auth_token',state.authToken);}
+        return r.bootstrap;
+    }
+    window.changeOwnPassword=async()=>{
+      try{await updateOwnPasswordFlow();await refreshData(true);showMessage('PIN Master berhasil diubah.','success');}
+      catch(e){showMessage(e.message||'Gagal mengganti PIN Master.','error');}
+    };
+    window.openMasterPinModal=(email)=>{
+      if(String(state.user?.email||'').toLowerCase()!=='mohammadziky2@gmail.com')return;
+      document.getElementById('masterPinEmail').value=String(email||'').toLowerCase();
+      document.getElementById('masterPinTarget').textContent='Akun: '+email;
+      document.getElementById('masterPinNew').value='';document.getElementById('masterPinConfirm').value='';
+      document.getElementById('masterPinModal').classList.remove('hidden');document.getElementById('masterPinNew').focus();
+    };
+    window.closeMasterPinModal=()=>document.getElementById('masterPinModal').classList.add('hidden');
+    document.getElementById('masterPinForm').addEventListener('submit',async(e)=>{
+      e.preventDefault();if(String(state.user?.email||'').toLowerCase()!=='mohammadziky2@gmail.com')return;
+      const email=document.getElementById('masterPinEmail').value,pin=document.getElementById('masterPinNew').value,verify=document.getElementById('masterPinConfirm').value;
+      if(!isValidMasterPin(pin)||pin!==verify)return showMessage('PIN harus tepat 5 angka non-sekuensial, dan konfirmasi sama.','error');
+      if(!window.confirm('Tetapkan PIN baru akun '+email+'? Semua sesi akun itu akan terputus.'))return;
+      const btn=document.getElementById('masterPinSaveButton');btn.disabled=true;
+      try{await apiCall('setUserPassword',{email,password:pin});closeMasterPinModal();showMessage('PIN akun berhasil diatur.','success');
+        if(email==='mohammadziky2@gmail.com'){await handleLogout();showMessage('PIN Master diubah. Silakan login ulang.','info');}}
+      catch(err){showMessage(err.message||'Gagal menyimpan PIN.','error');}
+      finally{btn.disabled=false;}
+    });
+    window.resetAccountPassword=(email)=>window.openMasterPinModal(email);
+
     async function apiCall(action, data = {}) {
         if (state.isMockMode) return mockApiCall(action, data);
 
-        const retryableActions = new Set(['login','healthCheck','refreshSession','getData']);
+        const retryableActions = new Set(['healthCheck','refreshSession','getData']);
         const maxAttempts = retryableActions.has(action) ? 2 : 1;
         let lastError = null;
 
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
             let timer = null;
             try {
-                if (GAS_URL.endsWith('/dev')) throw new Error("URL berakhiran /dev. Gunakan URL deployment /exec.");
+                // Dalam hosting Apps Script (Index.html + /exec?app=1), gunakan bridge native.
+                // Ini menghindari kendala CORS yang bisa terjadi pada frontend eksternal.
+                if (window.google?.script?.run) {
+                    const json=await new Promise((resolve,reject)=>{
+                        window.google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)
+                          .gloriaApiBridge({action,data,authToken:state.authToken||''});
+                    });
+                    if(!json||!json.success)throw new Error(json?.error||'Operasi backend gagal.');
+                    const badge=document.getElementById('serverStatusBadge');
+                    if(badge){badge.textContent='Server OK';badge.className='ml-2 px-2 py-0.5 text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full font-medium';}
+                    return json;
+                }
+                if (!GAS_URL || GAS_URL.endsWith('/dev')) throw new Error('Konfigurasi backend tidak valid. Gunakan URL deployment /exec.');
                 if (action !== 'login' && action !== 'refreshSession' && !state.authToken) {
                     throw new Error('Sesi login tidak ditemukan. Silakan login kembali.');
                 }
@@ -2061,8 +2228,18 @@
                     const totalResi = rows.reduce((n,a)=>n+(Number(a.resi1)||0)+(Number(a.resi2)||0),0);
                     const totalGMV = rows.reduce((n,a)=>n+(Number(a.gmv1)||0)+(Number(a.gmv2)||0),0);
                     let rateLabel,tier,commission;
-                    if(String(data.method||'GMV').toUpperCase()==='RESI'){ if(totalResi<2500){rateLabel='Rp500 / resi';tier='< 2.500 resi (target awal 1.300)';commission=totalResi*500;} else if(totalResi<3500){rateLabel='Rp700 / resi';tier='2.500 – < 3.500 resi';commission=totalResi*700;} else {rateLabel='Rp1.000 / resi';tier='≥ 3.500 resi';commission=totalResi*1000;} }
-                    else { if(totalGMV<150000000){rateLabel='0,5%';tier='< Rp150 juta';commission=totalGMV*0.005;} else if(totalGMV<250000000){rateLabel='1%';tier='Rp150 juta – < Rp250 juta';commission=totalGMV*0.01;} else if(totalGMV<400000000){rateLabel='1,5%';tier='Rp250 juta – < Rp400 juta';commission=totalGMV*0.015;} else {rateLabel='2%';tier='≥ Rp400 juta';commission=totalGMV*0.02;} }
+                    if(String(data.method||'GMV').toUpperCase()==='RESI'){
+                        if(totalResi<1300){rateLabel='Rp0 / resi (belum mencapai target)';tier='< 1.300 resi: belum ada komisi';commission=0;}
+                        else if(totalResi<2500){rateLabel='Rp500 / resi';tier='1.300 – < 2.500 resi';commission=totalResi*500;}
+                        else if(totalResi<3500){rateLabel='Rp700 / resi';tier='2.500 – < 3.500 resi';commission=totalResi*700;}
+                        else{rateLabel='Rp1.000 / resi';tier='≥ 3.500 resi';commission=totalResi*1000;}
+                    } else {
+                        if(totalGMV<100000000){rateLabel='0% (belum mencapai target)';tier='< Rp100 juta: belum ada komisi';commission=0;}
+                        else if(totalGMV<150000000){rateLabel='0,5%';tier='Rp100 juta – < Rp150 juta';commission=totalGMV*0.005;}
+                        else if(totalGMV<250000000){rateLabel='1%';tier='Rp150 juta – < Rp250 juta';commission=totalGMV*0.01;}
+                        else if(totalGMV<400000000){rateLabel='1,5%';tier='Rp250 juta – < Rp400 juta';commission=totalGMV*0.015;}
+                        else{rateLabel='2%';tier='≥ Rp400 juta';commission=totalGMV*0.02;}
+                    }
                     resolve({success:true,data:{employeeId:data.employeeId,employeeName:emp?.name||'',division:emp?.division||'',totalResi,totalGMV,rateLabel,tier,commission:Math.round(commission||0)}});
                 }
                 else if(action === 'getLateAttendance') {
@@ -2101,10 +2278,10 @@
     }
 
     // ===== SESSION & LOGIN GATE =====
-    // Session backend bersifat sliding sampai 30 hari. Saat refresh, browser mencoba refreshSession
+    // Session backend bersifat sliding sampai 12 jam. Saat refresh, browser mencoba refreshSession
     // lalu memuat ulang data dari backend. Hanya sesi yang benar-benar invalid yang dikembalikan ke login.
     async function restoreServerSession() {
-        const savedToken = String(localStorage.getItem('gloria_auth_token') || '').trim();
+        const savedToken = String(sessionStorage.getItem('gloria_auth_token') || '').trim();
         const savedEmail = String(localStorage.getItem('gloria_logged_in_user') || '').trim().toLowerCase();
         if (!savedToken || !savedEmail) {
             state.authToken = '';
@@ -2119,9 +2296,13 @@
             if (!session || !session.success || !session.authToken) throw new Error(session?.error || 'Sesi tidak valid.');
             state.authToken = String(session.authToken);
             state.user = session.user || { email: savedEmail };
-            localStorage.setItem('gloria_auth_token', state.authToken);
+            sessionStorage.setItem('gloria_auth_token', state.authToken);
             localStorage.setItem('gloria_logged_in_user', String(state.user.email || savedEmail).toLowerCase());
-            const boot=session.bootstrap;
+            let boot=session.bootstrap;
+            if(session.passwordChangeRequired){
+                boot=await updateOwnPasswordFlow();
+                showMessage('Password awal berhasil diganti.','success');
+            }
             if(boot){
                 if(String(boot.backendBuildId||'')!==EXPECTED_BACKEND_BUILD_ID) throw new Error('Backend belum diperbarui ke build '+EXPECTED_BACKEND_BUILD_ID+'.');
                 applyServerData(boot);
@@ -2142,7 +2323,7 @@
             console.warn('restoreServerSession:', error);
             state.authToken = '';
             state.user = null;
-            localStorage.removeItem('gloria_auth_token');
+            sessionStorage.removeItem('gloria_auth_token');
             localStorage.removeItem('gloria_logged_in_user');
             document.getElementById('loginScreen').classList.remove('hidden');
             document.getElementById('mainApp').classList.add('hidden');
@@ -2171,6 +2352,7 @@
         emailEl?.addEventListener('change', updateLoginGate);
         passEl?.addEventListener('input', updateLoginGate);
         updateLoginGate();
+        localStorage.removeItem('gloria_auth_token'); // hapus salinan token lama yang tidak aman.
         await restoreServerSession();
     });
 
@@ -2196,24 +2378,45 @@
     }
 
     function enforceLimitedUserMenu(email) {
-        const limited=isLimitedUser(email);
-        if(!limited){ document.querySelectorAll('.nav-btn[data-tab]').forEach(btn=>btn.classList.remove('hidden')); return; }
-        document.querySelectorAll('.nav-btn[data-tab]').forEach(btn=>{ const tab=btn.getAttribute('data-tab'); btn.classList.toggle('hidden',!LIMITED_ALLOWED_TABS.includes(tab)); });
+        if(!isLimitedUser(email))return; // Jangan membuka menu Host/Master hanya karena bukan akun terbatas.
+        const hideForLimited = el => {
+            if(el && !el.classList.contains('hidden')){
+                el.classList.add('hidden');
+                el.dataset.gloriaLimitedHidden='1';
+            }
+        };
+        document.querySelectorAll('.nav-btn[data-tab]').forEach(btn=>{
+            if(!LIMITED_ALLOWED_TABS.includes(btn.getAttribute('data-tab')))hideForLimited(btn);
+        });
         ['masterControlPanel','sidebarBankAuth','mobileBankAuth','dashboardBankAuth','dashboardHostAuth','sidebarHostAuth','mobileHostAuth',
-         'quickEmployeeCard','quickSalaryCard','quickScheduleCard','quickHostReportCard','quickHostRankingCard','quickBulkAttendanceCard','dashboardAISection','dashboardAccessLogSection'].forEach(id=>{const el=document.getElementById(id);if(el){el.classList.add('hidden');el.classList.remove('flex');}});
+         'quickEmployeeCard','quickSalaryCard','quickScheduleCard','quickHostReportCard','quickHostRankingCard','quickBulkAttendanceCard','dashboardAISection','dashboardAccessLogSection'].forEach(id=>{const el=document.getElementById(id);if(el){hideForLimited(el);el.classList.remove('flex');}});
         ['quickAttendanceCard','quickLateCard','quickReportsCard'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('hidden');});
-        document.querySelectorAll('[onclick]').forEach(el=>{const match=(el.getAttribute('onclick')||'').match(/switchTab\(['"]([^'"]+)['"]\)/);if(match && !LIMITED_ALLOWED_TABS.includes(match[1]))el.classList.add('hidden');});
+        document.querySelectorAll('[onclick]').forEach(el=>{const match=(el.getAttribute('onclick')||'').match(/switchTab\(['"]([^'"]+)['"]\)/);if(match && !LIMITED_ALLOWED_TABS.includes(match[1]))hideForLimited(el);});
     }
 
     function applyUserAccessUI(email) {
+        // Pergantian akun dalam satu tab harus membatalkan penyembunyian milik akun sebelumnya.
+        document.querySelectorAll('[data-gloria-limited-hidden]').forEach(el=>{
+            el.classList.remove('hidden');delete el.dataset.gloriaLimitedHidden;
+        });
         const isOwner = String(email||'').toLowerCase() === 'mohammadziky2@gmail.com';
+        document.getElementById('masterOwnPinBtn')?.classList.toggle('hidden',!isOwner);
         ['masterControlPanel','sidebarBankAuth','mobileBankAuth','dashboardBankAuth'].forEach(id=>{const el=document.getElementById(id);if(!el)return;if(isOwner){el.classList.remove('hidden');if(id!=='masterControlPanel')el.classList.add('flex');}else{el.classList.add('hidden');el.classList.remove('flex');}});
         const geminiKey=document.getElementById('geminiApiKey'); if(geminiKey&&geminiKey.parentElement){geminiKey.parentElement.classList.toggle('hidden',!isOwner); geminiKey.parentElement.classList.toggle('md:flex',isOwner);}
         const authorizedHostEmails=['bettyartanita@gmail.com','mohammadziky2@gmail.com','ysdd@gmail.com']; const isHost=authorizedHostEmails.includes(String(email||'').toLowerCase());
         ['dashboardHostAuth','sidebarHostAuth','mobileHostAuth'].forEach(id=>{const el=document.getElementById(id);if(!el)return;if(isHost){el.classList.remove('hidden');el.classList.add('flex');}else{el.classList.add('hidden');el.classList.remove('flex');}});
         ['quickScheduleCard','quickHostReportCard','quickHostRankingCard'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.toggle('hidden',!isHost);});
-        document.querySelectorAll('.nav-btn[data-tab="schedule"],.nav-btn[data-tab="hostReport"],.nav-btn[data-tab="hostRanking"],.nav-btn[data-tab="hostSalary"]').forEach(btn=>{btn.classList.toggle('hidden',!isHost);});
+        document.querySelectorAll('.nav-btn[data-tab="schedule"],.nav-btn[data-tab="hostReport"],.nav-btn[data-tab="hostRanking"],.nav-btn[data-tab="hostSalary"],.nav-btn[data-tab="hostExcel"]').forEach(btn=>{btn.classList.toggle('hidden',!isHost);});
+        document.getElementById('dashboardAISection')?.classList.toggle('hidden',!isHost);
+        const quickEmployee=document.getElementById('quickEmployeeCard');if(quickEmployee)quickEmployee.classList.remove('hidden');
+        const addEmployeeButton=document.querySelector('#employeesView button[onclick^="openModal"]');
+        if(addEmployeeButton)addEmployeeButton.classList.remove('hidden');
         enforceLimitedUserMenu(email);
+        // Hanya penambahan menu baru: tampil jika akun termasuk daftar Host yang telah diotorisasi.
+        ['desktopHostExcelAuth','mobileHostExcelAuth'].forEach(id => {
+            const menu=document.getElementById(id);
+            if(menu)menu.classList.toggle('hidden', !isHost);
+        });
     }
 
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -2241,10 +2444,14 @@
             state.authToken=String(loginRes.authToken||'');
             if(!state.authToken) throw new Error('Token sesi tidak diterima server.');
             state.user=loginRes.user||{email:email};
-            localStorage.setItem('gloria_auth_token',state.authToken);
+            sessionStorage.setItem('gloria_auth_token',state.authToken);
             localStorage.setItem('gloria_logged_in_user',email);
 
-            const res=loginRes.bootstrap;
+            let res=loginRes.bootstrap;
+            if(loginRes.passwordChangeRequired){
+                res=await updateOwnPasswordFlow(pass);
+                showMessage('Password lama berhasil diganti.','success');
+            }
             if(res){
                 if(String(res.backendBuildId||'')!==EXPECTED_BACKEND_BUILD_ID) throw new Error('Backend belum diperbarui ke build '+EXPECTED_BACKEND_BUILD_ID+'.');
                 applyServerData(res);
@@ -2262,7 +2469,7 @@
             showMessage('Login berhasil.','success');
         } catch(error) {
             state.authToken=''; state.user=null;
-            localStorage.removeItem('gloria_auth_token'); localStorage.removeItem('gloria_logged_in_user');
+            sessionStorage.removeItem('gloria_auth_token'); localStorage.removeItem('gloria_logged_in_user');
             document.getElementById('loginScreen').classList.remove('hidden'); document.getElementById('mainApp').classList.add('hidden');
             showMessage(error.message||'Gagal masuk ke sistem.','error');
         } finally {
@@ -2288,16 +2495,24 @@
             document.getElementById('loginPassword').value = '';
             state.user = null;
             state.authToken = '';
+            state.employees=[];state.attendance=[];state.lateAttendance=[];
+            state.hostPerformance=[];state.hostSchedule=[];state.salary=[];
+            state.activeUsers=[];state.allowedUsers=[];state.blockedUsers=[];
+            state.auditLog=[];state.historyLog=[];state.settings={};
+            hostExcelMatrixCache=null;
+            document.getElementById('loginPassword').disabled=true;
+            document.getElementById('loginBtn').disabled=true;
             const userDisplay = document.getElementById('currentUserDisplay');
             if (userDisplay) userDisplay.innerText = '-';
             localStorage.removeItem('gloria_logged_in_user');
-            localStorage.removeItem('gloria_auth_token');
+            sessionStorage.removeItem('gloria_auth_token');
             localStorage.removeItem('gloria_current_tab');
             localStorage.removeItem('gloria_last_view');
         }
     };
 
     function applyServerData(res) {
+        hostExcelMatrixCache=null; // Data attendance/host telah dimuat ulang; invalidasi matriks lama.
         state.employees=res.employees||[]; state.attendance=res.attendance||[]; state.lateAttendance=res.lateAttendance||[];
         state.hostPerformance=res.hostPerformance||[]; state.hostSchedule=res.hostSchedule||[]; state.salary=res.salary||[]; state.settings=res.settings||{};
         state.auditLog=res.auditLog||res.historyLog||[]; state.historyLog=state.auditLog; state.activeUsers=res.activeUsers||[]; state.blockedUsers=res.blockedUsers||[]; state.allowedUsers=res.allowedUsers||[];
@@ -2310,6 +2525,7 @@
         if(state.currentTab==='schedule'&&typeof window.renderScheduleTracker==='function')window.renderScheduleTracker();
         if(state.currentTab==='hostReport'&&typeof window.renderHostMonthlyReport==='function')window.renderHostMonthlyReport();
         if(state.currentTab==='hostRanking'&&typeof window.renderHostRanking==='function')window.renderHostRanking();
+        if(state.currentTab==='hostExcel'&&typeof window.loadHostExcelMatrix==='function')window.loadHostExcelMatrix(true);
         if(state.currentTab==='bankAccount'&&typeof window.renderBankAccountList==='function')window.renderBankAccountList();
         if(state.user) enforceLimitedUserMenu(state.user.email);
     }
@@ -2333,9 +2549,9 @@
             const tr = document.createElement('tr');
             tr.className = "hover:bg-gray-50 transition-colors";
             tr.innerHTML = `
-                <td class="p-4"><div class="flex items-center"><div class="h-8 w-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold mr-3">${emp.name.charAt(0).toUpperCase()}</div><span class="font-medium text-gray-800">${emp.name}</span></div></td>
-                <td class="p-4"><span class="px-3 py-1 rounded-full text-xs font-medium ${emp.division === 'Host Live' ? 'bg-purple-100 text-purple-700' : emp.division === 'Admin' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}">${emp.division}</span></td>
-                <td class="p-4 text-right"><button onclick="deleteEmployee('${emp.id}')" class="text-red-500 hover:text-red-700 p-2"><i class="ph ph-trash text-lg"></i></button></td>
+                <td class="p-4"><div class="flex items-center"><div class="h-8 w-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold mr-3">${escapeLateHtml(String(emp.name||'?').charAt(0).toUpperCase())}</div><span class="font-medium text-gray-800">${escapeLateHtml(emp.name)}</span></div></td>
+                <td class="p-4"><span class="px-3 py-1 rounded-full text-xs font-medium ${emp.division === 'Host Live' ? 'bg-purple-100 text-purple-700' : emp.division === 'Admin' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}">${escapeLateHtml(emp.division)}</span></td>
+                <td class="p-4 text-right">${String(state.user?.email||'').toLowerCase()==='mohammadziky2@gmail.com' ? `<button onclick="deleteEmployee(decodeURIComponent('${handlerKey(emp.id)}'))" class="text-red-500 hover:text-red-700 p-2"><i class="ph ph-trash text-lg"></i></button>` : '<span class="text-xs text-gray-400">Master</span>'}</td>
             `;
             tbody.appendChild(tr);
         });
@@ -2349,13 +2565,13 @@
             const tr = document.createElement('tr');
             tr.className = "hover:bg-gray-50 transition-colors";
             
-            const bankInfo = emp.bankName ? `<span class="font-bold text-gray-800">${emp.bankName}</span><br><span class="text-xs text-gray-500">${emp.bankAccount} (a/n ${emp.bankAccountName})</span>` : `<span class="text-xs text-red-500 italic">Belum ada data rekening</span>`;
+            const bankInfo = emp.bankName ? `<span class="font-bold text-gray-800">${escapeLateHtml(emp.bankName)}</span><br><span class="text-xs text-gray-500">${escapeLateHtml(emp.bankAccount)} (a/n ${escapeLateHtml(emp.bankAccountName)})</span>` : `<span class="text-xs text-red-500 italic">Belum ada data rekening</span>`;
 
             tr.innerHTML = `
-                <td class="p-4"><div class="flex items-center"><div class="h-8 w-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold mr-3">${emp.name.charAt(0).toUpperCase()}</div><span class="font-medium text-gray-800">${emp.name}</span></div></td>
-                <td class="p-4"><span class="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">${emp.division}</span></td>
+                <td class="p-4"><div class="flex items-center"><div class="h-8 w-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold mr-3">${escapeLateHtml(String(emp.name||'?').charAt(0).toUpperCase())}</div><span class="font-medium text-gray-800">${escapeLateHtml(emp.name)}</span></div></td>
+                <td class="p-4"><span class="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">${escapeLateHtml(emp.division)}</span></td>
                 <td class="p-4 text-sm">${bankInfo}</td>
-                <td class="p-4 text-right"><button onclick="openEditBankModal('${emp.id}')" class="text-blue-600 hover:text-white bg-blue-50 hover:bg-blue-600 border border-blue-200 px-3 py-1.5 rounded transition shadow-sm font-semibold text-xs"><i class="ph ph-pencil-simple mr-1"></i> Edit Rekening</button></td>
+                <td class="p-4 text-right"><button onclick="openEditBankModal(decodeURIComponent('${handlerKey(emp.id)}'))" class="text-blue-600 hover:text-white bg-blue-50 hover:bg-blue-600 border border-blue-200 px-3 py-1.5 rounded transition shadow-sm font-semibold text-xs"><i class="ph ph-pencil-simple mr-1"></i> Edit Rekening</button></td>
             `;
             tbody.appendChild(tr);
         });
@@ -2382,15 +2598,6 @@
         const bankAccountName = document.getElementById('editBankAccountName').value.trim();
 
         try {
-            // Optimistic Local Save
-            const empIdx = state.employees.findIndex(emp => emp.id === id);
-            if (empIdx !== -1) {
-                state.employees[empIdx].bankName = bankName;
-                state.employees[empIdx].bankAccount = bankAccount;
-                state.employees[empIdx].bankAccountName = bankAccountName;
-                if (state.isMockMode) localStorage.setItem('gloria_mock_emp', JSON.stringify(state.employees));
-            }
-
             await apiCall('editEmployeeBank', { id, bankName, bankAccount, bankAccountName });
             logActivity("Edit Rekening", `Memperbarui data rekening karyawan: ${document.getElementById('editBankEmpName').value}`);
             refreshData(true).catch(()=>{});
@@ -2468,7 +2675,7 @@
                         const nameB = String(emp.name || "").trim().toLowerCase();
                         const divA = String(a.empDivision || "").trim().toLowerCase();
                         const divB = String(emp.division || "").trim().toLowerCase();
-                        const isEmpMatch = (String(a.empId) === String(emp.id)) || (nameA === nameB && divA === divB); // STRICT
+                        const isEmpMatch = String(a.empId) === String(emp.id); // Identitas memakai ID, bukan nama yang mungkin sama.
                         return isDateMatch && isEmpMatch;
                     });
                     if (hasRecord) displayName = `✅ ${emp.name} (Sudah Input)`;
@@ -2511,8 +2718,8 @@
             if (!att.date) return;
             let recordDateStr = window.normalizeDateStr(att.date);
             if (recordDateStr === todayStr) { 
-                if (att.status === 'Hadir') presentSet.add(String(att.empName).trim());
-                else if (att.status === 'Izin' || att.status === 'Sakit' || att.status === 'Libur') absentSet.add(String(att.empName).trim());
+                if (att.status === 'Hadir') presentSet.add(String(att.empId||'').trim());
+                else if (att.status === 'Izin' || att.status === 'Sakit' || att.status === 'Libur') absentSet.add(String(att.empId||'').trim());
             }
         });
         
@@ -2559,7 +2766,7 @@
             if(!users || users.length === 0) return '';
             let html = `<div class="mb-6 last:mb-0"><div class="flex items-center mb-3 bg-gray-100 p-2 rounded-lg border border-gray-200"><div class="p-1.5 ${bgColorClass} ${textColorClass} rounded mr-2"><i class="${iconClass} text-lg"></i></div><h4 class="font-bold text-gray-800">${title}</h4><span class="ml-auto bg-gray-200 text-gray-600 text-xs py-1 px-2 rounded-full font-bold">${users.length} Orang</span></div><div class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm"><table class="w-full text-left border-collapse text-sm"><tbody class="divide-y divide-gray-100">`;
             users.forEach((user, index) => {
-                html += `<tr class="hover:bg-gray-50 transition-colors"><td class="p-3 w-12 text-center text-gray-400 font-medium border-r border-gray-100">${index + 1}</td><td class="p-3 font-medium text-gray-800"><div class="flex items-center"><div class="h-6 w-6 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-xs mr-3 shrink-0">${user.name.charAt(0).toUpperCase()}</div>${user.name}</div></td><td class="p-3 text-right w-16"><button onclick="deleteEmployee('${user.id}')" class="text-red-500 hover:text-white p-1.5 rounded-lg bg-red-50 hover:bg-red-600 transition shadow-sm border border-red-200"><i class="ph ph-trash text-lg"></i></button></td></tr>`;
+                html += `<tr class="hover:bg-gray-50 transition-colors"><td class="p-3 w-12 text-center text-gray-400 font-medium border-r border-gray-100">${index + 1}</td><td class="p-3 font-medium text-gray-800"><div class="flex items-center"><div class="h-6 w-6 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-xs mr-3 shrink-0">${escapeLateHtml(String(user.name||'?').charAt(0).toUpperCase())}</div>${escapeLateHtml(user.name)}</div></td><td class="p-3 text-right w-16"><button onclick="deleteEmployee(decodeURIComponent('${handlerKey(user.id)}'))" class="text-red-500 hover:text-white p-1.5 rounded-lg bg-red-50 hover:bg-red-600 transition shadow-sm border border-red-200"><i class="ph ph-trash text-lg"></i></button></td></tr>`;
             });
             html += `</tbody></table></div></div>`; return html;
         };
@@ -2568,7 +2775,7 @@
         contentHtml += buildDivSection('Host Live', 'ph ph-video-camera', 'bg-purple-100', 'text-purple-600', grouped['Host Live']);
         contentHtml += buildDivSection('Admin', 'ph ph-desktop', 'bg-blue-100', 'text-blue-600', grouped['Admin']);
         contentHtml += buildDivSection('Packing', 'ph ph-package', 'bg-orange-100', 'text-orange-600', grouped['Packing']);
-        container.innerHTML = contentHtml; openModal('employeeListModal');
+        container.innerHTML = contentHtml; if(String(state.user?.email||'').toLowerCase()!=='mohammadziky2@gmail.com')container.querySelectorAll('button[onclick^="deleteEmployee"]').forEach(b=>b.remove()); openModal('employeeListModal');
     };
 
     function renderActiveUsers() {
@@ -2583,11 +2790,11 @@
         state.activeUsers.forEach(data => {
             const d = new Date(data.lastActive); const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
             let actionBtn = '';
-            if (isOwner && data.email.toLowerCase() !== ownerEmail) actionBtn = `<button onclick="blockUserAccess('${data.email}')" class="text-red-500 hover:text-white bg-red-50 hover:bg-red-600 p-1.5 rounded border border-red-200 shadow-sm transition-colors shrink-0 ml-2" title="Blokir & Keluarkan Akun"><i class="ph ph-prohibit text-lg"></i></button>`;
+            if (isOwner && data.email.toLowerCase() !== ownerEmail) actionBtn = `<button onclick="blockUserAccess(decodeURIComponent('${handlerKey(data.email)}'))" class="text-red-500 hover:text-white bg-red-50 hover:bg-red-600 p-1.5 rounded border border-red-200 shadow-sm transition-colors shrink-0 ml-2" title="Blokir & Keluarkan Akun"><i class="ph ph-prohibit text-lg"></i></button>`;
             const isMe = state.user && data.email.toLowerCase() === state.user.email.toLowerCase();
             const badgeMe = isMe ? `<span class="ml-2 text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider border border-blue-200">Anda</span>` : '';
             
-            list.innerHTML += `<div class="p-3 border border-gray-100 flex justify-between items-center bg-white mb-1 rounded shadow-sm hover:border-blue-200 transition-colors"><div class="flex items-center truncate"><i class="ph-fill ph-user-circle text-2xl text-blue-500 mr-3 shrink-0"></i><span class="font-medium text-gray-800 truncate text-sm">${data.email} ${badgeMe}</span></div><div class="flex items-center shrink-0 pl-2"><span class="text-xs text-gray-500 font-medium">Terakhir: ${timeStr}</span>${actionBtn}</div></div>`;
+            list.innerHTML += `<div class="p-3 border border-gray-100 flex justify-between items-center bg-white mb-1 rounded shadow-sm hover:border-blue-200 transition-colors"><div class="flex items-center truncate"><i class="ph-fill ph-user-circle text-2xl text-blue-500 mr-3 shrink-0"></i><span class="font-medium text-gray-800 truncate text-sm">${escapeLateHtml(data.email)} ${badgeMe}</span></div><div class="flex items-center shrink-0 pl-2"><span class="text-xs text-gray-500 font-medium">Terakhir: ${timeStr}</span>${actionBtn}</div></div>`;
         });
     }
 
@@ -2596,7 +2803,7 @@
         list.innerHTML = '';
         if (!state.blockedUsers || state.blockedUsers.length === 0) { list.innerHTML = `<div class="p-2 text-xs text-red-400 text-center italic">Belum ada akun yang diblokir.</div>`; return; }
         state.blockedUsers.forEach(email => {
-            list.innerHTML += `<div class="p-2 border border-red-100 flex justify-between items-center bg-white rounded shadow-sm mb-1"><div class="flex items-center truncate"><i class="ph-fill ph-prohibit text-xl text-red-500 mr-2 shrink-0"></i><span class="font-medium text-gray-800 text-sm truncate">${email}</span></div><button onclick="unblockUserAccess('${email}')" class="text-green-600 hover:text-white bg-green-50 hover:bg-green-600 p-1.5 rounded border border-green-200 shadow-sm transition-colors shrink-0 ml-2 text-xs font-bold px-3 uppercase tracking-wider">Pulihkan</button></div>`;
+            list.innerHTML += `<div class="p-2 border border-red-100 flex justify-between items-center bg-white rounded shadow-sm mb-1"><div class="flex items-center truncate"><i class="ph-fill ph-prohibit text-xl text-red-500 mr-2 shrink-0"></i><span class="font-medium text-gray-800 text-sm truncate">${escapeLateHtml(email)}</span></div><button onclick="unblockUserAccess(decodeURIComponent('${handlerKey(email)}'))" class="text-green-600 hover:text-white bg-green-50 hover:bg-green-600 p-1.5 rounded border border-green-200 shadow-sm transition-colors shrink-0 ml-2 text-xs font-bold px-3 uppercase tracking-wider">Pulihkan</button></div>`;
         });
     };
 
@@ -2632,15 +2839,16 @@
         users.forEach(email => {
             const isOwner = email === 'mohammadziky2@gmail.com';
             const badge = isOwner ? `<span class="bg-amber-500/20 text-amber-400 border border-amber-500/50 px-2 py-0.5 rounded text-[10px] uppercase font-black tracking-widest ml-2">Master</span>` : '';
-            const delBtn = isOwner ? `<button disabled class="text-slate-600 cursor-not-allowed p-1.5"><i class="ph-fill ph-lock-key text-lg"></i></button>` : `<button onclick="window.removeAllowedUser('${email}')" class="text-red-400 hover:text-white bg-red-900/30 hover:bg-red-600 border border-red-500/30 p-1.5 rounded transition shadow-sm" title="Hapus Akses"><i class="ph ph-trash text-lg"></i></button>`;
+            const passBtn = `<button onclick="window.resetAccountPassword(decodeURIComponent('${handlerKey(email)}'))" class="ml-1 text-amber-400 bg-slate-800 hover:bg-slate-700 p-1.5 rounded" title="Atur atau ganti PIN 5 angka (Master)"><i class="ph ph-key"></i></button>`;
+            const delBtn = isOwner ? `<button disabled class="text-slate-600 cursor-not-allowed p-1.5"><i class="ph-fill ph-lock-key text-lg"></i></button>` : `<button onclick="window.removeAllowedUser(decodeURIComponent('${handlerKey(email)}'))" class="text-red-400 hover:text-white bg-red-900/30 hover:bg-red-600 border border-red-500/30 p-1.5 rounded transition shadow-sm" title="Hapus Akses"><i class="ph ph-trash text-lg"></i></button>`;
             
             list.innerHTML += `
                 <div class="flex items-center justify-between bg-slate-900/50 p-3 rounded border border-slate-700/50 hover:border-slate-600 transition">
                     <div class="flex items-center truncate">
                         <i class="ph-fill ph-user-circle text-xl ${isOwner ? 'text-amber-500' : 'text-slate-400'} mr-3 shrink-0"></i>
-                        <span class="text-slate-200 text-sm font-medium truncate">${email} ${badge}</span>
+                        <span class="text-slate-200 text-sm font-medium truncate">${escapeLateHtml(email)} ${badge}</span>
                     </div>
-                    <div class="shrink-0 ml-3">${delBtn}</div>
+                    <div class="shrink-0 ml-3">${passBtn}${delBtn}</div>
                 </div>
             `;
         });
@@ -2652,7 +2860,9 @@
         
         const emailInput = document.getElementById('newAllowedEmail');
         const newEmail = emailInput.value.trim().toLowerCase();
-        if(!newEmail) return;
+        const pin=document.getElementById('newAllowedPin').value, confirmPin=document.getElementById('confirmAllowedPin').value;
+        if(!newEmail)return;
+        if(!isValidMasterPin(pin)||pin!==confirmPin)return showMessage('PIN harus tepat 5 angka, tidak mudah ditebak, dan konfirmasi harus sama.','error');
 
         const btn = e.target.querySelector('button');
         btn.innerHTML = `<i class="ph ph-spinner animate-spin mr-2"></i> Memproses...`; btn.disabled = true;
@@ -2662,16 +2872,18 @@
                 showMessage("Email tersebut sudah memiliki akses.", "error");
                 return;
             }
-            await apiCall('addAllowedUser', { email: newEmail, addedBy: state.user.email });
+            const createdAccount=await apiCall('addAllowedUser', { email: newEmail, pin });
             state.allowedUsers.push(newEmail);
             logActivity("Master Control", `Menambahkan akses web untuk: ${newEmail}`);
             window.renderAllowedUsers();
             showMessage(`Akses diberikan untuk ${newEmail}`, "success");
             emailInput.value = '';
+            document.getElementById('newAllowedPin').value='';
+            document.getElementById('confirmAllowedPin').value='';
         } catch(err) {
             showMessage("Gagal menambahkan akun.", "error");
         } finally {
-            btn.innerHTML = `<i class="ph-bold ph-plus mr-2"></i> Izinkan Akses`; btn.disabled = false;
+            btn.innerHTML = `<i class="ph-bold ph-plus mr-2"></i> Buat Akun + PIN`; btn.disabled = false;
         }
     });
 
@@ -2747,7 +2959,8 @@
 
                 try {
                     if (!state.ocrWorker) {
-                        state.ocrWorker = await Tesseract.createWorker({
+                        if(!window.Tesseract?.createWorker)throw new Error('Pustaka OCR tidak berhasil dimuat. Periksa koneksi internet.');
+                        state.ocrWorker = await Tesseract.createWorker('ind+eng', 1, {
                             logger: m => {
                                 if (m.status === 'recognizing text') {
                                     const progress = Math.round(m.progress * 100);
@@ -2756,8 +2969,6 @@
                                 }
                             }
                         });
-                        await state.ocrWorker.loadLanguage('ind+eng');
-                        await state.ocrWorker.initialize('ind+eng');
                     }
                     const ret = await state.ocrWorker.recognize(file);
                     
@@ -2783,9 +2994,9 @@
                         if (empSelect && empSelect.selectedIndex > 0) {
                             const division = empSelect.options[empSelect.selectedIndex].dataset.division;
                             if (division === 'Host Live') {
-                                if (resiCandidate > 0 && !document.getElementById('attResi1').value) document.getElementById('attResi1').value = resiCandidate;
-                                if (maxNum > 0 && !document.getElementById('attGMV1').value) document.getElementById('attGMV1').value = maxNum;
-                                showMessage("AI menemukan angka dan otomatis mengisinya ke form Sesi 1!", "success");
+                                // OCR sering keliru membaca titik, koma, tanggal, dan tulisan tangan.
+                                // Jangan memasukkan angka ke data keuangan tanpa verifikasi manual.
+                                showMessage(`OCR mendeteksi kandidat Resi ${resiCandidate||'-'} dan GMV ${maxNum||'-'}. Periksa teks mentah, lalu ketik angka yang benar secara manual.`, 'info');
                             }
                         } else {
                              showMessage("Proses AI selesai. Silakan pilih karyawan 'Host Live' untuk auto-fill data.", "info");
@@ -2849,7 +3060,7 @@
             <td class="p-3">${escapeLateHtml(r.division)}</td>
             <td class="p-3 text-center"><span class="inline-flex px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 font-bold">${escapeLateHtml(r.durationText||formatLateDurationClient(r.minutesLate))}</span></td>
             <td class="p-3 text-gray-600 max-w-xs">${escapeLateHtml(r.reason)}</td>
-            <td class="p-3 text-right whitespace-nowrap"><button onclick="editLateAttendance('${escapeLateHtml(r.id)}')" class="text-blue-600 hover:text-blue-800 mr-2"><i class="ph ph-pencil-simple"></i></button><button onclick="deleteLateAttendance('${escapeLateHtml(r.id)}')" class="text-red-500 hover:text-red-700"><i class="ph ph-trash"></i></button></td>
+            <td class="p-3 text-right whitespace-nowrap"><button onclick="editLateAttendance(decodeURIComponent('${handlerKey(r.id)}'))" class="text-blue-600 hover:text-blue-800 mr-2"><i class="ph ph-pencil-simple"></i></button><button onclick="deleteLateAttendance(decodeURIComponent('${handlerKey(r.id)}'))" class="text-red-500 hover:text-red-700"><i class="ph ph-trash"></i></button></td>
         </tr>`).join('');
     }
 
@@ -2900,19 +3111,19 @@
             const statusClass = att.status === 'Hadir' ? 'text-green-600 bg-green-50' : att.status === 'Sakit' ? 'text-yellow-600 bg-yellow-50' : att.status === 'Izin' ? 'text-orange-600 bg-orange-50' : 'text-gray-600 bg-gray-100';
             const postTime = att.timestamp ? window.formatDetailedTime(att.timestamp) : '-';
             tr.innerHTML = `
-                <td class="p-3 font-medium text-gray-800">${att.empName}</td>
-                <td class="p-3"><span class="px-2 py-1 rounded text-xs font-semibold ${statusClass}">${att.status}</span></td>
-                <td class="p-3 text-xs text-indigo-700 font-medium whitespace-nowrap bg-indigo-50/30">${postTime}</td>
-                <td class="p-3 text-gray-600">${att.status === 'Hadir' ? att.session1 : '-'}</td>
-                <td class="p-3 text-gray-600">${att.status === 'Hadir' ? att.session2 : '-'}</td>
-                <td class="p-3 text-gray-800 font-medium bg-blue-50/40">${att.resi1 ? att.resi1 : '-'}</td>
+                <td class="p-3 font-medium text-gray-800">${escapeLateHtml(att.empName)}</td>
+                <td class="p-3"><span class="px-2 py-1 rounded text-xs font-semibold ${statusClass}">${escapeLateHtml(att.status)}</span></td>
+                <td class="p-3 text-xs text-indigo-700 font-medium whitespace-nowrap bg-indigo-50/30">${escapeLateHtml(postTime)}</td>
+                <td class="p-3 text-gray-600">${escapeLateHtml(att.session1 || '-')}</td>
+                <td class="p-3 text-gray-600">${escapeLateHtml(att.session2 || '-')}</td>
+                <td class="p-3 text-gray-800 font-medium bg-blue-50/40">${escapeLateHtml(att.resi1 ? att.resi1 : '-')}</td>
                 <td class="p-3 text-green-700 font-semibold whitespace-nowrap bg-blue-50/40">${att.gmv1 ? window.formatRupiah(att.gmv1) : '-'}</td>
-                <td class="p-3 text-gray-800 font-medium bg-purple-50/40">${att.resi2 ? att.resi2 : '-'}</td>
+                <td class="p-3 text-gray-800 font-medium bg-purple-50/40">${escapeLateHtml(att.resi2 ? att.resi2 : '-')}</td>
                 <td class="p-3 text-green-700 font-semibold whitespace-nowrap bg-purple-50/40">${att.gmv2 ? window.formatRupiah(att.gmv2) : '-'}</td>
-                <td class="p-3 text-gray-700 font-medium text-center">${att.lemburJam ? att.lemburJam + ' Jam' : '-'}</td>
-                <td class="p-3 text-gray-500 text-xs max-w-xs">${att.lemburKet || '-'}</td>
-                <td class="p-3 text-gray-500 text-xs max-w-xs">${att.reason || '-'}</td>
-                <td class="p-3 text-right"><button onclick="deleteAttendance('${att.id}')" class="text-red-400 hover:text-red-600"><i class="ph ph-trash"></i></button></td>`;
+                <td class="p-3 text-gray-700 font-medium text-center">${escapeLateHtml(att.lemburJam ? att.lemburJam + ' Jam' : '-')}</td>
+                <td class="p-3 text-gray-500 text-xs max-w-xs">${escapeLateHtml(att.lemburKet || '-')}</td>
+                <td class="p-3 text-gray-500 text-xs max-w-xs">${escapeLateHtml(att.reason || '-')}</td>
+                <td class="p-3 text-right"><button onclick="deleteAttendance(decodeURIComponent('${handlerKey(att.id)}'))" class="text-red-400 hover:text-red-600"><i class="ph ph-trash"></i></button></td>`;
             tbody.appendChild(tr);
         });
     }
@@ -2956,7 +3167,7 @@
             if (currentDate !== normalizedDate) {
                 currentDate = normalizedDate;
                 const sepTr = document.createElement('tr'); sepTr.className = "bg-indigo-100 border-y-4 border-indigo-300";
-                sepTr.innerHTML = `<td colspan="15" class="p-3 text-center font-bold text-indigo-900 uppercase tracking-widest text-xs shadow-inner"><i class="ph-fill ph-calendar-check mr-2 text-base align-text-bottom"></i> DATA TANGGAL: ${window.formatDetailedDate(currentDate)}</td>`;
+                sepTr.innerHTML = `<td colspan="15" class="p-3 text-center font-bold text-indigo-900 uppercase tracking-widest text-xs shadow-inner"><i class="ph-fill ph-calendar-check mr-2 text-base align-text-bottom"></i> DATA TANGGAL: ${escapeLateHtml(window.formatDetailedDate(currentDate))}</td>`;
                 tbody.appendChild(sepTr);
             }
 
@@ -2971,24 +3182,24 @@
 
             tr.innerHTML = `
                 <td class="p-3 border-r border-gray-200 bg-white sticky left-0 z-10 text-center shadow-[2px_0_5px_rgba(0,0,0,0.02)]">
-                    <input type="checkbox" class="report-checkbox w-4 h-4 cursor-pointer rounded text-blue-600 focus:ring-blue-500" value="${att.id}" onchange="updateBulkDeleteBtn()">
+                    <input type="checkbox" class="report-checkbox w-4 h-4 cursor-pointer rounded text-blue-600 focus:ring-blue-500" value="${escapeLateHtml(att.id)}" onchange="updateBulkDeleteBtn()">
                 </td>
-                <td class="p-3 border-r border-gray-200 bg-gray-50 sticky left-[48px] z-10 font-medium whitespace-nowrap text-xs">${displayDate}</td>
-                <td class="p-3 border-r border-gray-200 font-medium text-gray-800">${att.empName}</td>
-                <td class="p-3 border-r border-gray-200 text-gray-600">${att.empDivision}</td>
-                <td class="p-3 border-r border-gray-200 text-center" style="${statusStyle}">${att.status}</td>
-                <td class="p-3 border-r border-gray-200 text-center text-gray-600">${att.status === 'Hadir' ? att.session1 : '-'}</td>
-                <td class="p-3 border-r border-gray-200 text-center text-gray-600">${att.status === 'Hadir' ? att.session2 : '-'}</td>
-                <td class="p-3 border-r border-gray-200 text-right text-gray-800 font-medium bg-blue-50/30">${att.resi1 ? att.resi1 : '-'}</td>
+                <td class="p-3 border-r border-gray-200 bg-gray-50 sticky left-[48px] z-10 font-medium whitespace-nowrap text-xs">${escapeLateHtml(displayDate)}</td>
+                <td class="p-3 border-r border-gray-200 font-medium text-gray-800">${escapeLateHtml(att.empName)}</td>
+                <td class="p-3 border-r border-gray-200 text-gray-600">${escapeLateHtml(att.empDivision)}</td>
+                <td class="p-3 border-r border-gray-200 text-center" style="${statusStyle}">${escapeLateHtml(att.status)}</td>
+                <td class="p-3 border-r border-gray-200 text-center text-gray-600">${escapeLateHtml(att.session1 || '-')}</td>
+                <td class="p-3 border-r border-gray-200 text-center text-gray-600">${escapeLateHtml(att.session2 || '-')}</td>
+                <td class="p-3 border-r border-gray-200 text-right text-gray-800 font-medium bg-blue-50/30">${escapeLateHtml(att.resi1 ? att.resi1 : '-')}</td>
                 <td class="p-3 border-r border-gray-200 text-right text-green-700 font-semibold whitespace-nowrap bg-blue-50/30">${att.gmv1 ? window.formatRupiah(att.gmv1) : '-'}</td>
-                <td class="p-3 border-r border-gray-200 text-right text-gray-800 font-medium bg-purple-50/30">${att.resi2 ? att.resi2 : '-'}</td>
+                <td class="p-3 border-r border-gray-200 text-right text-gray-800 font-medium bg-purple-50/30">${escapeLateHtml(att.resi2 ? att.resi2 : '-')}</td>
                 <td class="p-3 border-r border-gray-200 text-right text-green-700 font-semibold whitespace-nowrap bg-purple-50/30">${att.gmv2 ? window.formatRupiah(att.gmv2) : '-'}</td>
-                <td class="p-3 border-r border-gray-200 text-center text-gray-700 font-medium">${att.lemburJam ? att.lemburJam + ' Jam' : '-'}</td>
-                <td class="p-3 border-r border-gray-200 text-gray-500 text-xs">${att.lemburKet || '-'}</td>
-                <td class="p-3 border-r border-gray-200 text-gray-500 text-xs">${att.reason || '-'}</td>
+                <td class="p-3 border-r border-gray-200 text-center text-gray-700 font-medium">${escapeLateHtml(att.lemburJam ? att.lemburJam + ' Jam' : '-')}</td>
+                <td class="p-3 border-r border-gray-200 text-gray-500 text-xs">${escapeLateHtml(att.lemburKet || '-')}</td>
+                <td class="p-3 border-r border-gray-200 text-gray-500 text-xs">${escapeLateHtml(att.reason || '-')}</td>
                 <td class="p-3 text-right whitespace-nowrap">
-                    <button onclick="openEditAttendance('${att.id}')" class="text-blue-500 hover:text-white p-1.5 rounded bg-blue-50 hover:bg-blue-600 transition shadow-sm border border-blue-200 mr-1"><i class="ph ph-pencil-simple"></i></button>
-                    <button onclick="deleteAttendance('${att.id}')" class="text-red-500 hover:text-white p-1.5 rounded bg-red-50 hover:bg-red-600 transition shadow-sm border border-red-200"><i class="ph ph-trash"></i></button>
+                    <button onclick="openEditAttendance(decodeURIComponent('${handlerKey(att.id)}'))" class="text-blue-500 hover:text-white p-1.5 rounded bg-blue-50 hover:bg-blue-600 transition shadow-sm border border-blue-200 mr-1"><i class="ph ph-pencil-simple"></i></button>
+                    <button onclick="deleteAttendance(decodeURIComponent('${handlerKey(att.id)}'))" class="text-red-500 hover:text-white p-1.5 rounded bg-red-50 hover:bg-red-600 transition shadow-sm border border-red-200"><i class="ph ph-trash"></i></button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -3013,9 +3224,9 @@
 
         if(filteredData.length === 0){ showMessage("Tidak ada data.", "error"); return; }
 
-        let csvContent = "data:text/csv;charset=utf-8,Tanggal,Nama Karyawan,Divisi,Status,Sesi 1,Sesi 2,Resi Sesi 1,GMV Sesi 1,Resi Sesi 2,GMV Sesi 2,Lembur (Jam),Ket Lembur,Keterangan Absen\n";
+        let csvContent = "Tanggal,Nama Karyawan,Divisi,Status,Sesi 1,Sesi 2,Resi Sesi 1,GMV Sesi 1,Resi Sesi 2,GMV Sesi 2,Lembur (Jam),Ket Lembur,Keterangan Absen\n";
         filteredData.forEach(row => {
-            const s1 = row.status === 'Hadir' ? row.session1 : '-'; const s2 = row.status === 'Hadir' ? row.session2 : '-';
+            const s1 = row.session1 || '-'; const s2 = row.session2 || '-';
             const lj = row.lemburJam || '-'; const lk = row.lemburKet ? `"${row.lemburKet}"` : '-';
             let normalizedDate = window.normalizeDateStr(row.date);
             let detailedDate = window.formatDetailedDate(normalizedDate).replace(/,/g, '');
@@ -3023,12 +3234,12 @@
                 const d = new Date(row.timestamp); const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
                 detailedDate += ` ${timeStr}`;
             }
-            let r = [detailedDate, `"${row.empName}"`, row.empDivision, row.status, s1, s2, row.resi1||'-', row.gmv1||'-', row.resi2||'-', row.gmv2||'-', lj, lk, row.reason?`"${row.reason}"`: '-'];
-            csvContent += r.join(",") + "\n";
+            let r = [detailedDate, row.empName, row.empDivision, row.status, s1, s2, row.resi1 ?? '-', row.gmv1 ?? '-', row.resi2 ?? '-', row.gmv2 ?? '-', lj, row.lemburKet||'-', row.reason||'-'];
+            csvContent += r.map(csvCell).join(',') + '\n';
         });
 
-        const link = document.createElement("a"); link.setAttribute("href", encodeURI(csvContent)); link.setAttribute("download", `Gloria_Report_${monthInput}.csv`);
-        document.body.appendChild(link); link.click(); link.remove(); showMessage("Mendownload CSV...", "success");
+        downloadCsv(`Gloria_Report_${monthInput||'semua'}.csv`,csvContent);
+        showMessage("Mengunduh CSV...", "success");
     };
 
     document.querySelectorAll('.emp-filter').forEach(btn => {
@@ -3046,12 +3257,6 @@
             const division = document.getElementById('newEmpDiv').value;
             const newEmp = { id: "EMP_" + Date.now(), name: name, division: division };
             
-            // Optimistic Local Save
-            state.employees.push(newEmp);
-            if (state.isMockMode) localStorage.setItem('gloria_mock_emp', JSON.stringify(state.employees));
-            renderEmployees();
-            updateEmployeeDropdown();
-
             await apiCall('addEmployee', newEmp);
             logActivity("Tambah Karyawan", `Karyawan baru: ${name}`);
             refreshData(true).catch(()=>{}); showMessage("Karyawan ditambahkan!", "success"); closeModal('addEmployeeModal'); e.target.reset();
@@ -3059,16 +3264,13 @@
     });
 
     window.deleteEmployee = async (id) => {
+        if(String(state.user?.email||'').toLowerCase()!=='mohammadziky2@gmail.com'){showMessage('Hanya Master yang boleh menghapus karyawan.','error');return;}
         try {
             const empName = state.employees.find(e => e.id === id)?.name || id;
             
-            // Optimistic Delete
-            if (state.isMockMode) window.registerDeletedId(id);
-            state.employees = state.employees.filter(e => e.id !== id);
-            if (state.isMockMode) localStorage.setItem('gloria_mock_emp', JSON.stringify(state.employees));
-            renderEmployees();
-
-            await apiCall('deleteEmployee', { id });
+            if(!window.confirm('Hapus karyawan '+empName+'? Data dengan riwayat absensi tidak dapat dihapus.'))return;
+            const removed=await apiCall('deleteEmployee', { id });
+            if(removed.deleted===false)throw new Error('Data karyawan tidak ditemukan.');
             logActivity("Hapus Karyawan", `Menghapus data karyawan: ${empName}`);
             refreshData(true).catch(()=>{}); showMessage("Karyawan dihapus.", "success");
         } catch (error) { if (!state.isMockMode) await refreshData(true).catch(()=>{}); showMessage(error.message || "Gagal menghapus.", "error"); }
@@ -3081,20 +3283,22 @@
         const isHost = empSelect.options[empSelect.selectedIndex].dataset.division === 'Host Live';
         const isHadir = document.getElementById('attStatus').value === 'Hadir';
 
-        if (isHost && isHadir) { perfCon.classList.remove('hidden'); perfCon.classList.add('grid'); sessionCon.classList.remove('hidden'); sessionCon.classList.add('grid', 'grid-cols-1', 'md:grid-cols-2', 'gap-5'); } 
+        if (isHost) { perfCon.classList.remove('hidden'); perfCon.classList.add('grid'); sessionCon.classList.remove('hidden'); sessionCon.classList.add('grid', 'grid-cols-1', 'md:grid-cols-2', 'gap-5'); } 
         else {
             perfCon.classList.add('hidden'); perfCon.classList.remove('grid');
             sessionCon.classList.add('hidden'); sessionCon.classList.remove('grid', 'grid-cols-1', 'md:grid-cols-2', 'gap-5');
-            document.getElementById('attResi1').value = ''; document.getElementById('attGMV1').value = '';
-            document.getElementById('attResi2').value = ''; document.getElementById('attGMV2').value = '';
+            if (!isHost) {
+                document.getElementById('attResi1').value = ''; document.getElementById('attGMV1').value = '';
+                document.getElementById('attResi2').value = ''; document.getElementById('attGMV2').value = '';
+            }
             if (!isHost) { document.getElementById('attSession1').value = '-'; document.getElementById('attSession2').value = '-'; }
-            else { document.getElementById('attSession1').value = 'Selesai'; document.getElementById('attSession2').value = 'Selesai'; }
+            else { document.getElementById('attSession1').value = '-'; document.getElementById('attSession2').value = '-'; }
         }
     };
 
     window.toggleReasonField = () => {
         const status = document.getElementById('attStatus').value; const reasonCon = document.getElementById('reasonContainer'); const sessionCon = document.getElementById('sessionContainer'); const reasonInput = document.getElementById('attReason');
-        if (status !== 'Hadir') { reasonCon.classList.remove('hidden'); sessionCon.classList.add('hidden'); reasonInput.setAttribute('required', 'true'); } 
+        if (status !== 'Hadir') { reasonCon.classList.remove('hidden'); reasonInput.setAttribute('required', 'true'); } 
         else { reasonCon.classList.add('hidden'); sessionCon.classList.remove('hidden'); reasonInput.removeAttribute('required'); reasonInput.value = ''; }
         handleEmployeeChange();
     };
@@ -3104,7 +3308,7 @@
         const selectedEmployees=employeeIds.map(id=>state.employees.find(e=>String(e.id)===String(id))).filter(Boolean);if(!selectedEmployees.length){showMessage('Tidak ada karyawan yang dipilih.','error');return;}
         const divisions=[...new Set(selectedEmployees.map(e=>String(e.division)))];if(divisions.length!==1){showMessage('Input massal harus satu divisi. Pilih Admin, Packing, atau Host Live secara terpisah.','error');return;}
         const division=divisions[0],status=document.getElementById('attStatus').value,reason=status!=='Hadir'?document.getElementById('attReason').value.trim():'';if(status!=='Hadir'&&!reason){showMessage('Keterangan wajib diisi untuk status selain Hadir.','error');return;}
-        const isHost=division==='Host Live';const base={date:dateInput,status:status,reason:reason,lemburJam:document.getElementById('attLemburJam').value?Number(document.getElementById('attLemburJam').value):'',lemburKet:document.getElementById('attLemburKet').value||'',session1:isHost&&status==='Hadir'?document.getElementById('attSession1').value:'-',session2:isHost&&status==='Hadir'?document.getElementById('attSession2').value:'-',resi1:isHost&&status==='Hadir'&&document.getElementById('attResi1').value?parseInt(document.getElementById('attResi1').value):'',gmv1:isHost&&status==='Hadir'&&document.getElementById('attGMV1').value?parseInt(document.getElementById('attGMV1').value):'',resi2:isHost&&status==='Hadir'&&document.getElementById('attResi2').value?parseInt(document.getElementById('attResi2').value):'',gmv2:isHost&&status==='Hadir'&&document.getElementById('attGMV2').value?parseInt(document.getElementById('attGMV2').value):''};
+        const isHost=division==='Host Live';const base={date:dateInput,status:status,reason:reason,lemburJam:document.getElementById('attLemburJam').value?Number(document.getElementById('attLemburJam').value):'',lemburKet:document.getElementById('attLemburKet').value||'',session1:isHost?document.getElementById('attSession1').value:'-',session2:isHost?document.getElementById('attSession2').value:'-',resi1:isHost&&document.getElementById('attResi1').value?parseInt(document.getElementById('attResi1').value):'',gmv1:isHost&&document.getElementById('attGMV1').value?parseInt(document.getElementById('attGMV1').value):'',resi2:isHost&&document.getElementById('attResi2').value?parseInt(document.getElementById('attResi2').value):'',gmv2:isHost&&document.getElementById('attGMV2').value?parseInt(document.getElementById('attGMV2').value):''};
         const existingKeys=new Set((state.attendance||[]).filter(a=>window.normalizeDateStr(a.date)===dateInput).map(a=>String(a.empId)));
         const items=selectedEmployees.filter(e=>!existingKeys.has(String(e.id))).map((e,i)=>({...base,id:'ATT_BULK_'+Date.now()+'_'+i+'_'+String(e.id),empId:e.id,empName:e.name,empDivision:e.division,timestamp:new Date().toISOString()}));if(!items.length){showMessage('Semua karyawan yang dipilih sudah memiliki absensi pada tanggal tersebut.','error');return;}
         const submitBtn=document.querySelector('#attendanceForm button[type="submit"]');if(submitBtn){submitBtn.disabled=true;submitBtn.innerText='Menyimpan massal...';}
@@ -3129,7 +3333,7 @@
             const nameB = String(empName || "").trim().toLowerCase();
             const divA = String(a.empDivision || "").trim().toLowerCase();
             const divB = String(empDivision || "").trim().toLowerCase();
-            const isEmpMatch = (String(a.empId) === String(empId)) || (nameA === nameB && divA === divB); // ABSOLUTE EMP MATCH
+            const isEmpMatch = String(a.empId) === String(empId); // Hindari tabrakan bila dua karyawan bernama sama.
             return isDateMatch && isEmpMatch;
         });
         
@@ -3138,7 +3342,7 @@
         else { if (existingDataToday.length >= 1) { showMessage("Karyawan sudah datang! (Maksimal 1 kali input untuk divisi ini)", "error"); return; } }
         
         const submitBtn = e.target.querySelector('button[type="submit"]'); submitBtn.disabled = true; submitBtn.innerText = "Menyimpan ke Spreadsheet...";
-        const status = document.getElementById('attStatus').value; const isHostPresent = (status === 'Hadir' && empDivision === 'Host Live');
+        const status = document.getElementById('attStatus').value; const isHostPresent = (empDivision === 'Host Live');
 
         let inputSesi1 = isHostPresent ? document.getElementById('attSession1').value : '-'; let inputSesi2 = isHostPresent ? document.getElementById('attSession2').value : '-';
         let inputResi1 = isHostPresent && document.getElementById('attResi1').value ? parseInt(document.getElementById('attResi1').value) : '';
@@ -3147,33 +3351,24 @@
         let inputGMV2 = isHostPresent && document.getElementById('attGMV2').value ? parseInt(document.getElementById('attGMV2').value) : '';
 
         if (isUpdate) {
-            if (inputSesi1 === '-' || inputSesi1 === '') inputSesi1 = existingRecord.session1;
-            if (inputSesi2 === '-' || inputSesi2 === '') inputSesi2 = existingRecord.session2;
-            if (inputResi1 === '') inputResi1 = existingRecord.resi1;
-            if (inputGMV1 === '') inputGMV1 = existingRecord.gmv1;
-            if (inputResi2 === '') inputResi2 = existingRecord.resi2;
-            if (inputGMV2 === '') inputGMV2 = existingRecord.gmv2;
+            if (isHostPresent && (inputSesi1 === '-' || inputSesi1 === '')) inputSesi1 = existingRecord.session1;
+            if (isHostPresent && (inputSesi2 === '-' || inputSesi2 === '')) inputSesi2 = existingRecord.session2;
+            if (isHostPresent && inputResi1 === '') inputResi1 = existingRecord.resi1;
+            if (isHostPresent && inputGMV1 === '') inputGMV1 = existingRecord.gmv1;
+            if (isHostPresent && inputResi2 === '') inputResi2 = existingRecord.resi2;
+            if (isHostPresent && inputGMV2 === '') inputGMV2 = existingRecord.gmv2;
         }
 
         const data = {
-            id: isUpdate ? existingRecord.id : "ATT_" + Date.now(),
+            id: isUpdate ? existingRecord.id : "ATT_" + Date.now() + '_' + Math.random().toString(36).slice(2),
             date: dateInput, empId: empId, empName: empName, empDivision: empDivision, status: status, session1: inputSesi1, session2: inputSesi2,
-            reason: status !== 'Hadir' ? document.getElementById('attReason').value : (isUpdate && existingRecord.reason ? existingRecord.reason : ''),
-            lemburJam: document.getElementById('attLemburJam').value ? Number(document.getElementById('attLemburJam').value) : (isUpdate && existingRecord.lemburJam ? existingRecord.lemburJam : ''),
-            lemburKet: document.getElementById('attLemburKet').value || (isUpdate && existingRecord.lemburKet ? existingRecord.lemburKet : ''),
+            reason: status !== 'Hadir' ? document.getElementById('attReason').value : '',
+            lemburJam: document.getElementById('attLemburJam').value ? Number(document.getElementById('attLemburJam').value) : (isUpdate ? existingRecord.lemburJam||'' : ''),
+            lemburKet: document.getElementById('attLemburKet').value || (isUpdate ? existingRecord.lemburKet||'' : ''),
             resi1: inputResi1, gmv1: inputGMV1, resi2: inputResi2, gmv2: inputGMV2, timestamp: new Date().toISOString()
         };
 
         try {
-            // Optimistic Local Save
-            if (isUpdate) {
-                const idx = state.attendance.findIndex(a => a.id === data.id);
-                if (idx !== -1) state.attendance[idx] = data;
-            } else {
-                state.attendance.push(data);
-            }
-            if (state.isMockMode) localStorage.setItem('gloria_mock_att', JSON.stringify(state.attendance));
-
             if (isUpdate) {
                 await apiCall('updateAttendance', data);
                 logActivity("Update Sesi", `Menggabungkan data absensi Sesi menyusul untuk ${data.empName}`);
@@ -3195,14 +3390,9 @@
         try {
             const att = state.attendance.find(a => a.id === id); const attDetails = att ? `${att.empName} tgl ${window.normalizeDateStr(att.date)}` : id;
             
-            // Optimistic Delete
-            if (state.isMockMode) window.registerDeletedId(id);
-            state.attendance = state.attendance.filter(a => a.id !== id);
-            if (state.isMockMode) localStorage.setItem('gloria_mock_att', JSON.stringify(state.attendance));
-            renderTodayAttendance();
-            if(state.currentTab === 'reports') renderMonthlyReport();
-
-            await apiCall('deleteAttendance', { id });
+            if(!window.confirm('Hapus absensi '+attDetails+'? Tindakan ini dicatat di audit log.'))return;
+            const deleted=await apiCall('deleteAttendance', { id });
+            if(deleted.deleted===false)throw new Error('Absensi tidak ditemukan.');
             logActivity("Hapus Kehadiran", `Menghapus data absensi: ${attDetails}`); refreshData(true).catch(()=>{}); showMessage("Data dihapus.", "success");
         } catch (error) { if (!state.isMockMode) await refreshData(true).catch(()=>{}); showMessage(error.message || "Gagal menghapus.", "error"); }
     };
@@ -3215,25 +3405,29 @@
         const checkboxes = document.querySelectorAll('.report-checkbox:checked'); const btn = document.getElementById('btnBulkDelete'); const countSpan = document.querySelector('.bulkDeleteCountValue');
         if (!btn || !countSpan) return;
         const count = checkboxes.length; countSpan.innerText = count;
-        if (count > 0) btn.classList.remove('hidden'); else btn.classList.add('hidden');
+        if (count > 0 && String(state.user?.email||'').toLowerCase()==='mohammadziky2@gmail.com') btn.classList.remove('hidden'); else btn.classList.add('hidden');
         const selectAllCb = document.getElementById('selectAllReports'); const allCheckboxes = document.querySelectorAll('.report-checkbox');
         if (selectAllCb && allCheckboxes.length > 0) selectAllCb.checked = (count === allCheckboxes.length);
     };
 
     window.bulkDeleteAttendance = async () => {
-        const checkboxes = document.querySelectorAll('.report-checkbox:checked'); if(checkboxes.length === 0) return;
-        const btn = document.getElementById('btnBulkDelete'); btn.innerHTML = `<i class="ph ph-spinner animate-spin mr-2"></i> Menghapus...`; btn.disabled = true;
+        const checkboxes = Array.from(document.querySelectorAll('.report-checkbox:checked'));
+        if(!checkboxes.length)return;
+        if(String(state.user?.email||'').toLowerCase()!=='mohammadziky2@gmail.com'){showMessage('Hapus massal hanya untuk Master.','error');return;}
+        if(checkboxes.length>100){showMessage('Maksimal 100 data untuk satu proses.','error');return;}
+        const idsToDelete=checkboxes.map(cb=>cb.value);
+        const month=document.getElementById('reportMonth')?.value||'semua bulan';
+        if(!window.confirm(`Anda akan menghapus ${idsToDelete.length} baris kehadiran periode ${month}.\nData akan diarsipkan di DeletedAttendance sebelum dihapus. Lanjutkan?`))return;
+        const btn=document.getElementById('btnBulkDelete');btn.disabled=true;
+        btn.innerHTML='<i class="ph ph-spinner animate-spin mr-2"></i> Mengarsipkan & menghapus...';
         try {
-            // Optimistic Delete
-            const idsToDelete = Array.from(checkboxes).map(cb => cb.value);
-            if (state.isMockMode) idsToDelete.forEach(id => window.registerDeletedId(id));
-            state.attendance = state.attendance.filter(a => !idsToDelete.includes(a.id));
-            if (state.isMockMode) localStorage.setItem('gloria_mock_att', JSON.stringify(state.attendance));
-            renderMonthlyReport();
-
-            await Promise.all(Array.from(checkboxes).map(cb => apiCall('deleteAttendance', { id: cb.value })));
-            logActivity("Hapus Massal", `Menghapus ${checkboxes.length} data kehadiran.`); refreshData(true).catch(()=>{}); showMessage(`${checkboxes.length} data berhasil dihapus.`, "success");
-        } catch(e) { if (!state.isMockMode) await refreshData(true).catch(()=>{}); showMessage(e.message || "Gagal menghapus beberapa data.", "error"); } finally { btn.innerHTML = `<i class="ph ph-trash mr-2"></i> Hapus Terpilih (<span class="bulkDeleteCountValue">0</span>)`; btn.disabled = false; }
+            // Tidak mengubah state lokal sampai server mengonfirmasi semua ID.
+            const response=await apiCall('deleteAttendanceBulk',{ids:idsToDelete});
+            await refreshData(true);
+            await renderMonthlyReport();
+            showMessage(`${response.deleted} data diarsipkan dan dihapus. ID arsip: ${response.archiveBatchId}`,'success');
+        }catch(e){await refreshData(true).catch(()=>{});showMessage(e.message||'Penghapusan dibatalkan atau gagal. Periksa data arsip.','error');}
+        finally{btn.disabled=false;btn.innerHTML='<i class="ph ph-trash mr-2"></i> Hapus Terpilih (<span class="bulkDeleteCountValue">0</span>)';}
     };
 
     window.openEditAttendance = (id) => {
@@ -3249,7 +3443,10 @@
     window.toggleEditReasonField = () => {
         const status = document.getElementById('editAttStatus').value; const reasonCon = document.getElementById('editReasonContainer'); const sessionCon = document.getElementById('editSessionContainer'); const empDivision = document.getElementById('editAttEmpDivision').value; const perfCon = document.getElementById('editPerformaContainer');
         if (status !== 'Hadir') {
-            reasonCon.classList.remove('hidden'); sessionCon.classList.add('hidden'); perfCon.classList.add('hidden'); perfCon.classList.remove('grid');
+            reasonCon.classList.remove('hidden');
+            // Kehadiran dan metrik penjualan Host terpisah: tampilkan semua angka untuk dicek.
+            if (empDivision === 'Host Live') {sessionCon.classList.remove('hidden');sessionCon.classList.add('grid');perfCon.classList.remove('hidden');perfCon.classList.add('grid');}
+            else {sessionCon.classList.add('hidden');perfCon.classList.add('hidden');perfCon.classList.remove('grid');}
         } else {
             reasonCon.classList.add('hidden'); 
             if (empDivision === 'Host Live') { sessionCon.classList.remove('hidden'); sessionCon.classList.add('grid'); perfCon.classList.remove('hidden'); perfCon.classList.add('grid'); } 
@@ -3259,7 +3456,7 @@
 
     document.getElementById('editAttendanceForm').addEventListener('submit', async (e) => {
         e.preventDefault(); const submitBtn = e.target.querySelector('button[type="submit"]'); submitBtn.innerText = "Menyimpan Perubahan..."; submitBtn.disabled = true;
-        const id = document.getElementById('editAttId').value; const status = document.getElementById('editAttStatus').value; const empDivision = document.getElementById('editAttEmpDivision').value; const isHostPresent = (status === 'Hadir' && empDivision === 'Host Live');
+        const id = document.getElementById('editAttId').value; const status = document.getElementById('editAttStatus').value; const empDivision = document.getElementById('editAttEmpDivision').value; const isHostPresent = (empDivision === 'Host Live');
         const existingData = state.attendance.find(a => a.id === id) || {};
 
         let inputSesi1 = isHostPresent ? document.getElementById('editAttSession1').value : '-'; let inputSesi2 = isHostPresent ? document.getElementById('editAttSession2').value : '-';
@@ -3273,11 +3470,6 @@
         };
 
         try {
-            // Optimistic Local Save
-            const idx = state.attendance.findIndex(a => a.id === id);
-            if (idx !== -1) state.attendance[idx] = data;
-            if (state.isMockMode) localStorage.setItem('gloria_mock_att', JSON.stringify(state.attendance));
-
             await apiCall('updateAttendance', data);
             logActivity("Edit Kehadiran", `Mengubah data absensi ${existingData.empName || document.getElementById('editAttEmpName').value} pada tanggal ${data.date}`);
             refreshData(true).catch(()=>{}); showMessage("Perubahan disimpan!", "success"); closeModal('editAttendanceModal');
@@ -3326,6 +3518,9 @@
                 document.getElementById('slipHostCommission').innerText=window.formatRupiah(Number(d.hostCommission||0));
                 document.getElementById('slipHostCommissionTier').innerText=d.hostCommissionTier||'-';
                 document.getElementById('slipHostCommissionRate').innerText=d.hostCommissionRate||'-';
+                const se=d.hostEvaluation||{title:'Evaluasi belum tersedia',message:'Evaluasi otomatis belum diterima dari backend.'};
+                document.getElementById('individualHostEvaluationTitle').textContent=se.title;
+                document.getElementById('individualHostEvaluationMessage').textContent=se.message;
                 if(hostChartInstance)hostChartInstance.destroy();
                 const dates=[],resis=[],gmvs=[]; (d.hostRows||[]).slice().sort((a,b)=>String(a.date).localeCompare(String(b.date))).forEach(row=>{dates.push(String(row.date).slice(5));resis.push(Number(row.resi||0));gmvs.push(Number(row.gmv||0));});
                 hostChartInstance=new Chart(document.getElementById('hostPerformanceChart').getContext('2d'),{type:'line',data:{labels:dates,datasets:[{label:'Total Resi',data:resis,borderColor:'#a855f7',backgroundColor:'#a855f7',yAxisID:'y'},{label:'Total GMV (Rp)',data:gmvs,borderColor:'#16a34a',backgroundColor:'#16a34a',yAxisID:'y1'}]},options:{scales:{y:{display:true,position:'left'},y1:{display:true,position:'right',grid:{drawOnChartArea:false}}}}});
@@ -3372,14 +3567,48 @@
     };
 
     window.downloadSlipExcel = () => {
-        const month = document.getElementById('salaryMonth').value, empId = document.getElementById('salaryEmployee').value;
-        const filtered = state.attendance.filter(a => window.normalizeDateStr(a.date).startsWith(month) && String(a.empId) === String(empId)).sort((a,b)=>new Date(window.normalizeDateStr(a.date))-new Date(window.normalizeDateStr(b.date)));
-        let csv = "data:text/csv;charset=utf-8,Tanggal,Status,Lembur Jam,Ket Lembur,Total Resi,Total GMV,Keterangan Absen,Keterlambatan\n";
-        filtered.forEach(r => { const late=(state.lateAttendance||[]).find(x=>String(x.employeeId)===String(empId)&&window.normalizeDateStr(x.date)===window.normalizeDateStr(r.date)); csv += `${window.normalizeDateStr(r.date)},${r.status},${r.lemburJam||'-'},${r.lemburKet?`"${r.lemburKet}"`: '-'},${(Number(r.resi1)||0)+(Number(r.resi2)||0)},${(Number(r.gmv1)||0)+(Number(r.gmv2)||0)},${r.reason?`"${r.reason}"`: '-'},${late?`"${late.durationText} — ${late.reason}"`:'-'}\n`; });
-        csv += `\nRekap Keterlambatan\nTanggal,Durasi,Alasan\n`;
-        (state.lateAttendance||[]).filter(x=>window.normalizeDateStr(x.date).startsWith(month)&&String(x.employeeId)===String(empId)).forEach(x=>csv += `${window.normalizeDateStr(x.date)},"${x.durationText}","${String(x.reason||'').replace(/"/g,'""')}"\n`);
-        const a = document.createElement("a"); a.href = encodeURI(csv); a.download = `Individu_${document.getElementById('slipName').innerText}_${month}.csv`;
-        document.body.appendChild(a); a.click(); a.remove();
+        const month=document.getElementById('salaryMonth').value,empId=document.getElementById('salaryEmployee').value;
+        if(!month||!empId)return showMessage('Pilih bulan dan karyawan terlebih dahulu.','error');
+        const filtered=(state.attendance||[]).filter(a=>window.normalizeDateStr(a.date).startsWith(month)&&String(a.empId)===String(empId)).sort((a,b)=>window.normalizeDateStr(a.date).localeCompare(window.normalizeDateStr(b.date)));
+        let rows=[['Tanggal','Status','Lembur Jam','Ket Lembur','Total Resi','Total GMV','Keterangan Absen','Keterlambatan']];
+        filtered.forEach(r=>{
+            const late=(state.lateAttendance||[]).find(x=>String(x.employeeId)===String(empId)&&window.normalizeDateStr(x.date)===window.normalizeDateStr(r.date));
+            rows.push([window.normalizeDateStr(r.date),r.status,r.lemburJam||0,r.lemburKet||'',(Number(r.resi1)||0)+(Number(r.resi2)||0),(Number(r.gmv1)||0)+(Number(r.gmv2)||0),r.reason||'',late?`${late.durationText||''} - ${late.reason||''}`:'']);
+        });
+        rows.push([],['Rekap Keterlambatan'],['Tanggal','Durasi','Alasan']);
+        (state.lateAttendance||[]).filter(x=>window.normalizeDateStr(x.date).startsWith(month)&&String(x.employeeId)===String(empId)).forEach(x=>rows.push([window.normalizeDateStr(x.date),x.durationText||'',x.reason||'']));
+        const csv=rows.map(cells=>cells.map(csvCell).join(',')).join('\n');
+        downloadCsv(`Individu_${String(document.getElementById('slipName').innerText||'Karyawan').replace(/[^\w-]+/g,'_')}_${month}.csv`,csv);
+    };
+
+    let currentHostSalaryDraftPayload = null;
+    let lastHostSalarySnapshot = null;
+    ['calcHostAttStart','calcHostAttEnd','calcHostPerfStart','calcHostPerfEnd','calcHostEmployee','calcHostBase','calcHostBonus','calcHostCommissionMethod'].forEach(id=>{document.getElementById(id)?.addEventListener('change',()=>{currentHostSalaryDraftPayload=null;lastHostSalarySnapshot=null;document.getElementById('hostSalaryResult')?.classList.add('hidden');});});
+    window.saveCurrentHostSalaryDraft = async () => {
+        if(String(state.user?.email||'').toLowerCase()!=='mohammadziky2@gmail.com')return showMessage('Hanya Master boleh menyimpan draft gaji.','error');
+        if(!currentHostSalaryDraftPayload)return showMessage('Hitung gaji Host terlebih dahulu.','error');
+        if(!window.confirm('Simpan snapshot kalkulasi sebagai DRAFT permanen? Tidak ada gaji yang dibayarkan secara otomatis.'))return;
+        const btn=document.getElementById('saveHostSalaryDraftBtn');btn.disabled=true;
+        try{
+            const r=await apiCall('saveHostSalaryDraft',currentHostSalaryDraftPayload);
+            showMessage('Draft tercatat di HostSalaryDrafts. ID: '+r.id,'success');
+        }catch(e){showMessage(e.message||'Gagal menyimpan draft gaji.','error');}
+        finally{btn.disabled=false;}
+    };
+    window.loadHostSalaryDrafts = async () => {
+        const el=document.getElementById('hostSalaryDraftHistory');
+        try{
+            const response=await apiCall('getHostSalaryDrafts',{});
+            const rows=response.data||[];
+            el.innerHTML=rows.length?rows.map(x=>`<div class="py-3 border-b"><b>${escapeLateHtml(x.employeeName)}</b> · ${escapeLateHtml(x.startDate)} s/d ${escapeLateHtml(x.endDate)} · ${escapeLateHtml(x.method)} · GMV ${window.formatRupiah(x.totalGMV)} · Resi ${Number(x.totalResi||0).toLocaleString('id-ID')} · Komisi ${window.formatRupiah(x.commission)} · Total <b>${window.formatRupiah(x.totalSalary)}</b><div class="text-indigo-800 mt-1 font-bold">${escapeLateHtml(x.evaluation?.title||'-')}</div><div class="text-slate-600 mt-1">${escapeLateHtml(x.evaluation?.message||'-')}</div><div class="text-slate-400">ID ${escapeLateHtml(x.id)} — ${escapeLateHtml(x.status)}${x.evaluation?.source==='calculated_for_legacy'?' · Evaluasi lama dihitung saat ditampilkan':''}</div></div>`).join(''):'Belum ada draft tersimpan.';
+            el.classList.remove('hidden');
+        }catch(e){showMessage(e.message||'Gagal memuat draft gaji.','error');}
+    };
+    window.downloadHostSalarySummaryCSV=()=>{
+      const c=lastHostSalarySnapshot,p=currentHostSalaryDraftPayload;
+      if(!c||!p)return showMessage('Hitung gaji Host sebelum membuat backup.','error');
+      const rows=[['GLORIA — Rekap dan Evaluasi Host Live'],['Nama Host',c.employeeName],['Tanggal Mulai Kehadiran',p.attendanceStartDate],['Tanggal Akhir Kehadiran',p.attendanceEndDate],['Mulai Performa',p.startDate],['Akhir Performa',p.endDate],['Metode Komisi',c.method],['Total Resi',c.totalResi],['Total GMV (Rp)',c.totalGMV],['Hari Hadir',c.hadir],['Gaji Pokok (Rp)',c.basicSalary],['Bonus (Rp)',c.bonus],['Komisi (Rp)',c.commission],['Total Gaji (Rp)',c.totalSalary],['Tarif Komisi',c.rateLabel],['Tier Komisi',c.tier],['Tingkat Evaluasi',c.evaluation.level],['Judul Evaluasi',c.evaluation.title],['Pesan Evaluasi',c.evaluation.message],['Target Berikutnya',c.evaluation.nextTarget==null?'Tingkat tertinggi':c.evaluation.nextTarget],['Status','Rekap perhitungan; bukan bukti pembayaran']];
+      downloadCsv(`Rekap_Host_${String(c.employeeName||'Host').replace(/[^a-z0-9_-]/gi,'_')}_${p.startDate}_${p.endDate}.csv`,rows.map(row=>row.map(csvCell).join(',')).join('\n'));
     };
 
     window.calculateHostSalary = async () => {
@@ -3389,8 +3618,10 @@
         const method=document.getElementById('calcHostCommissionMethod').value||'GMV';
         if(!attStart||!attEnd||!perfStart||!perfEnd||!empId){showMessage('Mohon lengkapi semua rentang tanggal dan pilih host.','error');return;}
         if(perfStart>perfEnd||attStart>attEnd){showMessage('Periode tidak valid.','error');return;}
+        currentHostSalaryDraftPayload=null;lastHostSalarySnapshot=null;
+        document.getElementById('hostSalaryResult').classList.add('hidden');
         try{
-            const commissionRes=await apiCall('calculateHostCommission',{employeeId:empId,startDate:perfStart,endDate:perfEnd,method});
+            const commissionRes=await apiCall('calculateHostCommission',{employeeId:empId,startDate:perfStart,endDate:perfEnd,attendanceStartDate:attStart,attendanceEndDate:attEnd,method});
             const c=commissionRes.data||{};
             const emp=state.employees.find(e=>String(e.id)===String(empId));
             if(!emp) throw new Error('Host tidak ditemukan pada data server.');
@@ -3407,8 +3638,19 @@
             document.getElementById('calcHostCommissionRate').innerText=c.rateLabel||'-';
             document.getElementById('calcHostCommissionBasis').innerText=method==='GMV'?window.formatRupiah(Number(c.totalGMV)||0):`${Number(c.totalResi||0).toLocaleString('id-ID')} resi`;
             document.getElementById('calcHostTotalDisplay').innerText=window.formatRupiah(base+bonus+Number(c.commission||0));
-            document.getElementById('calcHostBankDetails').innerHTML=emp&&emp.bankName?`${escapeLateHtml(emp.bankName)} - ${escapeLateHtml(emp.bankAccount||'')}<br><span class="text-xs text-gray-500 font-medium">a/n ${escapeLateHtml(emp.bankAccountName||'')}</span>`:'<span class="text-red-500 italic text-xs">Rekening belum diatur</span>';
+            if(!c.evaluation || typeof c.evaluation.title!=='string')throw new Error('Backend belum mengembalikan evaluasi Host. Pastikan build terbaru terpasang.');
+            document.getElementById('hostEvaluationTitle').textContent=c.evaluation.title;
+            document.getElementById('hostEvaluationMessage').textContent=c.evaluation.message;
+            const nex=c.evaluation.nextTarget;
+            document.getElementById('hostEvaluationNext').textContent=nex==null?'Anda telah mencapai tingkat tertinggi pada metode komisi ini.':
+                `Menuju target berikutnya: ${method==='GMV'?window.formatRupiah(nex):Number(nex).toLocaleString('id-ID')+' resi'} (sisa ${method==='GMV'?window.formatRupiah(c.evaluation.remaining):Number(c.evaluation.remaining).toLocaleString('id-ID')+' resi'}).`;
+            lastHostSalarySnapshot={...c,basicSalary:base,bonus,totalSalary:base+bonus+Number(c.commission||0)};
+            document.getElementById('calcHostBankDetails').innerHTML=emp&&emp.bankName?`${escapeLateHtml(emp.bankName)} - ${escapeLateHtml(emp.bankAccount||'')}<span class="text-xs text-gray-500 font-medium"> a/n ${escapeLateHtml(emp.bankAccountName||'')}</span>`:(String(state.user?.email||'').toLowerCase()==='mohammadziky2@gmail.com'?'<span class="text-red-500 italic text-xs">Rekening belum diatur</span>':'<span class="text-slate-500 italic text-xs">Informasi rekening hanya tersedia untuk akun Master</span>');
             localStorage.setItem('gloria_host_commission_method',method);
+            currentHostSalaryDraftPayload={employeeId:empId,startDate:perfStart,endDate:perfEnd,attendanceStartDate:attStart,attendanceEndDate:attEnd,method,basicSalary:base,bonus};
+            const owner=String(state.user?.email||'').toLowerCase()==='mohammadziky2@gmail.com';
+            document.getElementById('saveHostSalaryDraftBtn').classList.toggle('hidden',!owner);
+            document.getElementById('loadHostSalaryDraftsBtn').classList.toggle('hidden',!owner);
             document.getElementById('hostSalaryResult').classList.remove('hidden');
         }catch(error){showMessage(error.message||'Gagal menghitung komisi Host Live.','error');}
     };
@@ -3438,9 +3680,7 @@
         try{
             const result=await apiCall('gloriaAIQuery',{query});
             const typingEl=document.getElementById(typingId); if(typingEl)typingEl.remove();
-            let reply=String(result.text||'').replace(/\r?\n/g,'<br>');
-            // Allow only the simple formatting promised by the backend prompt.
-            reply=reply.replace(/<(?!\/?(?:b|br|ul|li)\b)[^>]*>/gi,'');
+            const reply=escapeLateHtml(String(result.text||'')).replace(/\r?\n/g,'<br>');
             chatWindow.innerHTML += `<div class="flex items-start space-x-2"><div class="w-6 h-6 rounded bg-amber-500 text-slate-950 font-bold flex items-center justify-center text-xs shrink-0">AI</div><div class="bg-slate-800/80 p-3 rounded-lg text-slate-200 text-xs leading-relaxed max-w-lg">${reply}</div></div>`;
             chatWindow.scrollTop=chatWindow.scrollHeight;
         }catch(error){
@@ -3460,7 +3700,7 @@
         }
 
         const authorizedHostEmails = ['bettyartanita@gmail.com', 'mohammadziky2@gmail.com', 'ysdd@gmail.com'];
-        const hostOnlyTabs = new Set(['hostSalary','schedule','hostReport','hostRanking']);
+        const hostOnlyTabs = new Set(['hostSalary','schedule','hostReport','hostRanking','hostExcel']);
         if (hostOnlyTabs.has(tabId) && (!state.user || !authorizedHostEmails.includes(String(state.user.email||'').toLowerCase()))) { showMessage("Akses Ditolak: fitur Host Live hanya untuk akun yang diotorisasi.", "error"); return; }
         
         if (tabId === 'bankAccount') {
@@ -3512,6 +3752,11 @@
             if(!document.getElementById('hostReportMonth').value) document.getElementById('hostReportMonth').value = val;
             window.renderHostMonthlyReport();
         }
+        if (tabId === 'hostExcel') {
+            const now = new Date(); const val = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+            if(!document.getElementById('hostExcelMonth').value) document.getElementById('hostExcelMonth').value = val;
+            window.loadHostExcelMatrix();
+        }
         if (tabId === 'hostRanking') {
             const now = new Date(); const val = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
             if(!document.getElementById('rankingMonth').value) document.getElementById('rankingMonth').value = val;
@@ -3543,22 +3788,55 @@
     window.closeMobileMenu = () => document.getElementById('mobileMenu').classList.add('hidden');
     document.getElementById('closeMobileMenuBtn').addEventListener('click', closeMobileMenu);
 
-    window.previewScheduleImage = (e) => {
-        const file = e.target.files[0]; if(!file) return; const reader = new FileReader();
-        reader.onload = (event) => {
-            document.getElementById('scheduleImagePreview').src = event.target.result; document.getElementById('scheduleImagePreview').classList.remove('hidden');
-            document.getElementById('scheduleUploadPrompt').classList.add('hidden'); document.getElementById('btnClearScheduleImg').classList.remove('hidden');
-        }; reader.readAsDataURL(file);
+    let scheduleImageLoadedMonth = '';
+    function displayScheduleImage(dataUrl) {
+        const preview=document.getElementById('scheduleImagePreview'),upload=document.getElementById('scheduleUploadPrompt'),clear=document.getElementById('btnClearScheduleImg');
+        if(dataUrl && /^data:image\/(?:jpeg|png|webp);base64,/.test(dataUrl)){
+            preview.src=dataUrl;preview.classList.remove('hidden');upload.classList.add('hidden');clear.classList.remove('hidden');
+        }else{
+            preview.removeAttribute('src');preview.classList.add('hidden');upload.classList.remove('hidden');clear.classList.add('hidden');
+        }
+    }
+    async function loadScheduleImageForMonth(month) {
+        if(!month || scheduleImageLoadedMonth===month)return;
+        const r=await apiCall('getHostScheduleImage',{month});
+        if((document.getElementById('scheduleDate')?.value||'').slice(0,7)!==month)return;
+        displayScheduleImage(r.imageDataUrl||null);scheduleImageLoadedMonth=month;
+    }
+    window.previewScheduleImage = async (e) => {
+        const file=e.target.files?.[0];if(!file)return;
+        const month=(document.getElementById('scheduleDate')?.value||'').slice(0,7);
+        if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)){showMessage('Pilih Tanggal Pantauan sebelum mengunggah jadwal.','error');return;}
+        if(!/^image\/(png|jpeg|webp)$/.test(file.type)){showMessage('Gunakan gambar PNG, JPG, atau WebP.','error');return;}
+        if(file.size>12*1024*1024){showMessage('Foto terlalu besar. Pilih file maksimal 12 MB.','error');return;}
+        try{
+            const dataUrl=await new Promise((resolve,reject)=>{
+                const reader=new FileReader();reader.onerror=()=>reject(new Error('Gagal membaca gambar.'));
+                reader.onload=()=>{const img=new Image();img.onerror=()=>reject(new Error('File gambar rusak.'));img.onload=()=>{
+                    const scale=Math.min(1,1100/Math.max(img.naturalWidth,img.naturalHeight)),canvas=document.createElement('canvas');
+                    canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));
+                    const ctx=canvas.getContext('2d');ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);
+                    resolve(canvas.toDataURL('image/jpeg',.70));
+                };img.src=reader.result;};reader.readAsDataURL(file);
+            });
+            if(dataUrl.length>480000)throw new Error('Foto setelah kompresi masih terlalu besar. Coba foto lebih sederhana.');
+            await apiCall('saveHostScheduleImage',{month,imageDataUrl:dataUrl});
+            displayScheduleImage(dataUrl);scheduleImageLoadedMonth=month;
+            showMessage('Foto jadwal tersimpan untuk bulan '+month+'.','success');
+        }catch(err){showMessage(err.message||'Gagal menyimpan foto jadwal.','error');}
+        finally{e.target.value='';}
     };
-
-    window.clearScheduleImage = () => {
-        document.getElementById('scheduleImageInput').value = ""; document.getElementById('scheduleImagePreview').src = "";
-        document.getElementById('scheduleImagePreview').classList.add('hidden'); document.getElementById('scheduleUploadPrompt').classList.remove('hidden'); document.getElementById('btnClearScheduleImg').classList.add('hidden');
+    window.clearScheduleImage = async () => {
+        const month=(document.getElementById('scheduleDate')?.value||'').slice(0,7);
+        if(!month||!window.confirm('Kosongkan foto jadwal bulan '+month+'? File lama tidak dihapus dari Drive.'))return;
+        try{await apiCall('clearHostScheduleImage',{month});displayScheduleImage(null);scheduleImageLoadedMonth=month;showMessage('Foto jadwal bulan ini dikosongkan.','success');}
+        catch(err){showMessage(err.message||'Gagal menghapus referensi foto jadwal.','error');}
     };
 
     window.renderScheduleTracker = async () => {
         const tbody=document.getElementById('scheduleTrackerBody'); if(!tbody)return;
         const dateInput=document.getElementById('scheduleDate').value; if(!dateInput)return;
+        loadScheduleImageForMonth(dateInput.slice(0,7)).catch(e=>showMessage(e.message||'Foto jadwal gagal dimuat.','error'));
         const hostEmployees=state.employees.filter(e=>e.division==='Host Live');
         if(hostEmployees.length===0){tbody.innerHTML='<tr><td colspan="3" class="p-6 text-center text-gray-500 font-medium">Belum ada data karyawan dengan divisi Host Live.</td></tr>';return;}
         let rows=[];
@@ -3576,7 +3854,7 @@
             const crossIcon='<div class="flex items-center justify-center text-gray-300"><i class="ph-fill ph-x-circle text-2xl"></i></div>';
             let rowClass='', avatarClass='bg-indigo-100 text-indigo-700', sessionColumns='';
             if(isLibur){rowClass='bg-orange-50/50';avatarClass='bg-orange-200 text-orange-800';sessionColumns='<td colspan="2" class="p-4 text-center border-l border-gray-100"><span class="bg-orange-100 text-orange-700 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest"><i class="ph-fill ph-coffee mr-1"></i>Sedang Libur</span></td>';}else if(isSakit){rowClass='bg-yellow-50/50';avatarClass='bg-yellow-200 text-yellow-800';sessionColumns='<td colspan="2" class="p-4 text-center border-l border-gray-100"><span class="bg-yellow-100 text-yellow-700 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest"><i class="ph-fill ph-pill mr-1"></i>Sakit</span></td>';}else if(isIzin){rowClass='bg-blue-50/50';avatarClass='bg-blue-200 text-blue-800';sessionColumns='<td colspan="2" class="p-4 text-center border-l border-gray-100"><span class="bg-blue-100 text-blue-700 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest"><i class="ph-fill ph-envelope-open mr-1"></i>Izin</span></td>';}else if(status==='Belum Input'){rowClass='bg-gray-50';sessionColumns='<td colspan="2" class="p-4 text-center border-l border-gray-100"><span class="bg-gray-100 text-gray-500 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest">Belum Input</span></td>';}else{if(hasSesi1&&hasSesi2)rowClass='bg-green-50/40';else if(hasSesi1)rowClass='bg-blue-50/20';sessionColumns=`<td class="p-4 text-center border-l border-gray-100">${hasSesi1?checkIcon:crossIcon}</td><td class="p-4 text-center border-l border-gray-100">${hasSesi2?checkIcon:crossIcon}</td>`;}
-            const tr=document.createElement('tr');tr.className=`hover:bg-gray-100 transition-colors ${rowClass}`;tr.innerHTML=`<td class="p-4 font-bold text-gray-800"><div class="flex items-center"><div class="w-8 h-8 rounded-full ${avatarClass} flex items-center justify-center mr-3 text-xs shrink-0">${String(host.name||'').charAt(0).toUpperCase()}</div>${escapeLateHtml(host.name)}</div></td>${sessionColumns}`;tbody.appendChild(tr);
+            const tr=document.createElement('tr');tr.className=`hover:bg-gray-100 transition-colors ${rowClass}`;tr.innerHTML=`<td class="p-4 font-bold text-gray-800"><div class="flex items-center"><div class="w-8 h-8 rounded-full ${avatarClass} flex items-center justify-center mr-3 text-xs shrink-0">${escapeLateHtml(String(host.name||'').charAt(0).toUpperCase())}</div>${escapeLateHtml(host.name)}</div></td>${sessionColumns}`;tbody.appendChild(tr);
         });
     };
 
@@ -3591,7 +3869,7 @@
             const isDateMatch = recordDateStr === dateInput; // ABSOLUTE DATE MATCH
             const nameA = String(a.empName || "").trim().toLowerCase(); const nameB = String(empName || "").trim().toLowerCase();
             const divA = String(a.empDivision || "").trim().toLowerCase(); const divB = "host live";
-            return isDateMatch && ((String(a.empId) === String(empId)) || (nameA === nameB && divA === divB));
+            return isDateMatch && String(a.empId) === String(empId);
         });
 
         if (existingDataToday.length > 0) { showMessage("Peringatan: Host sudah ada absensi. Hapus di Rekap Bulanan terlebih dahulu.", "error"); return; }
@@ -3620,6 +3898,286 @@
         } finally { btn.disabled = false; btn.innerHTML = `<i class="ph ph-calendar-minus mr-2"></i> Simpan Status Libur`; }
     };
 
+
+    // ========================= HOST EXCEL KESELURUHAN (READ-ONLY) =========================
+    // Satu-satunya API yang digunakan adalah getHostPerformance yang sudah ada.
+    // Tidak ada sheet, data, atau perhitungan komisi yang ditulis/diubah.
+    let hostExcelMatrixCache = null;
+    let hostExcelRequestSequence = 0;
+
+    function hostExcelMonthParts(month) {
+        if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(String(month||''))) throw new Error('Format bulan tidak valid.');
+        const year = Number(month.slice(0,4)), monthNumber = Number(month.slice(5,7));
+        if (year < 1900 || year > 9999) throw new Error('Tahun harus antara 1900 dan 9999.');
+        const days = new Date(year, monthNumber, 0).getDate();
+        return {year, monthNumber, days};
+    }
+    function hostExcelFormatNumber(num) { return Number(num||0).toLocaleString('id-ID',{maximumFractionDigits:2}); }
+    function hostExcelFormatMoney(num) { return 'Rp ' + hostExcelFormatNumber(num); }
+    function hostExcelValidValue(value) {
+        // Hindari NaN dan Infinity merusak hasil rekap; tanpa mengubah record asli.
+        const n = Number(value);
+        return Number.isFinite(n) ? n : 0;
+    }
+    function hostExcelBuildMatrix(month, employees, performance) {
+        const {year,monthNumber,days} = hostExcelMonthParts(month);
+        const hosts = (employees||[]).filter(e => String(e.division||'').trim()==='Host Live')
+            .map(e=>({id:String(e.id),name:String(e.name||'Host tanpa nama')}))
+            .sort((a,b)=>a.name.localeCompare(b.name,'id')||a.id.localeCompare(b.id));
+        const hostIds = new Set(hosts.map(h=>h.id)), daily = new Map();
+        for (const row of (performance||[])) {
+            const id=String(row.employeeId||row.empId||'');
+            const date=window.normalizeDateStr(row.date);
+            if (!hostIds.has(id) || date.slice(0,7)!==month || !/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+            const day=Number(date.slice(8,10));
+            if (day < 1 || day > days) continue;
+            const key=id+'|'+date;
+            if (!daily.has(key)) daily.set(key,{gmv:0,resi:0,recorded:true});
+            const item=daily.get(key);
+            // API getHostPerformance sudah menambahkan kedua sesi tanpa memeriksa status hadir.
+            item.gmv+=hostExcelValidValue(row.gmv);
+            item.resi+=hostExcelValidValue(row.resi);
+        }
+        const totals = new Map(hosts.map(h=>[h.id,{gmv:0,resi:0}]));
+        const rows=[];let grandGMV=0,grandResi=0;
+        for (let day=1;day<=days;day++) {
+            const date=month+'-'+String(day).padStart(2,'0');
+            const cells=hosts.map(h=>{
+                const item=daily.get(h.id+'|'+date)||null;
+                if(item) {const t=totals.get(h.id); t.gmv+=item.gmv; t.resi+=item.resi; grandGMV+=item.gmv; grandResi+=item.resi;}
+                return item;
+            });
+            rows.push({day,date,cells});
+        }
+        const monthLabel=new Intl.DateTimeFormat('id-ID',{month:'long',year:'numeric'}).format(new Date(year,monthNumber-1,1));
+        return {month,monthLabel,days,hosts,rows,totals,grandGMV,grandResi};
+    }
+    function hostExcelSetDownloadButtons(enabled) {
+        ['hostExcelXlsxBtn','hostExcelCsvBtn','hostExcelPngBtn'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=!enabled;});
+    }
+    function hostExcelSetStatus(message,error=false) {
+        const el=document.getElementById('hostExcelStatus');
+        if(el){el.textContent=message;el.className='px-5 pt-3 text-sm '+(error?'text-red-700':'text-slate-500');}
+    }
+    function hostExcelClearMatrixDisplay() {
+        ['hostExcelThead','hostExcelTbody','hostExcelTfoot'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
+        ['hostExcelHostCount','hostExcelTotalResi'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='0';});
+        const g=document.getElementById('hostExcelTotalGMV');if(g)g.textContent='Rp 0';
+        const d=document.getElementById('hostExcelDaysCount');if(d)d.textContent='0';
+        const label=document.getElementById('hostExcelPeriodLabel');if(label)label.textContent='Belum ada hasil untuk periode yang dipilih.';
+    }
+    window.shiftHostExcelMonth = (step) => {
+        const el=document.getElementById('hostExcelMonth');
+        if(!el)return;
+        const now=new Date();const val=el.value||`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+        try {
+            const {year,monthNumber}=hostExcelMonthParts(val);
+            const shifted=new Date(year,monthNumber-1+(step<0?-1:1),1);
+            el.value=`${shifted.getFullYear()}-${String(shifted.getMonth()+1).padStart(2,'0')}`;
+            window.loadHostExcelMatrix();
+        }catch(e){hostExcelSetStatus(e.message,true);}
+    };
+    window.loadHostExcelMatrix = async (force=false) => {
+        const month=document.getElementById('hostExcelMonth')?.value||'';
+        const request=++hostExcelRequestSequence;
+        try {
+            hostExcelMonthParts(month);
+            if (!force && hostExcelMatrixCache?.month===month) {
+                window.renderHostExcelMatrix(hostExcelMatrixCache);return;
+            }
+            hostExcelMatrixCache=null;
+            hostExcelClearMatrixDisplay();
+            hostExcelSetDownloadButtons(false);
+            hostExcelSetStatus('Memuat data performa langsung dari backend untuk '+month+'…');
+            const response=await apiCall('getHostPerformance',{month});
+            if(request!==hostExcelRequestSequence) return; // Jangan tampilkan hasil bulan lama setelah pengguna mengganti periode.
+            hostExcelMatrixCache=hostExcelBuildMatrix(month,state.employees,response.data||[]);
+            window.renderHostExcelMatrix(hostExcelMatrixCache);
+        } catch(error) {
+            if(request!==hostExcelRequestSequence)return;
+            hostExcelMatrixCache=null;hostExcelSetDownloadButtons(false);
+            hostExcelClearMatrixDisplay();
+            hostExcelSetStatus(error.message||'Gagal memuat laporan Host Live.',true);
+        }
+    };
+    window.renderHostExcelMatrix = matrix => {
+        const {hosts,rows,totals,monthLabel,grandGMV,grandResi}=matrix;
+        document.getElementById('hostExcelHostCount').textContent=hosts.length.toLocaleString('id-ID');
+        document.getElementById('hostExcelTotalGMV').textContent=hostExcelFormatMoney(grandGMV);
+        document.getElementById('hostExcelTotalResi').textContent=hostExcelFormatNumber(grandResi);
+        document.getElementById('hostExcelDaysCount').textContent=matrix.days+' hari';
+        document.getElementById('hostExcelPeriodLabel').textContent='Periode '+monthLabel+' · '+hosts.length+' Host Live · 01–'+String(matrix.days).padStart(2,'0');
+        const head=document.getElementById('hostExcelThead');
+        const body=document.getElementById('hostExcelTbody');
+        const foot=document.getElementById('hostExcelTfoot');
+        const first='sticky left-0 z-20 border border-slate-300 px-4 py-3 min-w-[120px] text-left';
+        let header='<tr class="bg-slate-900 text-white"><th rowspan="2" class="'+first+' bg-slate-900">TANGGAL</th>';
+        hosts.forEach((h,i)=>{header+=`<th colspan="2" scope="colgroup" class="border border-slate-600 px-3 py-3 text-center min-w-[240px] ${i%2?'bg-indigo-950':'bg-slate-800'}">${escapeLateHtml(h.name)}</th>`;});
+        header+='</tr><tr class="bg-slate-700 text-white">';
+        hosts.forEach(()=>{header+='<th class="border border-slate-500 bg-emerald-800/90 px-3 py-2 min-w-[148px] text-center">GMV (Rp)</th><th class="border border-slate-500 bg-blue-800/90 px-3 py-2 min-w-[100px] text-center">RESI</th>';});
+        head.innerHTML=header+'</tr>';
+        if(!hosts.length) {
+            body.innerHTML='<tr><td colspan="1" class="p-8 text-center text-slate-500">Belum ada Host Live yang terdaftar.</td></tr>';
+            foot.innerHTML='';hostExcelSetDownloadButtons(false);
+            hostExcelSetStatus('Tidak ditemukan karyawan divisi Host Live.');return;
+        }
+        let html='';
+        rows.forEach((r,i)=>{
+            const bg=i%2===0?'bg-white':'bg-slate-50';
+            html+=`<tr class="${bg} hover:bg-indigo-50/70"><th scope="row" class="${first} ${bg} font-extrabold text-slate-700">${String(r.day).padStart(2,'0')} <span class="font-normal text-xs text-slate-400">${matrix.month.slice(5)}</span></th>`;
+            r.cells.forEach(c=>{
+                html+=`<td class="border border-slate-200 px-3 py-2 font-semibold ${c?'text-emerald-800':'text-slate-300'}">${c?hostExcelFormatNumber(c.gmv):'—'}</td>`;
+                html+=`<td class="border border-slate-200 px-3 py-2 font-semibold ${c?'text-blue-800':'text-slate-300'}">${c?hostExcelFormatNumber(c.resi):'—'}</td>`;
+            });
+            html+='</tr>';
+        });
+        body.innerHTML=html;
+        let bottom=`<tr class="bg-indigo-950 text-white font-extrabold"><th class="${first} bg-indigo-950">TOTAL</th>`;
+        hosts.forEach(h=>{const t=totals.get(h.id);bottom+=`<td class="border border-indigo-700 px-3 py-3 text-emerald-200">${hostExcelFormatNumber(t.gmv)}</td><td class="border border-indigo-700 px-3 py-3 text-blue-200">${hostExcelFormatNumber(t.resi)}</td>`;});
+        foot.innerHTML=bottom+'</tr>';
+        hostExcelSetDownloadButtons(true);
+        hostExcelSetStatus('Data '+monthLabel+' siap. Nilai berasal dari rekap Attendance pada backend; halaman ini hanya membaca data.');
+    };
+    function hostExcelCurrentMatrix() {
+        const selected=document.getElementById('hostExcelMonth')?.value||'';
+        if(!hostExcelMatrixCache||hostExcelMatrixCache.month!==selected||!hostExcelMatrixCache.hosts.length)
+            throw new Error('Muat terlebih dahulu data bulan yang dipilih.');
+        return hostExcelMatrixCache;
+    }
+    function hostExcelSaveBlob(blob,filename) {
+        const url=URL.createObjectURL(blob),link=document.createElement('a');
+        link.href=url;link.download=filename;document.body.appendChild(link);link.click();link.remove();
+        setTimeout(()=>URL.revokeObjectURL(url),3000);
+    }
+    window.downloadHostExcelCsv = () => {
+        try {
+            const m=hostExcelCurrentMatrix();
+            const title=['TANGGAL'];m.hosts.forEach(h=>title.push(h.name,''));
+            const labels=['TANGGAL'];m.hosts.forEach(()=>labels.push('GMV (Rp)','RESI'));
+            const content=[['DATA EXCEL KESELURUHAN HASIL KINERJA HOST LIVE',m.monthLabel],title,labels];
+            m.rows.forEach(row=>{const cells=[row.date];row.cells.forEach(c=>cells.push(c?c.gmv:'',c?c.resi:''));content.push(cells);});
+            const total=['TOTAL BULANAN'];m.hosts.forEach(h=>{const t=m.totals.get(h.id);total.push(t.gmv,t.resi);});content.push(total);
+            downloadCsv('GLORIA_Host_Live_Keseluruhan_'+m.month+'.csv',content.map(r=>r.map(csvCell).join(',')).join('\r\n'));
+            showMessage('CSV seluruh Host Live berhasil disiapkan.','success');
+        }catch(e){showMessage(e.message,'error');}
+    };
+    window.downloadHostExcelXlsx = async () => {
+        const btn=document.getElementById('hostExcelXlsxBtn');
+        try {
+            const m=hostExcelCurrentMatrix();
+            if(typeof ExcelJS==='undefined')throw new Error('Pustaka pembuat Excel belum termuat. Pastikan koneksi internet tersedia, atau gunakan tombol CSV.');
+            btn.disabled=true;
+            const wb=new ExcelJS.Workbook();wb.creator='GLORIA Internasional Abadi';wb.subject='Rekap seluruh GMV dan resi Host Live';
+            const sh=wb.addWorksheet('Kinerja Host '+m.month,{views:[{state:'frozen',xSplit:1,ySplit:4}],pageSetup:{orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0,paperSize:9}});
+            const lastCol=1+m.hosts.length*2;
+            sh.mergeCells(1,1,1,lastCol);sh.getCell(1,1).value='GLORIA | DATA EXCEL KESELURUHAN HASIL KINERJA HOST LIVE';
+            sh.mergeCells(2,1,2,lastCol);sh.getCell(2,1).value='Periode: '+m.monthLabel+'   ·   Jumlah Host: '+m.hosts.length+'   ·   Sumber: Attendance (GMV + Resi seluruh sesi)';
+            sh.mergeCells(3,1,4,1);sh.getCell(3,1).value='TANGGAL';sh.getColumn(1).width=17;
+            for(let j=0;j<m.hosts.length;j++){
+                const gCol=2+j*2,rCol=gCol+1;
+                sh.mergeCells(3,gCol,3,rCol);
+                sh.getCell(3,gCol).value=m.hosts[j].name;
+                sh.getCell(4,gCol).value='GMV (Rp)';sh.getCell(4,rCol).value='RESI';
+                sh.getColumn(gCol).width=21;sh.getColumn(rCol).width=15;
+                sh.getColumn(gCol).numFmt='#,##0.##';sh.getColumn(rCol).numFmt='#,##0.##';
+            }
+            sh.getRow(1).height=33;sh.getRow(2).height=25;sh.getRow(3).height=30;sh.getRow(4).height=25;
+            for(let d=0;d<m.rows.length;d++) {
+                const r=m.rows[d],line=5+d;
+                sh.getCell(line,1).value=r.date;
+                r.cells.forEach((cell,j)=>{if(cell){sh.getCell(line,2+j*2).value=cell.gmv;sh.getCell(line,3+j*2).value=cell.resi;}});
+                sh.getRow(line).height=21;
+            }
+            const final=5+m.days;sh.getCell(final,1).value='TOTAL BULANAN';
+            m.hosts.forEach((h,j)=>{
+                const t=m.totals.get(h.id);
+                // Formula dan nilai hasil tersimpan; dapat digunakan saat berkas dibuka di Excel.
+                const g=sh.getColumn(2+j*2).letter,r=sh.getColumn(3+j*2).letter;
+                sh.getCell(final,2+j*2).value={formula:`SUM(${g}5:${g}${final-1})`,result:t.gmv};
+                sh.getCell(final,3+j*2).value={formula:`SUM(${r}5:${r}${final-1})`,result:t.resi};
+            });
+            sh.getRow(final).height=29;
+            const top=sh.getCell(1,1);top.font={name:'Aptos Display',size:16,bold:true,color:{argb:'FFFFFFFF'}};top.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF172554'}};top.alignment={vertical:'middle',horizontal:'center'};
+            for(let col=1;col<=lastCol;col++){sh.getCell(1,col).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF172554'}};sh.getCell(2,col).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEFF6FF'}};}
+            sh.getCell(2,1).font={name:'Aptos',size:11,bold:true,color:{argb:'FF1E3A8A'}};sh.getCell(2,1).alignment={vertical:'middle',horizontal:'left'};
+            for(let row=3;row<=final;row++)for(let col=1;col<=lastCol;col++) {
+                const c=sh.getCell(row,col),isHead=row<=4,isTotal=row===final;
+                c.alignment={vertical:'middle',horizontal:col===1?'left':'right'};
+                c.border={bottom:{style:'hair',color:{argb:'FFCBD5E1'}},right:{style:'hair',color:{argb:'FFCBD5E1'}}};
+                if(isHead||isTotal){
+                    const color=isTotal?'FF312E81':row===3?'FF1E293B':col%2===0?'FF047857':'FF1D4ED8';
+                    c.fill={type:'pattern',pattern:'solid',fgColor:{argb:color}};
+                    c.font={name:'Aptos',size:11,bold:true,color:{argb:'FFFFFFFF'}};
+                    c.alignment={vertical:'middle',horizontal:'center',wrapText:true};
+                }else {
+                    c.font={name:'Aptos',size:10,bold:col===1,color:{argb:col===1?'FF1E293B':col%2===0?'FF065F46':'FF1E40AF'}};
+                    if(row%2===0)c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF8FAFC'}};
+                }
+            }
+            sh.pageSetup.printArea='A1:'+sh.getColumn(lastCol).letter+final;
+            const buffer=await wb.xlsx.writeBuffer();
+            hostExcelSaveBlob(new Blob([buffer],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),'GLORIA_Data_Excel_Host_Live_'+m.month+'.xlsx');
+            showMessage('File Excel (.xlsx) seluruh Host Live telah disiapkan.','success');
+        }catch(e){showMessage(e.message||'Gagal membuat file Excel.','error');}
+        finally{btn.disabled=false;}
+    };
+    window.downloadHostExcelPng = async () => {
+        const btn=document.getElementById('hostExcelPngBtn');
+        try {
+            const m=hostExcelCurrentMatrix();btn.disabled=true;
+            // Bagi per lima host agar gambar tidak terpotong/melebihi batas canvas browser.
+            const pageSize=5,pages=Math.ceil(m.hosts.length/pageSize);
+            for(let page=0;page<pages;page++) {
+                const start=page*pageSize,subset=m.hosts.slice(start,start+pageSize);
+                const colDate=126,colGMV=172,colResi=110;
+                const width=colDate+subset.length*(colGMV+colResi),top=116,head1=40,head2=34,rowHeight=29,foot=40;
+                const height=top+head1+head2+m.days*rowHeight+foot+52;
+                const canvas=document.createElement('canvas');canvas.width=width*2;canvas.height=height*2;
+                const ctx=canvas.getContext('2d');if(!ctx)throw new Error('Perangkat tidak mendukung ekspor gambar.');ctx.scale(2,2);
+                ctx.fillStyle='#ffffff';ctx.fillRect(0,0,width,height);
+                const rect=(x,y,w,h,color)=>{ctx.fillStyle=color;ctx.fillRect(x,y,w,h);};
+                const text=(value,x,y,align='left',color='#0f172a',size=12,bold=false,maxWidth)=>{ctx.font=(bold?'700 ':'')+size+'px Arial,sans-serif';ctx.textBaseline='middle';ctx.textAlign=align;ctx.fillStyle=color;ctx.fillText(String(value),x,y,maxWidth||width);};
+                rect(0,0,width,top,'#0f172a');text('GLORIA · INTERNASIONAL ABADI',20,25,'left','#fbbf24',13,true);
+                text('DATA EXCEL KESELURUHAN HASIL KINERJA HOST LIVE',20,57,'left','#ffffff',19,true,width-40);
+                text('Periode '+m.monthLabel+'  |  '+m.hosts.length+' host  |  Bagian '+(page+1)+' dari '+pages,20,88,'left','#cbd5e1',13);
+                rect(0,top,colDate,head1+head2,'#1e293b');text('TANGGAL',10,top+(head1+head2)/2,'left','#ffffff',13,true);
+                subset.forEach((h,i)=>{
+                    const x=colDate+i*(colGMV+colResi);
+                    rect(x,top,colGMV+colResi,head1,i%2?'#312e81':'#1e3a8a');text(h.name,x+(colGMV+colResi)/2,top+head1/2,'center','#ffffff',13,true,colGMV+colResi-16);
+                    rect(x,top+head1,colGMV,head2,'#047857');text('GMV (Rp)',x+colGMV/2,top+head1+head2/2,'center','#ffffff',12,true);
+                    rect(x+colGMV,top+head1,colResi,head2,'#1d4ed8');text('RESI',x+colGMV+colResi/2,top+head1+head2/2,'center','#ffffff',12,true);
+                });
+                const yBody=top+head1+head2;
+                m.rows.forEach((r,idx)=>{
+                    const y=yBody+idx*rowHeight;rect(0,y,width,rowHeight,idx%2?'#f1f5f9':'#ffffff');
+                    text(String(r.day).padStart(2,'0'),14,y+rowHeight/2,'left','#334155',12,true);
+                    subset.forEach((h,i)=>{
+                        const x=colDate+i*(colGMV+colResi),c=r.cells[start+i];
+                        text(c?hostExcelFormatNumber(c.gmv):'—',x+colGMV-9,y+rowHeight/2,'right',c?'#065f46':'#94a3b8',11,!!c,colGMV-16);
+                        text(c?hostExcelFormatNumber(c.resi):'—',x+colGMV+colResi-9,y+rowHeight/2,'right',c?'#1e40af':'#94a3b8',11,!!c,colResi-16);
+                    });
+                    rect(0,y+rowHeight-1,width,1,'#e2e8f0');
+                });
+                const totalY=yBody+m.days*rowHeight;
+                rect(0,totalY,width,foot,'#312e81');text('TOTAL',14,totalY+foot/2,'left','#ffffff',13,true);
+                subset.forEach((h,i)=>{
+                    const x=colDate+i*(colGMV+colResi),t=m.totals.get(h.id);
+                    text(hostExcelFormatNumber(t.gmv),x+colGMV-9,totalY+foot/2,'right','#bbf7d0',12,true,colGMV-15);
+                    text(hostExcelFormatNumber(t.resi),x+colGMV+colResi-9,totalY+foot/2,'right','#bfdbfe',12,true,colResi-15);
+                });
+                for(let i=0;i<=subset.length;i++){let x=i===0?colDate:colDate+i*(colGMV+colResi);rect(x-1,top,1,head1+head2+m.days*rowHeight+foot,'#cbd5e1');}
+                text('Sumber: Attendance · GMV dan Resi merupakan hasil seluruh sesi, tidak dikurangi oleh status kehadiran.',16,height-23,'left','#64748b',11,false,width-32);
+                const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('PNG tidak dapat diproses.')),'image/png'));
+                hostExcelSaveBlob(blob,'GLORIA_Kinerja_Host_'+m.month+'_bagian-'+String(page+1).padStart(2,'0')+'.png');
+                // Beri kesempatan browser memproses download sebelum halaman berikutnya.
+                if(page+1<pages)await new Promise(r=>setTimeout(r,180));
+            }
+            showMessage('PNG dibuat dalam '+pages+' bagian (maksimal 5 host per gambar).','success');
+        }catch(e){showMessage(e.message||'Gagal membuat gambar.','error');}
+        finally{btn.disabled=false;}
+    };
+    // ========================= END HOST EXCEL KESELURUHAN =========================
+
     window.renderHostMonthlyReport = async () => {
         const monthInput = document.getElementById('hostReportMonth').value; if (!monthInput) return;
         let performanceRows=[]; try{ const r=await apiCall('getHostPerformance',{month:monthInput}); performanceRows=r.data||[]; state.hostPerformance=performanceRows; }catch(e){ showMessage(e.message||'Gagal memuat performa Host dari server.','error'); return; }
@@ -3642,7 +4200,7 @@
 
         hostEmployees.forEach((host, index) => {
             const bgClass = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
-            let resiRow = `<tr class="${bgClass} group hover:bg-blue-50/30 transition-colors"><td class="p-3 border-r border-gray-200 border-b border-gray-100 sticky left-0 z-10 ${bgClass} font-bold text-gray-800" rowspan="2"><div class="flex items-center"><div class="w-6 h-6 rounded bg-indigo-100 text-indigo-700 flex items-center justify-center mr-2 text-[10px] shrink-0">${host.name.charAt(0).toUpperCase()}</div>${host.name}</div></td><td class="p-2 border-r border-gray-200 border-b border-gray-100 text-center text-xs font-bold text-blue-700 bg-blue-50/50">RESI</td>`;
+            let resiRow = `<tr class="${bgClass} group hover:bg-blue-50/30 transition-colors"><td class="p-3 border-r border-gray-200 border-b border-gray-100 sticky left-0 z-10 ${bgClass} font-bold text-gray-800" rowspan="2"><div class="flex items-center"><div class="w-6 h-6 rounded bg-indigo-100 text-indigo-700 flex items-center justify-center mr-2 text-[10px] shrink-0">${escapeLateHtml(String(host.name||'?').charAt(0).toUpperCase())}</div>${escapeLateHtml(host.name)}</div></td><td class="p-2 border-r border-gray-200 border-b border-gray-100 text-center text-xs font-bold text-blue-700 bg-blue-50/50">RESI</td>`;
             let gmvRow = `<tr class="${bgClass} group hover:bg-green-50/30 transition-colors border-b border-gray-300"><td class="p-2 border-r border-gray-200 text-center text-xs font-bold text-green-700 bg-green-50/50">GMV</td>`;
                 
             let hostTotalResi = 0; let hostTotalGMV = 0;
@@ -3672,13 +4230,13 @@
         const hostEmployees = state.employees.filter(e => e.division === 'Host Live');
         if(hostEmployees.length === 0){ showMessage("Tidak ada data host.", "error"); return; }
 
-        let csvContent = "data:text/csv;charset=utf-8,";
+        let csvContent = "";
         let header = ["Nama Host", "Tipe Data"];
         for(let i = 1; i <= daysInMonth; i++) header.push(`Tgl ${i}`);
         header.push("TOTAL BULAN INI"); csvContent += header.join(",") + "\n";
 
         hostEmployees.forEach(host => {
-            let rowResi = [`"${host.name}"`, "RESI"]; let rowGMV = [`"${host.name}"`, "GMV"];
+            let rowResi = [host.name, "RESI"]; let rowGMV = [host.name, "GMV"];
             let hostTotalResi = 0; let hostTotalGMV = 0;
             for (let i = 1; i <= daysInMonth; i++) {
                 const dateStr = `${yearStr}-${monthStr}-${String(i).padStart(2, '0')}`;
@@ -3691,10 +4249,10 @@
                 rowResi.push(dayResi || 0); rowGMV.push(dayGMV || 0);
             }
             rowResi.push(hostTotalResi); rowGMV.push(hostTotalGMV);
-            csvContent += rowResi.join(",") + "\n" + rowGMV.join(",") + "\n";
+            csvContent += rowResi.map(csvCell).join(",") + "\n" + rowGMV.map(csvCell).join(",") + "\n";
         });
-        const link = document.createElement("a"); link.setAttribute("href", encodeURI(csvContent)); link.setAttribute("download", `Laporan_Performa_Host_${monthInput}.csv`);
-        document.body.appendChild(link); link.click(); link.remove(); showMessage("Mengunduh Excel...", "success");
+        downloadCsv(`Laporan_Performa_Host_${monthInput}.csv`,csvContent);
+        showMessage("Mengunduh CSV...", "success");
     };
 
     let rankingChartInstance = null;
@@ -3758,6 +4316,8 @@
             return `<span class="text-gray-500 font-medium bg-gray-100 px-2 py-1 rounded"><i class="ph-bold ph-minus mr-1"></i> Stagnan</span>`;
         };
 
+        const tbody = document.getElementById('rankingTbody');
+        if(!tbody)return;
         let tableHTML = '';
         stats.forEach((s, index) => {
             const rank = index + 1; let rowClass = 'hover:bg-gray-50'; let rankBadge = `<span class="font-bold text-gray-500">${rank}</span>`;
@@ -3772,7 +4332,7 @@
                 rowClass = 'bg-red-50/30 hover:bg-red-50'; rankBadge = `<span class="font-bold text-red-500">${rank}</span>`;
             }
 
-            tableHTML += `<tr class="${rowClass} transition-colors"><td class="p-4 text-center border-r border-gray-100">${rankBadge}</td><td class="p-4 font-bold text-gray-800">${s.name}</td><td class="p-4 text-right font-bold text-blue-700 ${metric === 'resi' ? 'bg-blue-50/20' : ''}">${s.currResi.toLocaleString('id-ID')}</td><td class="p-4 text-right font-bold text-green-700 ${metric === 'gmv' ? 'bg-green-50/20' : ''}">${window.formatRupiah(s.currGMV)}</td><td class="p-4 text-center text-xs whitespace-nowrap">${metric === 'resi' ? getTrendBadge(s.currResi, s.prevResi) : getTrendBadge(s.currGMV, s.prevGMV)}</td></tr>`;
+            tableHTML += `<tr class="${rowClass} transition-colors"><td class="p-4 text-center border-r border-gray-100">${rankBadge}</td><td class="p-4 font-bold text-gray-800">${escapeLateHtml(s.name)}</td><td class="p-4 text-right font-bold text-blue-700 ${metric === 'resi' ? 'bg-blue-50/20' : ''}">${s.currResi.toLocaleString('id-ID')}</td><td class="p-4 text-right font-bold text-green-700 ${metric === 'gmv' ? 'bg-green-50/20' : ''}">${window.formatRupiah(s.currGMV)}</td><td class="p-4 text-center text-xs whitespace-nowrap">${metric === 'resi' ? getTrendBadge(s.currResi, s.prevResi) : getTrendBadge(s.currGMV, s.prevGMV)}</td></tr>`;
         });
         tbody.innerHTML = tableHTML;
 
@@ -3831,7 +4391,7 @@
             else return b.currGMV !== a.currGMV ? b.currGMV - a.currGMV : b.currResi - a.currResi;
         });
 
-        let csvContent = "data:text/csv;charset=utf-8,";
+        let csvContent = "";
         csvContent += `Bulan: ${monthInput}\nDiurutkan Berdasarkan: ${metric === 'resi' ? 'TOTAL RESI' : 'TOTAL GMV'}\n\n`;
         csvContent += "Peringkat,Nama Host,Total Resi (Bulan Ini),Total GMV (Bulan Ini),Total Resi (Bulan Lalu),Total GMV (Bulan Lalu),Status Performa (%)\n";
 
@@ -3840,11 +4400,11 @@
             let trend = "Stagnan (0%)";
             if (prevVal === 0 && currVal > 0) trend = "Naik (Data Baru)";
             else if (prevVal > 0 || currVal > 0) { const diff = currVal - prevVal; const perc = ((diff / prevVal) * 100).toFixed(1); trend = diff > 0 ? `Naik +${perc}%` : `Turun ${perc}%`; }
-            csvContent += `${index + 1},"${s.name}",${s.currResi},${s.currGMV},${s.prevResi},${s.prevGMV},"${trend}"\n`;
+            csvContent += [index+1,s.name,s.currResi,s.currGMV,s.prevResi,s.prevGMV,trend].map(csvCell).join(",")+"\n";
         });
 
-        const link = document.createElement("a"); link.setAttribute("href", encodeURI(csvContent)); link.setAttribute("download", `Peringkat_Host_${metric.toUpperCase()}_${monthInput}.csv`);
-        document.body.appendChild(link); link.click(); link.remove(); showMessage("Mengunduh Excel (CSV)...", "success");
+        downloadCsv(`Peringkat_Host_${metric.toUpperCase()}_${monthInput}.csv`,csvContent);
+        showMessage("Mengunduh CSV...", "success");
     };
 </script>
 </body>
