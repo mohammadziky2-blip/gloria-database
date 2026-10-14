@@ -503,7 +503,7 @@
                     <button id="quickSalaryCard" onclick="switchTab('salary')" class="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-6 rounded-xl shadow hover:shadow-lg transition-all text-left flex justify-between items-center group border-2 border-green-300 animate-pulse">
                         <div>
                             <h4 class="font-bold text-lg">Slip Gaji & Performa</h4>
-                            <p class="text-green-100 text-sm mt-1">Kalkulasi 1 bulan, lembur & total data individu</p>
+                            <p class="text-green-100 text-sm mt-1">Periode fleksibel, kehadiran & perhitungan gaji individu</p>
                         </div>
                         <i class="ph ph-receipt text-2xl transform group-hover:scale-110 transition-transform"></i>
                     </button>
@@ -530,6 +530,15 @@
                             <p class="text-indigo-100 text-sm mt-1">Rekap tabel spreadsheet komprehensif tanggal 1 s/d selesai untuk seluruh perolehan Resi dan GMV Host Live.</p>
                         </div>
                         <i class="ph ph-table text-4xl transform group-hover:scale-110 transition-transform"></i>
+                    </button>
+
+                    <button id="dashboardHostExcelAuth" onclick="switchTab('hostExcel')" class="hidden bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all text-left flex justify-between items-center group border border-amber-400/50 md:col-span-2">
+                        <div>
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-amber-300 rounded-full bg-white/10 mb-3">GLORIA · HOST ANALYTICS</span>
+                            <h4 class="font-black text-xl md:text-2xl">Data Excel Keseluruhan Host Live</h4>
+                            <p class="text-indigo-200 text-sm mt-2">Tabel kinerja harian seluruh Host, rekap GMV dan resi, ekspor Excel, CSV, dan gambar.</p>
+                        </div>
+                        <i class="ph ph-file-xls text-5xl text-amber-300 group-hover:scale-110 transition-transform"></i>
                     </button>
 
                     <button id="quickHostRankingCard" onclick="switchTab('hostRanking')" class="bg-gradient-to-r from-rose-500 to-pink-600 text-white p-6 rounded-xl shadow hover:shadow-lg transition-all text-left flex justify-between items-center group border-2 border-rose-300 hover:border-rose-400 md:col-span-2 animate-pulse">
@@ -812,6 +821,7 @@
                             </div>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-5" id="sessionContainer">
+                                <p class="col-span-full text-xs text-indigo-800 bg-indigo-50 rounded-lg p-2">Admin/Packing: untuk hadir penuh, boleh biarkan kedua sesi “-”. Untuk izin/sakit mendadak setengah hari, isi satu sesi dengan izin/sakit mendadak dan sesi lainnya Selesai. Hasil gaji akan menghitung 0,5 hari potongan.</p>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Sesi 1</label>
                                     <select id="attSession1" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white">
@@ -1106,41 +1116,29 @@
                         </button>
                         <div>
                             <h2 class="text-2xl font-bold text-gray-800">Slip Gaji dan Performa Karyawan</h2>
-                            <p class="text-gray-500 text-sm">Kalkulasi total kehadiran & performa per karyawan secara otomatis</p>
+                            <p class="text-gray-500 text-sm">Periode fleksibel dan prorata 26 hari kerja untuk Host Live, Admin, dan Packing</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row gap-4" data-html2canvas-ignore="true">
-                    <div class="flex-1">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Pilih Bulan</label>
-                        <input type="month" id="salaryMonth" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-blue-500 bg-white">
+                <div class="rounded-2xl border border-indigo-100 bg-white p-5 md:p-6 mb-6 shadow-sm space-y-4" data-html2canvas-ignore="true">
+                    <div class="flex items-center gap-3 border-b border-slate-100 pb-3"><i class="ph-fill ph-calendar-check text-2xl text-indigo-600"></i><div><h3 class="font-extrabold text-slate-900">Pengaturan Periode & Gaji</h3><p class="text-xs text-slate-500">Bisa lintas bulan, contoh 16 September – 15 Oktober. Libur tidak dipotong.</p></div></div>
+                    <input type="month" id="salaryMonth" class="hidden" aria-hidden="true" tabindex="-1">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                        <label class="text-sm font-semibold text-slate-700">Tanggal Mulai<input type="date" id="salaryStartDate" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-3 bg-white" required></label>
+                        <label class="text-sm font-semibold text-slate-700">Tanggal Akhir<input type="date" id="salaryEndDate" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-3 bg-white" required></label>
+                        <label class="text-sm font-semibold text-slate-700">Pilih Karyawan<select id="salaryEmployee" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-3 bg-white"><option value="">-- Pilih Karyawan --</option></select></label>
+                        <label class="text-sm font-semibold text-slate-700">Gaji Pokok per 26 Hari (Rp)<input type="number" id="salaryBasicInput" min="0" max="1000000000000" step="1" placeholder="Contoh: 3900000" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-3 bg-white" required></label>
                     </div>
-                    <div class="flex-1">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Metode Komisi Host Live</label>
-                        <select id="salaryHostCommissionMethod" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-blue-500 bg-white">
-                            <option value="GMV">Berdasarkan GMV</option>
-                            <option value="RESI">Berdasarkan Resi / Pesanan</option>
-                        </select>
-                    </div>
-                    <div class="flex-1">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Pilih Karyawan</label>
-                        <select id="salaryEmployee" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-blue-500 bg-white">
-                            <option value="">-- Pilih Karyawan --</option>
-                        </select>
-                    </div>
-                    <div class="flex items-end">
-                        <button onclick="generateSalarySlip()" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-bold transition-colors shadow-sm">
-                            Kalkulasi Data
-                        </button>
-                    </div>
+                    <div id="salaryMethodWrap" class="hidden max-w-sm"><label class="text-sm font-semibold text-slate-700">Metode Komisi — Khusus Host Live<select id="salaryHostCommissionMethod" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-3 bg-white"><option value="GMV">GMV</option><option value="RESI">Resi / Pesanan</option></select></label></div>
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 bg-amber-50/70 border border-amber-200 rounded-xl p-3"><p class="text-xs text-amber-900"><b>Rumus:</b> Gaji sehari = Pokok ÷ 26; Izin/Sakit 1 hari, Izin/Sakit mendadak atau sesi Tidak Selesai ½ hari. Libur 0 potongan. Angka hasil dibulatkan ke Rupiah terdekat.</p><button onclick="generateSalarySlip()" class="bg-indigo-700 hover:bg-indigo-800 text-white font-extrabold px-6 py-3 rounded-xl shrink-0 shadow">Hitung Slip Gaji <i class="ph ph-arrow-right ml-1"></i></button></div>
                 </div>
 
-                <div id="salaryResult" class="hidden bg-white p-8 rounded-xl shadow-sm border border-gray-200 max-w-4xl mx-auto w-full">
+                <div id="salaryResult" class="hidden bg-white p-5 md:p-8 rounded-3xl shadow-xl border border-slate-200 max-w-4xl mx-auto w-full">
                     <div class="text-center mb-8 border-b pb-6">
                         <h3 class="text-2xl font-bold text-gray-800 uppercase tracking-widest">GLORIA</h3>
                         <p class="text-gray-500">Rekapitulasi Kehadiran & Performa Individu</p>
-                        <p class="font-medium text-gray-800 mt-2">Periode Bulan: <span id="slipMonthDisplay"></span></p>
+                        <p class="font-medium text-gray-800 mt-2">Periode Gaji: <span id="slipMonthDisplay"></span></p>
                     </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
@@ -1166,6 +1164,25 @@
                         </div>
                     </div>
 
+                    <section class="gloria-premium-payroll rounded-2xl overflow-hidden mb-7 border border-slate-800 shadow-xl">
+                      <div class="bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 p-5 md:p-6 text-white">
+                        <div class="flex justify-between items-start gap-3"><div><p class="text-xs text-amber-300 tracking-[.22em] font-black uppercase">GLORIA · Payroll Statement</p><h4 class="text-xl md:text-2xl font-black mt-2">Rincian Gaji Pokok Final</h4><p class="text-slate-300 text-xs mt-2">Basis tetap 26 hari kerja · Libur tidak dipotong</p></div><i class="ph-fill ph-seal-check text-4xl text-amber-300"></i></div>
+                        <div class="mt-5 grid grid-cols-2 md:grid-cols-4 gap-3">
+                          <div class="rounded-xl bg-white/10 p-3"><p class="text-[11px] text-slate-300">Gaji Pokok Awal</p><strong class="text-base md:text-lg" id="slipBaseInput">Rp 0</strong></div>
+                          <div class="rounded-xl bg-white/10 p-3"><p class="text-[11px] text-slate-300">Nilai Sehari (÷26)</p><strong class="text-base md:text-lg" id="slipDayRate">Rp 0</strong></div>
+                          <div class="rounded-xl bg-white/10 p-3"><p class="text-[11px] text-slate-300">Total Potongan Hari</p><strong class="text-base md:text-lg" id="slipDeductionDays">0 hari</strong></div>
+                          <div class="rounded-xl bg-white/10 p-3"><p class="text-[11px] text-slate-300">Potongan Rupiah</p><strong class="text-base md:text-lg text-rose-300" id="slipDeductionMoney">Rp 0</strong></div>
+                        </div>
+                      </div>
+                      <div class="p-5 md:p-6 bg-white space-y-3">
+                        <div class="flex items-center justify-between gap-3"><span class="text-sm font-semibold text-slate-600">Gaji pokok setelah potongan</span><strong class="text-lg text-slate-900" id="slipFinalBase">Rp 0</strong></div>
+                        <div id="slipCommissionRow" class="hidden flex items-center justify-between gap-3"><span class="text-sm font-semibold text-slate-600">Komisi Host Live</span><strong class="text-lg text-indigo-800" id="slipCommissionFinal">Rp 0</strong></div>
+                        <div class="flex items-center justify-between gap-3 bg-emerald-50 rounded-xl p-4 border border-emerald-100"><span class="font-extrabold text-emerald-950">Total kalkulasi</span><strong class="text-xl md:text-2xl font-black text-emerald-800" id="slipTotalFinal">Rp 0</strong></div>
+                        <div id="salaryPayrollWarnings" class="hidden bg-amber-50 text-amber-950 text-xs p-3 rounded-xl border border-amber-300"></div>
+                        <details class="border-t border-slate-100 pt-3"><summary class="text-xs font-extrabold text-indigo-800 cursor-pointer">Lihat rincian per tanggal dan alasan potongan</summary><div id="salaryPayrollDailyDetail" class="mt-3 text-xs space-y-1"></div></details>
+                        <p class="text-[11px] text-slate-500">Estimasi gaji pokok + komisi Host (jika ada), belum termasuk kebijakan lembur/bonus/potongan lain di luar perhitungan ini. Wajib ditinjau sebelum pembayaran.</p>
+                      </div>
+                    </section>
                     <div id="slipLateContainer" class="hidden bg-amber-50 p-6 rounded-lg border border-amber-200 mb-8">
                         <h4 class="text-lg font-bold text-amber-900 mb-3 border-b border-amber-200 pb-2 flex items-center">
                             <i class="ph-fill ph-clock-warning mr-2"></i> Rekap Keterlambatan Bulanan
@@ -1294,7 +1311,7 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Gaji Pokok (Rp)</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Gaji Pokok Awal / 26 Hari Kerja (Rp)</label>
                             <input type="number" id="calcHostBase" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-blue-500 bg-white" placeholder="Contoh: 3000000">
                         </div>
                         <div>
@@ -1325,7 +1342,7 @@
                     </div>
                 </div>
 
-                <div id="hostSalaryResult" class="hidden bg-white p-8 rounded-xl shadow-sm border border-green-200 max-w-3xl mx-auto w-full border-t-8 border-t-green-600 relative">
+                <div id="hostSalaryResult" class="hidden bg-white p-5 md:p-8 rounded-3xl shadow-xl border border-emerald-200 max-w-4xl mx-auto w-full border-t-8 border-t-amber-400 relative">
                     
                     <div class="absolute top-4 right-4 flex flex-wrap gap-2 max-w-[72%] justify-end" data-html2canvas-ignore="true">
                         <button onclick="previewHostSalaryA4()" class="bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 px-3 py-2 rounded-lg font-bold flex items-center transition-colors shadow-sm text-sm"><i class="ph ph-eye mr-1.5"></i>A4</button>
@@ -1377,9 +1394,22 @@
                         </div>
                     </div>
 
+                    <section class="rounded-2xl border border-amber-300 bg-gradient-to-br from-slate-950 to-indigo-950 text-white p-5 md:p-6 mb-6 shadow-xl gloria-premium-payroll">
+                      <p class="text-[11px] tracking-[.22em] text-amber-300 font-black uppercase">GLORIA · Executive Payroll</p>
+                      <h4 class="text-xl font-extrabold mt-2">Prorata Gaji Pokok · 26 Hari Kerja</h4>
+                      <div class="grid grid-cols-2 gap-4 mt-5 text-sm">
+                        <div><p class="text-slate-300 text-xs">Gaji awal diinput</p><b id="calcHostInputBaseDisplay" class="text-lg">Rp 0</b></div>
+                        <div><p class="text-slate-300 text-xs">Nilai per hari</p><b id="calcHostDayRate" class="text-lg">Rp 0</b></div>
+                        <div><p class="text-slate-300 text-xs">Hari terpotong</p><b id="calcHostDeductionDays" class="text-lg">0 hari</b></div>
+                        <div><p class="text-slate-300 text-xs">Total potongan</p><b id="calcHostDeductionTotal" class="text-lg text-rose-300">Rp 0</b></div>
+                      </div>
+                      <p id="calcHostPayrollWarnings" class="hidden bg-amber-100 text-amber-950 text-xs mt-4 rounded-lg p-3"></p>
+                      <details class="mt-4 text-xs border-t border-white/20 pt-3"><summary class="cursor-pointer font-bold text-amber-300">Rincian per tanggal dan alasan potongan</summary><div id="calcHostPayrollDailyDetail" class="mt-3 space-y-1"></div></details>
+                      <p class="text-[11px] text-slate-300 mt-4">Libur tidak dipotong; seluruh nilai dihitung dari server dan dibulatkan ke Rupiah terdekat.</p>
+                    </section>
                     <table class="w-full text-left mb-8 border-collapse">
                         <tr class="border-b border-gray-100">
-                            <td class="py-4 text-gray-700 font-medium">Gaji Pokok</td>
+                            <td class="py-4 text-gray-700 font-medium">Gaji Pokok Final (setelah potongan)</td>
                             <td class="py-4 text-right font-bold text-gray-800 text-lg" id="calcHostBaseDisplay">Rp 0</td>
                         </tr>
                         <tr class="border-b border-gray-100">
@@ -1925,7 +1955,7 @@
     // GitHub Pages: URL /exec di gloria-config.js; komunikasi melalui iframe bridge Apps Script.
     // Hosting langsung Apps Script tetap memakai google.script.run tanpa URL.
     const GAS_URL = String(window.GLORIA_CONFIG?.gasWebAppUrl || '').trim();
-    const EXPECTED_BACKEND_BUILD_ID = 'GLORIA-2026.10.14.05';
+    const EXPECTED_BACKEND_BUILD_ID = 'GLORIA-2026.10.14.06';
     const EXPECTED_BACKEND_SCHEMA = '2026.10.5'; 
     
     let state = {
@@ -2464,7 +2494,7 @@
         document.querySelectorAll('.nav-btn[data-tab]').forEach(btn=>{
             if(!LIMITED_ALLOWED_TABS.includes(btn.getAttribute('data-tab')))hideForLimited(btn);
         });
-        ['masterControlPanel','sidebarBankAuth','mobileBankAuth','dashboardBankAuth','dashboardHostAuth','sidebarHostAuth','mobileHostAuth',
+        ['masterControlPanel','sidebarBankAuth','mobileBankAuth','dashboardBankAuth','dashboardHostAuth','dashboardHostExcelAuth','sidebarHostAuth','mobileHostAuth',
          'quickEmployeeCard','quickSalaryCard','quickScheduleCard','quickHostReportCard','quickHostRankingCard','quickBulkAttendanceCard','dashboardAISection','dashboardAccessLogSection'].forEach(id=>{const el=document.getElementById(id);if(el){hideForLimited(el);el.classList.remove('flex');}});
         ['quickAttendanceCard','quickLateCard','quickReportsCard'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('hidden');});
         document.querySelectorAll('[onclick]').forEach(el=>{const match=(el.getAttribute('onclick')||'').match(/switchTab\(['"]([^'"]+)['"]\)/);if(match && !LIMITED_ALLOWED_TABS.includes(match[1]))hideForLimited(el);});
@@ -2480,7 +2510,7 @@
         ['masterControlPanel','sidebarBankAuth','mobileBankAuth','dashboardBankAuth'].forEach(id=>{const el=document.getElementById(id);if(!el)return;if(isOwner){el.classList.remove('hidden');if(id!=='masterControlPanel')el.classList.add('flex');}else{el.classList.add('hidden');el.classList.remove('flex');}});
         const geminiKey=document.getElementById('geminiApiKey'); if(geminiKey&&geminiKey.parentElement){geminiKey.parentElement.classList.toggle('hidden',!isOwner); geminiKey.parentElement.classList.toggle('md:flex',isOwner);}
         const authorizedHostEmails=['bettyartanita@gmail.com','mohammadziky2@gmail.com','ysdd@gmail.com']; const isHost=authorizedHostEmails.includes(String(email||'').toLowerCase());
-        ['dashboardHostAuth','sidebarHostAuth','mobileHostAuth'].forEach(id=>{const el=document.getElementById(id);if(!el)return;if(isHost){el.classList.remove('hidden');el.classList.add('flex');}else{el.classList.add('hidden');el.classList.remove('flex');}});
+        ['dashboardHostAuth','dashboardHostExcelAuth','sidebarHostAuth','mobileHostAuth'].forEach(id=>{const el=document.getElementById(id);if(!el)return;if(isHost){el.classList.remove('hidden');el.classList.add('flex');}else{el.classList.add('hidden');el.classList.remove('flex');}});
         ['quickScheduleCard','quickHostReportCard','quickHostRankingCard'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.toggle('hidden',!isHost);});
         document.querySelectorAll('.nav-btn[data-tab="schedule"],.nav-btn[data-tab="hostReport"],.nav-btn[data-tab="hostRanking"],.nav-btn[data-tab="hostSalary"],.nav-btn[data-tab="hostExcel"]').forEach(btn=>{btn.classList.toggle('hidden',!isHost);});
         document.getElementById('dashboardAISection')?.classList.toggle('hidden',!isHost);
@@ -3352,24 +3382,21 @@
         } catch (error) { if (!state.isMockMode) await refreshData(true).catch(()=>{}); showMessage(error.message || "Gagal menghapus.", "error"); }
     };
     
+    let gloriaLastAttendanceEmployee='';
     window.handleEmployeeChange = () => {
-        const empSelect = document.getElementById('attEmployee'); const perfCon = document.getElementById('performaContainer'); const sessionCon = document.getElementById('sessionContainer');
-        if (empSelect.selectedIndex <= 0) { perfCon.classList.add('hidden'); perfCon.classList.remove('grid'); sessionCon.classList.add('hidden'); sessionCon.classList.remove('grid'); return; }
-        
-        const isHost = empSelect.options[empSelect.selectedIndex].dataset.division === 'Host Live';
-        const isHadir = document.getElementById('attStatus').value === 'Hadir';
-
-        if (isHost) { perfCon.classList.remove('hidden'); perfCon.classList.add('grid'); sessionCon.classList.remove('hidden'); sessionCon.classList.add('grid', 'grid-cols-1', 'md:grid-cols-2', 'gap-5'); } 
-        else {
-            perfCon.classList.add('hidden'); perfCon.classList.remove('grid');
-            sessionCon.classList.add('hidden'); sessionCon.classList.remove('grid', 'grid-cols-1', 'md:grid-cols-2', 'gap-5');
-            if (!isHost) {
-                document.getElementById('attResi1').value = ''; document.getElementById('attGMV1').value = '';
-                document.getElementById('attResi2').value = ''; document.getElementById('attGMV2').value = '';
-            }
-            if (!isHost) { document.getElementById('attSession1').value = '-'; document.getElementById('attSession2').value = '-'; }
-            else { document.getElementById('attSession1').value = '-'; document.getElementById('attSession2').value = '-'; }
+        const select=document.getElementById('attEmployee'),perf=document.getElementById('performaContainer'),sessions=document.getElementById('sessionContainer');
+        const id=select?.value||'',option=select?.selectedOptions?.[0],isHost=option?.dataset?.division==='Host Live';
+        const status=document.getElementById('attStatus').value;
+        if(id!==gloriaLastAttendanceEmployee){
+            document.getElementById('attSession1').value='-';document.getElementById('attSession2').value='-';
+            gloriaLastAttendanceEmployee=id;
         }
+        perf.classList.toggle('hidden',!id||!isHost);perf.classList.toggle('grid',!!id&&isHost);
+        const sessionsVisible=!!id&&(status==='Hadir'||isHost);
+        sessions.classList.toggle('hidden',!sessionsVisible);
+        sessions.classList.toggle('grid',sessionsVisible);
+        if(!isHost){['attResi1','attGMV1','attResi2','attGMV2'].forEach(k=>document.getElementById(k).value='');}
+        if(status!=='Hadir'&&!isHost){document.getElementById('attSession1').value='-';document.getElementById('attSession2').value='-';}
     };
 
     window.toggleReasonField = () => {
@@ -3384,7 +3411,7 @@
         const selectedEmployees=employeeIds.map(id=>state.employees.find(e=>String(e.id)===String(id))).filter(Boolean);if(!selectedEmployees.length){showMessage('Tidak ada karyawan yang dipilih.','error');return;}
         const divisions=[...new Set(selectedEmployees.map(e=>String(e.division)))];if(divisions.length!==1){showMessage('Input massal harus satu divisi. Pilih Admin, Packing, atau Host Live secara terpisah.','error');return;}
         const division=divisions[0],status=document.getElementById('attStatus').value,reason=status!=='Hadir'?document.getElementById('attReason').value.trim():'';if(status!=='Hadir'&&!reason){showMessage('Keterangan wajib diisi untuk status selain Hadir.','error');return;}
-        const isHost=division==='Host Live';const base={date:dateInput,status:status,reason:reason,lemburJam:document.getElementById('attLemburJam').value?Number(document.getElementById('attLemburJam').value):'',lemburKet:document.getElementById('attLemburKet').value||'',session1:isHost?document.getElementById('attSession1').value:'-',session2:isHost?document.getElementById('attSession2').value:'-',resi1:isHost&&document.getElementById('attResi1').value?parseInt(document.getElementById('attResi1').value):'',gmv1:isHost&&document.getElementById('attGMV1').value?parseInt(document.getElementById('attGMV1').value):'',resi2:isHost&&document.getElementById('attResi2').value?parseInt(document.getElementById('attResi2').value):'',gmv2:isHost&&document.getElementById('attGMV2').value?parseInt(document.getElementById('attGMV2').value):''};
+        const isHost=division==='Host Live';const base={date:dateInput,status:status,reason:reason,lemburJam:document.getElementById('attLemburJam').value?Number(document.getElementById('attLemburJam').value):'',lemburKet:document.getElementById('attLemburKet').value||'',session1:status==='Hadir'?document.getElementById('attSession1').value:'-',session2:status==='Hadir'?document.getElementById('attSession2').value:'-',resi1:isHost&&document.getElementById('attResi1').value?parseInt(document.getElementById('attResi1').value):'',gmv1:isHost&&document.getElementById('attGMV1').value?parseInt(document.getElementById('attGMV1').value):'',resi2:isHost&&document.getElementById('attResi2').value?parseInt(document.getElementById('attResi2').value):'',gmv2:isHost&&document.getElementById('attGMV2').value?parseInt(document.getElementById('attGMV2').value):''};
         const existingKeys=new Set((state.attendance||[]).filter(a=>window.normalizeDateStr(a.date)===dateInput).map(a=>String(a.empId)));
         const items=selectedEmployees.filter(e=>!existingKeys.has(String(e.id))).map((e,i)=>({...base,id:'ATT_BULK_'+Date.now()+'_'+i+'_'+String(e.id),empId:e.id,empName:e.name,empDivision:e.division,timestamp:new Date().toISOString()}));if(!items.length){showMessage('Semua karyawan yang dipilih sudah memiliki absensi pada tanggal tersebut.','error');return;}
         const submitBtn=document.querySelector('#attendanceForm button[type="submit"]');if(submitBtn){submitBtn.disabled=true;submitBtn.innerText='Menyimpan massal...';}
@@ -3420,7 +3447,7 @@
         const submitBtn = e.target.querySelector('button[type="submit"]'); submitBtn.disabled = true; submitBtn.innerText = "Menyimpan ke Spreadsheet...";
         const status = document.getElementById('attStatus').value; const isHostPresent = (empDivision === 'Host Live');
 
-        let inputSesi1 = isHostPresent ? document.getElementById('attSession1').value : '-'; let inputSesi2 = isHostPresent ? document.getElementById('attSession2').value : '-';
+        let inputSesi1 = status==='Hadir'||isHostPresent ? document.getElementById('attSession1').value : '-'; let inputSesi2 = status==='Hadir'||isHostPresent ? document.getElementById('attSession2').value : '-';
         let inputResi1 = isHostPresent && document.getElementById('attResi1').value ? parseInt(document.getElementById('attResi1').value) : '';
         let inputGMV1 = isHostPresent && document.getElementById('attGMV1').value ? parseInt(document.getElementById('attGMV1').value) : '';
         let inputResi2 = isHostPresent && document.getElementById('attResi2').value ? parseInt(document.getElementById('attResi2').value) : '';
@@ -3526,7 +3553,7 @@
         } else {
             reasonCon.classList.add('hidden'); 
             if (empDivision === 'Host Live') { sessionCon.classList.remove('hidden'); sessionCon.classList.add('grid'); perfCon.classList.remove('hidden'); perfCon.classList.add('grid'); } 
-            else { sessionCon.classList.add('hidden'); sessionCon.classList.remove('grid'); perfCon.classList.add('hidden'); perfCon.classList.remove('grid'); }
+            else { sessionCon.classList.remove('hidden'); sessionCon.classList.add('grid'); perfCon.classList.add('hidden'); perfCon.classList.remove('grid'); }
         }
     };
 
@@ -3535,7 +3562,7 @@
         const id = document.getElementById('editAttId').value; const status = document.getElementById('editAttStatus').value; const empDivision = document.getElementById('editAttEmpDivision').value; const isHostPresent = (empDivision === 'Host Live');
         const existingData = state.attendance.find(a => a.id === id) || {};
 
-        let inputSesi1 = isHostPresent ? document.getElementById('editAttSession1').value : '-'; let inputSesi2 = isHostPresent ? document.getElementById('editAttSession2').value : '-';
+        let inputSesi1 = status==='Hadir'||isHostPresent ? document.getElementById('editAttSession1').value : '-'; let inputSesi2 = status==='Hadir'||isHostPresent ? document.getElementById('editAttSession2').value : '-';
 
         const data = {
             ...existingData, id: id, date: document.getElementById('editAttDate').value, status: status, session1: inputSesi1, session2: inputSesi2,
@@ -3560,17 +3587,48 @@
 
     let hostChartInstance = null; let adminChartInstance = null;
 
+    function updateSalaryDivisionUI(){
+        const id=document.getElementById('salaryEmployee')?.value;
+        const employee=state.employees.find(x=>String(x.id)===String(id));
+        const isHost=employee?.division==='Host Live';
+        document.getElementById('salaryMethodWrap')?.classList.toggle('hidden',!isHost);
+        document.getElementById('salaryResult')?.classList.add('hidden');
+    }
+    document.getElementById('salaryEmployee')?.addEventListener('change',updateSalaryDivisionUI);
+    ['salaryStartDate','salaryEndDate','salaryBasicInput','salaryHostCommissionMethod'].forEach(id=>{
+        document.getElementById(id)?.addEventListener('change',()=>document.getElementById('salaryResult')?.classList.add('hidden'));
+    });
+
     window.generateSalarySlip = async () => {
-        const monthInput=document.getElementById('salaryMonth').value;
+        const startDate=document.getElementById('salaryStartDate').value,endDate=document.getElementById('salaryEndDate').value;
         const empSelect=document.getElementById('salaryEmployee');
-        if(!monthInput||!empSelect.value){showMessage('Pilih bulan dan karyawan.','error');return;}
+        const rawBase=document.getElementById('salaryBasicInput').value;
+        if(!startDate||!endDate||startDate>endDate||!empSelect.value){showMessage('Pilih karyawan dan rentang tanggal yang benar.','error');return;}
+        if(rawBase.trim()===''||!/^\d+$/.test(rawBase)||Number(rawBase)>1000000000000){showMessage('Masukkan gaji pokok bulat dalam Rupiah.','error');return;}
+        const basicSalary=Number(rawBase);
         const method=document.getElementById('salaryHostCommissionMethod')?.value||'GMV';
         try{
-            const res=await apiCall('calculateSalary',{period:monthInput,employeeId:empSelect.value,method});
+            const res=await apiCall('calculateSalary',{startDate,endDate,employeeId:empSelect.value,basicSalary,method});
             const d=res.result||res.data?.[0];
             if(!d) throw new Error('Server tidak mengembalikan hasil kalkulasi gaji.');
             state.salary=[d];
-            document.getElementById('slipMonthDisplay').innerText=d.period;
+            document.getElementById('slipMonthDisplay').innerText=`${d.startDate} s.d. ${d.endDate}`;
+            if(!d.payroll)throw new Error('Backend belum mendukung kalkulasi prorata. Perbarui backend v06 dahulu.');
+            const p=d.payroll;
+            document.getElementById('slipBaseInput').textContent=window.formatRupiah(p.basicSalaryInput);
+            document.getElementById('slipDayRate').textContent=window.formatRupiah(p.dayRate);
+            document.getElementById('slipDeductionDays').textContent=`${Number(p.deductionDays).toLocaleString('id-ID')} hari`;
+            document.getElementById('slipDeductionMoney').textContent=window.formatRupiah(p.absenceDeduction);
+            document.getElementById('slipFinalBase').textContent=window.formatRupiah(p.finalBasicSalary);
+            const isHostSalary=d.division==='Host Live';
+            document.getElementById('slipCommissionRow').classList.toggle('hidden',!isHostSalary);
+            document.getElementById('slipCommissionFinal').textContent=window.formatRupiah(isHostSalary?d.hostCommission:0);
+            document.getElementById('slipTotalFinal').textContent=window.formatRupiah(p.finalBasicSalary+(isHostSalary?Number(d.hostCommission||0):0));
+            const notice=document.getElementById('salaryPayrollWarnings');
+            notice.textContent=(p.warnings||[]).join(' · ');notice.classList.toggle('hidden',!(p.warnings||[]).length);
+            const detail=document.getElementById('salaryPayrollDailyDetail');
+            const deducted=(p.dayDetails||[]).filter(x=>Number(x.deductionDays)>0);
+            detail.innerHTML=deducted.length?deducted.map(x=>`<div class="flex flex-wrap items-center justify-between gap-2 py-2 border-b border-slate-100"><span>${escapeLateHtml(x.date)} · ${escapeLateHtml(x.reason)}</span><b class="text-rose-700">−${Number(x.deductionDays).toLocaleString('id-ID')} hari</b></div>`).join(''):'<p class="text-slate-500">Tidak ada potongan berdasarkan data kehadiran pada periode ini.</p>';
             document.getElementById('slipName').innerText=d.employeeName||'-';
             document.getElementById('slipDivision').innerText=d.division||'-';
             document.getElementById('slipBankName').innerText=d.bankName||'-';
@@ -3612,8 +3670,8 @@
 
     // ===== A4 SLIP EXPORT / PRINT ADD-ON =====
     const A4_PRINT_STYLE = `@page{size:A4 portrait;margin:12mm}*{box-sizing:border-box}html,body{margin:0;padding:0;background:#fff;font-family:Arial,Helvetica,sans-serif;color:#111827}body{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}.a4-document{width:186mm;margin:0 auto;background:#fff;font-size:10pt;line-height:1.35}.a4-document button,.a4-document [data-html2canvas-ignore="true"]{display:none!important}.a4-document .shadow,.a4-document .shadow-sm,.a4-document .shadow-lg,.a4-document .shadow-xl{box-shadow:none!important}.a4-document canvas{max-width:100%!important;height:auto!important}.a4-document .p-8{padding:7mm!important}.a4-document .p-6{padding:4.5mm!important}.a4-document .mb-8{margin-bottom:5mm!important}.a4-document .py-4{padding-top:2.5mm!important;padding-bottom:2.5mm!important}.a4-document .py-2{padding-top:1.5mm!important;padding-bottom:1.5mm!important}.a4-document .text-3xl{font-size:18pt!important}.a4-document .text-2xl{font-size:14pt!important}.a4-document .text-xl{font-size:12pt!important}.a4-document .text-lg{font-size:11pt!important}.a4-document .text-sm{font-size:9pt!important}.a4-document .text-xs{font-size:8pt!important}`;
-    function getA4SlipNode(type){const id=type==='host'?'hostSalaryResult':'salaryResult';const src=document.getElementById(id);if(!src||src.classList.contains('hidden'))throw new Error('Slip gaji belum dibuat. Silakan klik Kalkulasi Data terlebih dahulu.');const clone=src.cloneNode(true);clone.classList.remove('hidden');clone.removeAttribute('id');clone.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id'));clone.classList.add('a4-document');clone.querySelectorAll('[data-html2canvas-ignore="true"],button').forEach(e=>e.remove());clone.style.cssText='width:186mm;max-width:186mm;margin:0 auto;background:#fff;box-shadow:none;border:0;';return clone;}
-    function buildA4Html(type){const node=getA4SlipNode(type);return '<!doctype html><html><head><meta charset="utf-8"><title>Slip Gaji A4</title><style>'+A4_PRINT_STYLE+'</style></head><body><div class="a4-document">'+node.innerHTML+'</div></body></html>';}
+    function getA4SlipNode(type){const id=type==='host'?'hostSalaryResult':'salaryResult';const src=document.getElementById(id);if(!src||src.classList.contains('hidden'))throw new Error('Slip gaji belum dibuat. Silakan klik Kalkulasi Data terlebih dahulu.');const clone=src.cloneNode(true);clone.classList.remove('hidden');clone.removeAttribute('id');const originalCanvases=src.querySelectorAll('canvas'),clonedCanvases=clone.querySelectorAll('canvas');originalCanvases.forEach((canvas,i)=>{try{const picture=document.createElement('img');picture.src=canvas.toDataURL('image/png');picture.alt='Grafik performa';picture.style.cssText='display:block;max-width:100%;height:auto;max-height:220px;margin:0 auto';clonedCanvases[i]?.replaceWith(picture)}catch(e){}});clone.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id'));clone.classList.add('a4-document');clone.querySelectorAll('[data-html2canvas-ignore="true"],button').forEach(e=>e.remove());clone.style.cssText='width:186mm;max-width:186mm;margin:0 auto;background:#fff;box-shadow:none;border:0;';return clone;}
+    function buildA4Html(type){const node=getA4SlipNode(type);const css=Array.from(document.querySelectorAll('style')).map(e=>e.outerHTML).join('');return '<!doctype html><html><head><meta charset="utf-8"><title>Slip Gaji A4</title>'+css+'<style>'+A4_PRINT_STYLE+'</style></head><body><div class="a4-document">'+node.innerHTML+'</div></body></html>';}
     function openA4PrintWindow(type){const win=window.open('','_blank','width=1000,height=900');if(!win)throw new Error('Popup diblokir browser. Izinkan popup untuk Gloria Database lalu coba lagi.');win.document.open();win.document.write(buildA4Html(type));win.document.close();setTimeout(()=>{win.focus();win.print();},700);}
     function openA4Preview(type){try{const modal=document.getElementById('a4PreviewModal'),page=document.getElementById('a4PreviewPage');page.innerHTML='';page.appendChild(getA4SlipNode(type));modal.classList.remove('hidden');document.getElementById('a4PreviewPrintBtn').onclick=()=>{try{openA4PrintWindow(type)}catch(e){showMessage(e.message,'error')}};document.getElementById('a4PreviewPdfBtn').onclick=()=>type==='host'?downloadHostSalaryA4PDF():downloadSalaryA4PDF()}catch(e){showMessage(e.message||'Gagal membuka preview A4.','error')}}
     window.closeA4Preview=()=>document.getElementById('a4PreviewModal')?.classList.add('hidden');window.previewSalaryA4=()=>openA4Preview('salary');window.previewHostSalaryA4=()=>openA4Preview('host');window.printSalaryA4=()=>{try{openA4PrintWindow('salary')}catch(e){showMessage(e.message,'error')}};window.printHostSalaryA4=()=>{try{openA4PrintWindow('host')}catch(e){showMessage(e.message,'error')}};
@@ -3643,18 +3701,26 @@
     };
 
     window.downloadSlipExcel = () => {
-        const month=document.getElementById('salaryMonth').value,empId=document.getElementById('salaryEmployee').value;
-        if(!month||!empId)return showMessage('Pilih bulan dan karyawan terlebih dahulu.','error');
-        const filtered=(state.attendance||[]).filter(a=>window.normalizeDateStr(a.date).startsWith(month)&&String(a.empId)===String(empId)).sort((a,b)=>window.normalizeDateStr(a.date).localeCompare(window.normalizeDateStr(b.date)));
-        let rows=[['Tanggal','Status','Lembur Jam','Ket Lembur','Total Resi','Total GMV','Keterangan Absen','Keterlambatan']];
+        const start=document.getElementById('salaryStartDate').value,end=document.getElementById('salaryEndDate').value,empId=document.getElementById('salaryEmployee').value;
+        if(!start||!end||!empId)return showMessage('Pilih periode dan karyawan terlebih dahulu.','error');
+        const slip=state.salary?.[0];
+        if(!slip||slip.startDate!==start||slip.endDate!==end||String(slip.employeeId)!==String(empId))return showMessage('Hitung ulang slip sebelum mengunduh CSV.','error');
+        const filtered=(state.attendance||[]).filter(a=>window.normalizeDateStr(a.date)>=start&&window.normalizeDateStr(a.date)<=end&&String(a.empId)===String(empId)).sort((a,b)=>window.normalizeDateStr(a.date).localeCompare(window.normalizeDateStr(b.date)));
+        const isHost=slip.division==='Host Live';
+        let rows=[['GLORIA — SLIP GAJI PERIODE FLEKSIBEL'],['Periode',start+' s.d. '+end],['Gaji Pokok Awal',slip.payroll.basicSalaryInput],['Basis Hari Kerja',26],['Total Hari Dipotong',slip.payroll.deductionDays],['Nilai Potongan',slip.payroll.absenceDeduction],['Gaji Pokok Final',slip.payroll.finalBasicSalary]];
+        if(isHost)rows.push(['Komisi Host',slip.hostCommission||0]);
+        rows.push(['Total Kalkulasi',slip.estimatedTotal],[],isHost?['Tanggal','Status','Lembur Jam','Ket Lembur','Total Resi','Total GMV','Keterangan Absen','Keterlambatan']:['Tanggal','Status','Lembur Jam','Ket Lembur','Keterangan Absen','Keterlambatan']);
         filtered.forEach(r=>{
             const late=(state.lateAttendance||[]).find(x=>String(x.employeeId)===String(empId)&&window.normalizeDateStr(x.date)===window.normalizeDateStr(r.date));
-            rows.push([window.normalizeDateStr(r.date),r.status,r.lemburJam||0,r.lemburKet||'',(Number(r.resi1)||0)+(Number(r.resi2)||0),(Number(r.gmv1)||0)+(Number(r.gmv2)||0),r.reason||'',late?`${late.durationText||''} - ${late.reason||''}`:'']);
+            const basicRow=[window.normalizeDateStr(r.date),r.status,r.lemburJam||0,r.lemburKet||''];
+            if(isHost)basicRow.push((Number(r.resi1)||0)+(Number(r.resi2)||0),(Number(r.gmv1)||0)+(Number(r.gmv2)||0));
+            basicRow.push(r.reason||'',late?`${late.durationText||''} - ${late.reason||''}`:'');
+            rows.push(basicRow);
         });
         rows.push([],['Rekap Keterlambatan'],['Tanggal','Durasi','Alasan']);
-        (state.lateAttendance||[]).filter(x=>window.normalizeDateStr(x.date).startsWith(month)&&String(x.employeeId)===String(empId)).forEach(x=>rows.push([window.normalizeDateStr(x.date),x.durationText||'',x.reason||'']));
+        (state.lateAttendance||[]).filter(x=>window.normalizeDateStr(x.date)>=start&&window.normalizeDateStr(x.date)<=end&&String(x.employeeId)===String(empId)).forEach(x=>rows.push([window.normalizeDateStr(x.date),x.durationText||'',x.reason||'']));
         const csv=rows.map(cells=>cells.map(csvCell).join(',')).join('\n');
-        downloadCsv(`Individu_${String(document.getElementById('slipName').innerText||'Karyawan').replace(/[^\w-]+/g,'_')}_${month}.csv`,csv);
+        downloadCsv(`Individu_${String(document.getElementById('slipName').innerText||'Karyawan').replace(/[^\w-]+/g,'_')}_${start}_${end}.csv`,csv);
     };
 
     let currentHostSalaryDraftPayload = null;
@@ -3676,28 +3742,31 @@
         try{
             const response=await apiCall('getHostSalaryDrafts',{});
             const rows=response.data||[];
-            el.innerHTML=rows.length?rows.map(x=>`<div class="py-3 border-b"><b>${escapeLateHtml(x.employeeName)}</b> · ${escapeLateHtml(x.startDate)} s/d ${escapeLateHtml(x.endDate)} · ${escapeLateHtml(x.method)} · GMV ${window.formatRupiah(x.totalGMV)} · Resi ${Number(x.totalResi||0).toLocaleString('id-ID')} · Komisi ${window.formatRupiah(x.commission)} · Total <b>${window.formatRupiah(x.totalSalary)}</b><div class="text-indigo-800 mt-1 font-bold">${escapeLateHtml(x.evaluation?.title||'-')}</div><div class="text-slate-600 mt-1">${escapeLateHtml(x.evaluation?.message||'-')}</div><div class="text-slate-400">ID ${escapeLateHtml(x.id)} — ${escapeLateHtml(x.status)}${x.evaluation?.source==='calculated_for_legacy'?' · Evaluasi lama dihitung saat ditampilkan':''}</div></div>`).join(''):'Belum ada draft tersimpan.';
+            el.innerHTML=rows.length?rows.map(x=>`<div class="py-3 border-b"><b>${escapeLateHtml(x.employeeName)}</b> · ${escapeLateHtml(x.startDate)} s/d ${escapeLateHtml(x.endDate)} · ${escapeLateHtml(x.method)} · Potongan ${Number(x.deductionDays||0).toLocaleString('id-ID')} hari (${window.formatRupiah(x.absenceDeduction||0)}) · Pokok Final ${window.formatRupiah(x.finalBasicSalary||x.basicSalary||0)} · GMV ${window.formatRupiah(x.totalGMV)} · Resi ${Number(x.totalResi||0).toLocaleString('id-ID')} · Komisi ${window.formatRupiah(x.commission)} · Total <b>${window.formatRupiah(x.totalSalary)}</b><div class="text-indigo-800 mt-1 font-bold">${escapeLateHtml(x.evaluation?.title||'-')}</div><div class="text-slate-600 mt-1">${escapeLateHtml(x.evaluation?.message||'-')}</div><div class="text-slate-400">ID ${escapeLateHtml(x.id)} — ${escapeLateHtml(x.status)}${x.evaluation?.source==='calculated_for_legacy'?' · Evaluasi lama dihitung saat ditampilkan':''}</div></div>`).join(''):'Belum ada draft tersimpan.';
             el.classList.remove('hidden');
         }catch(e){showMessage(e.message||'Gagal memuat draft gaji.','error');}
     };
     window.downloadHostSalarySummaryCSV=()=>{
       const c=lastHostSalarySnapshot,p=currentHostSalaryDraftPayload;
       if(!c||!p)return showMessage('Hitung gaji Host sebelum membuat backup.','error');
-      const rows=[['GLORIA — Rekap dan Evaluasi Host Live'],['Nama Host',c.employeeName],['Tanggal Mulai Kehadiran',p.attendanceStartDate],['Tanggal Akhir Kehadiran',p.attendanceEndDate],['Mulai Performa',p.startDate],['Akhir Performa',p.endDate],['Metode Komisi',c.method],['Total Resi',c.totalResi],['Total GMV (Rp)',c.totalGMV],['Hari Hadir',c.hadir],['Gaji Pokok (Rp)',c.basicSalary],['Bonus (Rp)',c.bonus],['Komisi (Rp)',c.commission],['Total Gaji (Rp)',c.totalSalary],['Tarif Komisi',c.rateLabel],['Tier Komisi',c.tier],['Tingkat Evaluasi',c.evaluation.level],['Judul Evaluasi',c.evaluation.title],['Pesan Evaluasi',c.evaluation.message],['Target Berikutnya',c.evaluation.nextTarget==null?'Tingkat tertinggi':c.evaluation.nextTarget],['Status','Rekap perhitungan; bukan bukti pembayaran']];
+      const rows=[['GLORIA — Rekap dan Evaluasi Host Live'],['Nama Host',c.employeeName],['Tanggal Mulai Kehadiran',p.attendanceStartDate],['Tanggal Akhir Kehadiran',p.attendanceEndDate],['Mulai Performa',p.startDate],['Akhir Performa',p.endDate],['Metode Komisi',c.method],['Total Resi',c.totalResi],['Total GMV (Rp)',c.totalGMV],['Hari Hadir',c.hadir],['Gaji Pokok Awal (Rp)',c.basicSalary],['Potongan Hari',c.deductionDays],['Potongan (Rp)',c.absenceDeduction],['Gaji Pokok Final (Rp)',c.finalBasicSalary],['Bonus (Rp)',c.bonus],['Komisi (Rp)',c.commission],['Total Gaji (Rp)',c.totalSalary],['Tarif Komisi',c.rateLabel],['Tier Komisi',c.tier],['Tingkat Evaluasi',c.evaluation.level],['Judul Evaluasi',c.evaluation.title],['Pesan Evaluasi',c.evaluation.message],['Target Berikutnya',c.evaluation.nextTarget==null?'Tingkat tertinggi':c.evaluation.nextTarget],['Status','Rekap perhitungan; bukan bukti pembayaran']];
       downloadCsv(`Rekap_Host_${String(c.employeeName||'Host').replace(/[^a-z0-9_-]/gi,'_')}_${p.startDate}_${p.endDate}.csv`,rows.map(row=>row.map(csvCell).join(',')).join('\n'));
     };
 
     window.calculateHostSalary = async () => {
         const attStart=document.getElementById('calcHostAttStart').value, attEnd=document.getElementById('calcHostAttEnd').value;
         const perfStart=document.getElementById('calcHostPerfStart').value, perfEnd=document.getElementById('calcHostPerfEnd').value;
-        const empId=document.getElementById('calcHostEmployee').value, base=Number(document.getElementById('calcHostBase').value)||0, bonus=Number(document.getElementById('calcHostBonus').value)||0;
+        const empId=document.getElementById('calcHostEmployee').value;
+        const baseText=document.getElementById('calcHostBase').value,bonusText=document.getElementById('calcHostBonus').value;
+        if(baseText.trim()===''||!/^\d+$/.test(baseText)||Number(baseText)>1000000000000|| (bonusText!=='' && (!/^\d+$/.test(bonusText)||Number(bonusText)>1000000000000)))return showMessage('Gaji pokok wajib diisi dalam Rupiah bulat. Bonus tidak boleh negatif.','error');
+        const base=Number(baseText),bonus=bonusText===''?0:Number(bonusText);
         const method=document.getElementById('calcHostCommissionMethod').value||'GMV';
         if(!attStart||!attEnd||!perfStart||!perfEnd||!empId){showMessage('Mohon lengkapi semua rentang tanggal dan pilih host.','error');return;}
         if(perfStart>perfEnd||attStart>attEnd){showMessage('Periode tidak valid.','error');return;}
         currentHostSalaryDraftPayload=null;lastHostSalarySnapshot=null;
         document.getElementById('hostSalaryResult').classList.add('hidden');
         try{
-            const commissionRes=await apiCall('calculateHostCommission',{employeeId:empId,startDate:perfStart,endDate:perfEnd,attendanceStartDate:attStart,attendanceEndDate:attEnd,method});
+            const commissionRes=await apiCall('calculateHostCommission',{employeeId:empId,startDate:perfStart,endDate:perfEnd,attendanceStartDate:attStart,attendanceEndDate:attEnd,method,basicSalary:base});
             const c=commissionRes.data||{};
             const emp=state.employees.find(e=>String(e.id)===String(empId));
             if(!emp) throw new Error('Host tidak ditemukan pada data server.');
@@ -3706,21 +3775,32 @@
             document.getElementById('calcHostHadir').innerText=`${Number(c.hadir||0)} Hari`;
             document.getElementById('calcHostResi').innerText=Number(c.totalResi||0).toLocaleString('id-ID');
             document.getElementById('calcHostGMV').innerText=window.formatRupiah(Number(c.totalGMV||0));
-            document.getElementById('calcHostBaseDisplay').innerText=window.formatRupiah(base);
+            if(!c.payroll)throw new Error('Backend belum mendukung prorata gaji Host.');
+            const p=c.payroll;
+            document.getElementById('calcHostInputBaseDisplay').textContent=window.formatRupiah(p.basicSalaryInput);
+            document.getElementById('calcHostDayRate').textContent=window.formatRupiah(p.dayRate);
+            document.getElementById('calcHostDeductionDays').textContent=`${Number(p.deductionDays).toLocaleString('id-ID')} hari`;
+            document.getElementById('calcHostDeductionTotal').textContent=window.formatRupiah(p.absenceDeduction);
+            const warning=document.getElementById('calcHostPayrollWarnings');
+            warning.textContent=(p.warnings||[]).join(' · ');warning.classList.toggle('hidden',!(p.warnings||[]).length);
+            const detail=document.getElementById('calcHostPayrollDailyDetail');
+            const deducted=(p.dayDetails||[]).filter(x=>Number(x.deductionDays)>0);
+            detail.innerHTML=deducted.length?deducted.map(x=>`<div class="flex justify-between items-start gap-3 py-2 border-b border-white/15"><span>${escapeLateHtml(x.date)} · ${escapeLateHtml(x.reason)}</span><b class="text-rose-300 whitespace-nowrap">−${Number(x.deductionDays).toLocaleString('id-ID')} hari</b></div>`).join(''):'<p class="text-slate-300">Tidak ada potongan kehadiran pada periode ini.</p>';
+            document.getElementById('calcHostBaseDisplay').innerText=window.formatRupiah(p.finalBasicSalary);
             document.getElementById('calcHostBonusDisplay').innerText=window.formatRupiah(bonus);
             document.getElementById('calcHostCommissionMethodDisplay').innerText=method==='GMV'?'GMV':'RESI';
             document.getElementById('calcHostCommissionDisplay').innerText=window.formatRupiah(Number(c.commission)||0);
             document.getElementById('calcHostCommissionTier').innerText=c.tier||'-';
             document.getElementById('calcHostCommissionRate').innerText=c.rateLabel||'-';
             document.getElementById('calcHostCommissionBasis').innerText=method==='GMV'?window.formatRupiah(Number(c.totalGMV)||0):`${Number(c.totalResi||0).toLocaleString('id-ID')} resi`;
-            document.getElementById('calcHostTotalDisplay').innerText=window.formatRupiah(base+bonus+Number(c.commission||0));
+            document.getElementById('calcHostTotalDisplay').innerText=window.formatRupiah(p.finalBasicSalary+bonus+Number(c.commission||0));
             if(!c.evaluation || typeof c.evaluation.title!=='string')throw new Error('Backend belum mengembalikan evaluasi Host. Pastikan build terbaru terpasang.');
             document.getElementById('hostEvaluationTitle').textContent=c.evaluation.title;
             document.getElementById('hostEvaluationMessage').textContent=c.evaluation.message;
             const nex=c.evaluation.nextTarget;
             document.getElementById('hostEvaluationNext').textContent=nex==null?'Anda telah mencapai tingkat tertinggi pada metode komisi ini.':
                 `Menuju target berikutnya: ${method==='GMV'?window.formatRupiah(nex):Number(nex).toLocaleString('id-ID')+' resi'} (sisa ${method==='GMV'?window.formatRupiah(c.evaluation.remaining):Number(c.evaluation.remaining).toLocaleString('id-ID')+' resi'}).`;
-            lastHostSalarySnapshot={...c,basicSalary:base,bonus,totalSalary:base+bonus+Number(c.commission||0)};
+            lastHostSalarySnapshot={...c,basicSalary:base,bonus,finalBasicSalary:p.finalBasicSalary,absenceDeduction:p.absenceDeduction,deductionDays:p.deductionDays,totalSalary:p.finalBasicSalary+bonus+Number(c.commission||0)};
             document.getElementById('calcHostBankDetails').innerHTML=emp&&emp.bankName?`${escapeLateHtml(emp.bankName)} - ${escapeLateHtml(emp.bankAccount||'')}<span class="text-xs text-gray-500 font-medium"> a/n ${escapeLateHtml(emp.bankAccountName||'')}</span>`:(String(state.user?.email||'').toLowerCase()==='mohammadziky2@gmail.com'?'<span class="text-red-500 italic text-xs">Rekening belum diatur</span>':'<span class="text-slate-500 italic text-xs">Informasi rekening hanya tersedia untuk akun Master</span>');
             localStorage.setItem('gloria_host_commission_method',method);
             currentHostSalaryDraftPayload={employeeId:empId,startDate:perfStart,endDate:perfEnd,attendanceStartDate:attStart,attendanceEndDate:attEnd,method,basicSalary:base,bonus};
@@ -3804,7 +3884,11 @@
         if (tabId === 'salary') {
             const now = new Date(); const val = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
             if(!document.getElementById('salaryMonth').value) document.getElementById('salaryMonth').value = val;
+            const first=val+'-01',last=val+'-'+String(new Date(now.getFullYear(),now.getMonth()+1,0).getDate()).padStart(2,'0');
+            if(!document.getElementById('salaryStartDate').value)document.getElementById('salaryStartDate').value=first;
+            if(!document.getElementById('salaryEndDate').value)document.getElementById('salaryEndDate').value=last;
             updateEmployeeDropdown();
+            updateSalaryDivisionUI();
             const savedCommissionMethod = localStorage.getItem('gloria_host_commission_method');
             const salaryMethodEl = document.getElementById('salaryHostCommissionMethod');
             if (salaryMethodEl && savedCommissionMethod) salaryMethodEl.value = savedCommissionMethod;
