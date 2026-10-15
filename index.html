@@ -54,14 +54,26 @@
 .gloria-a4-small{font-size:10px;color:var(--a4-muted);line-height:1.35}
 .gloria-a4-minilist{margin:4px 0 0;padding-left:14px}
 .gloria-a4-minilist li{margin:2px 0;overflow-wrap:anywhere}
-.gloria-a4-signatures{margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.gloria-a4-sign-card{border:1px solid var(--a4-border);border-radius:8px;padding:10px 11px 9px;background:linear-gradient(180deg,#fff 0%,var(--a4-soft) 100%);min-height:124px;display:flex;flex-direction:column;justify-content:space-between}
-.gloria-a4-sign-label{font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--a4-muted)}
-.gloria-a4-sign-role{font-size:13px;font-weight:800;color:var(--a4-ink);margin-top:4px}
-.gloria-a4-sign-space{height:48px;border-bottom:1.5px solid var(--a4-ink);margin-top:8px;position:relative}
-.gloria-a4-sign-space:before{content:'Tanda tangan manual';position:absolute;left:0;bottom:4px;font-size:8.5px;color:var(--a4-muted)}
-.gloria-a4-sign-name{font-size:12px;font-weight:900;text-transform:uppercase;margin-top:6px;line-height:1.25}
-.gloria-a4-sign-sub{font-size:9.5px;color:var(--a4-muted);margin-top:2px}
+/* GLORIA v10: grafik ringkas readonly pada laporan gaji, menggantikan tanda tangan. */
+.gloria-pay-chart{margin-top:12px;border:1px solid var(--a4-border,#d9e2ef);background:var(--a4-soft,#f8fafc);color:var(--a4-ink,#172337);border-radius:9px;padding:11px 13px;font-family:Arial,Helvetica,sans-serif}
+.gloria-pay-chart-title{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-weight:800;font-size:12px;margin-bottom:9px;color:var(--a4-accent,#233d73)}
+.gloria-pay-chart-desc{font-weight:400;color:var(--a4-muted,#536176);font-size:9.5px}
+.gloria-pay-chart-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:8px}
+.gloria-pay-chart-stat{background:#fff;border:1px solid var(--a4-border,#d9e2ef);border-radius:6px;padding:7px 8px;min-width:0}
+.gloria-pay-chart-stat b{display:block;font-size:12px;color:var(--a4-ink,#172337);overflow-wrap:anywhere}
+.gloria-pay-chart-stat span{font-size:9px;color:var(--a4-muted,#536176)}
+.gloria-pay-chart-bars{height:69px;display:flex;align-items:end;justify-content:space-around;gap:5px;border-bottom:1px solid var(--a4-border,#d9e2ef);padding:0 3px}
+.gloria-pay-chart-col{height:100%;display:flex;flex:1;max-width:60px;min-width:0;align-items:center;justify-content:end;flex-direction:column;gap:3px}
+.gloria-pay-chart-rect{width:64%;max-width:30px;min-height:2px;border-radius:4px 4px 0 0;background:#3466a8}
+.gloria-pay-chart-tick{font-size:9px;color:var(--a4-muted,#536176);white-space:nowrap}
+.gloria-pay-chart-att-row{display:grid;grid-template-columns:64px minmax(0,1fr) 75px;align-items:center;gap:9px;margin:6px 0;font-size:11px}
+.gloria-pay-chart-track{background:#e5e9ef;border-radius:7px;height:9px;overflow:hidden}
+.gloria-pay-chart-progress{height:100%;min-width:0;background:#3466a8;border-radius:7px}
+.gloria-pay-chart-att-row strong{text-align:right;font-variant-numeric:tabular-nums}
+.gloria-pay-chart-legend{margin-top:7px;font-size:9px;line-height:1.4;color:var(--a4-muted,#536176)}
+.gloria-a4-sheet.a4-blackwhite .gloria-pay-chart-rect,.gloria-a4-sheet.a4-blackwhite .gloria-pay-chart-progress{background:#222!important}
+.gloria-a4-sheet.a4-blackwhite .gloria-pay-chart-track{background:#dedede}
+@media (max-width:560px){.gloria-pay-chart-stats{grid-template-columns:repeat(3,minmax(0,1fr))}.gloria-pay-chart-stat b{font-size:10px}}
 .gloria-a4-bottom{margin-top:14px;padding-top:9px;border-top:1px solid var(--a4-border);font-size:10px;color:var(--a4-muted);display:flex;justify-content:space-between;gap:15px}
 .gloria-a4-print-theme{font-size:9px;font-weight:800;letter-spacing:.3px}
 
@@ -133,21 +145,6 @@
             background-position: right center; 
             box-shadow: 0 10px 20px -5px rgba(212, 175, 55, 0.5); 
         }
-
-
-        /* GLORIA v09: blok tanda tangan resmi slip gaji */
-        .gloria-signoff-wrap{margin-top:1.75rem;padding-top:1.1rem;border-top:1px solid #dbe3ef}
-        .gloria-signoff-title{font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:#64748b;margin-bottom:.35rem}
-        .gloria-signoff-note{font-size:11px;line-height:1.45;color:#64748b;margin-bottom:1rem}
-        .gloria-signoff-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.5rem}
-        .gloria-signoff-card{border:1px solid #dbe3ef;border-radius:1rem;background:linear-gradient(180deg,#ffffff 0%,#f8fafc 100%);padding:1rem 1rem .85rem;min-height:185px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 6px 20px rgba(15,23,42,.05)}
-        .gloria-signoff-label{font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.14em}
-        .gloria-signoff-role{margin-top:.45rem;font-size:16px;font-weight:800;color:#0f172a;line-height:1.25}
-        .gloria-signoff-space{height:84px;border-bottom:1.8px solid #0f172a;margin-top:1rem;position:relative}
-        .gloria-signoff-space:before{content:'Tanda tangan manual';position:absolute;bottom:.45rem;left:0;font-size:10px;color:#94a3b8;letter-spacing:.04em}
-        .gloria-signoff-name{margin-top:.7rem;font-size:15px;font-weight:900;color:#0f172a;text-transform:uppercase;line-height:1.3}
-        .gloria-signoff-sub{font-size:11px;color:#64748b;margin-top:.2rem}
-        @media (max-width:767px){.gloria-signoff-grid{grid-template-columns:1fr}.gloria-signoff-card{min-height:168px}}
     </style>
 </head>
 <body class="text-gray-800 h-screen flex flex-col overflow-hidden">
@@ -584,7 +581,7 @@
                     </button>
                     <button id="quickSalaryCard" onclick="switchTab('salary')" class="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-6 rounded-xl shadow hover:shadow-lg transition-all text-left flex justify-between items-center group border-2 border-green-300 animate-pulse">
                         <div>
-                            <h4 class="font-bold text-lg">Slip Gaji & Performa</h4>
+                            <h4 class="font-bold text-lg">SLIP GAJI ADMIN & PACKING</h4>
                             <p class="text-green-100 text-sm mt-1">Periode fleksibel, kehadiran & perhitungan gaji individu</p>
                         </div>
                         <i class="ph ph-receipt text-2xl transform group-hover:scale-110 transition-transform"></i>
@@ -634,8 +631,8 @@
                     <!-- TOMBOL BARU: MANAJEMEN REKENING DI DASHBOARD (HANYA MASTER) -->
                     <button id="dashboardBankAuth" onclick="switchTab('bankAccount')" class="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-6 rounded-xl shadow hover:shadow-lg transition-all text-left flex justify-between items-center group border-2 border-amber-500 md:col-span-2 hidden">
                         <div>
-                            <h4 class="font-bold text-lg flex items-center text-amber-400"><i class="ph-fill ph-bank mr-2"></i> Manajemen Rekening (Khusus Master)</h4>
-                            <p class="text-slate-300 text-sm mt-1">Input dan perbarui data rekening bank karyawan. Data ini akan otomatis tertaut dan muncul ke dalam Slip Gaji Individu & Host.</p>
+                            <h4 class="font-bold text-lg flex items-center text-amber-400"><i class="ph-fill ph-bank mr-2"></i> <span id="dashboardBankRoleTitle">Manajemen Rekening (Khusus Master)</span></h4>
+                            <p id="dashboardBankDescription" class="text-slate-300 text-sm mt-1">Input dan perbarui data rekening bank karyawan. Data ini akan otomatis tertaut dan muncul ke dalam Slip Gaji Individu & Host.</p>
                         </div>
                         <i class="ph ph-wallet text-4xl text-amber-500 transform group-hover:scale-110 transition-transform"></i>
                     </button>
@@ -818,7 +815,7 @@
                         </button>
                         <div>
                             <h2 class="text-2xl font-bold text-gray-800">Manajemen Rekening Karyawan</h2>
-                            <p class="text-gray-500 text-sm">Kelola data rekening bank seluruh karyawan (Akses Khusus Master)</p>
+                            <p id="bankViewAccessDesc" class="text-gray-500 text-sm">Kelola data rekening bank seluruh karyawan (Akses Khusus Master)</p>
                         </div>
                     </div>
                 </div>
@@ -830,7 +827,7 @@
                                     <th class="p-4 font-bold">Nama Karyawan</th>
                                     <th class="p-4 font-bold">Divisi</th>
                                     <th class="p-4 font-bold">Informasi Rekening Bank</th>
-                                    <th class="p-4 font-bold text-right">Aksi Edit</th>
+                                    <th class="p-4 font-bold text-right" id="bankActionColumnHeader">Aksi Edit</th>
                                 </tr>
                             </thead>
                             <tbody id="bankAccountTableBody" class="divide-y divide-gray-100">
@@ -1268,7 +1265,7 @@
 
                 <div id="salaryResult" class="hidden bg-white p-5 md:p-8 rounded-3xl shadow-xl border border-slate-200 max-w-4xl mx-auto w-full">
                     <div class="text-center mb-8 border-b pb-6">
-                        <h3 class="text-2xl font-bold text-gray-800 uppercase tracking-widest">GLORIA</h3>
+                        <h3 class="text-2xl font-bold text-gray-800 uppercase tracking-widest">GIA</h3>
                         <p class="text-gray-500">Rekapitulasi Kehadiran & Performa Individu</p>
                         <p class="font-medium text-gray-800 mt-2">Periode Gaji: <span id="slipMonthDisplay"></span></p>
                     </div>
@@ -1372,34 +1369,7 @@
                         </div>
                     </div>
 
-                    <div class="gloria-signoff-wrap">
-                        <p class="gloria-signoff-title">Pengesahan Dokumen</p>
-                        <p class="gloria-signoff-note">Dokumen ini menggunakan format resmi perusahaan dan disiapkan untuk pembubuhan tanda tangan manual menggunakan pulpen setelah dicetak.</p>
-                        <div class="gloria-signoff-grid">
-                            <div class="gloria-signoff-card">
-                                <div>
-                                    <p class="gloria-signoff-label">Mengetahui</p>
-                                    <p class="gloria-signoff-role">Manager</p>
-                                </div>
-                                <div>
-                                    <div class="gloria-signoff-space"></div>
-                                    <p class="gloria-signoff-name">Betty AS. SM,MM</p>
-                                    <p class="gloria-signoff-sub">Manager</p>
-                                </div>
-                            </div>
-                            <div class="gloria-signoff-card">
-                                <div>
-                                    <p class="gloria-signoff-label">Disetujui Oleh</p>
-                                    <p class="gloria-signoff-role">Direktur</p>
-                                </div>
-                                <div>
-                                    <div class="gloria-signoff-space"></div>
-                                    <p class="gloria-signoff-name">Lin Chang Zhuang</p>
-                                    <p class="gloria-signoff-sub">Direktur</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <div id="salaryPayrollStats" class="mt-5"></div>
 
                     <div class="mt-6 rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-blue-50/60 p-4 md:p-5 shadow-sm" data-html2canvas-ignore="true">
                         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
@@ -1607,34 +1577,7 @@
                         <span class="font-bold text-xl">TOTAL DITERIMA</span>
                         <span class="font-black text-3xl" id="calcHostTotalDisplay">Rp 0</span>
                     </div>
-                    <div class="gloria-signoff-wrap">
-                        <p class="gloria-signoff-title">Pengesahan Dokumen</p>
-                        <p class="gloria-signoff-note">Rekap gaji Host Live ini disusun dengan format yang rapi dan profesional untuk pembubuhan tanda tangan manual menggunakan pulpen setelah dicetak.</p>
-                        <div class="gloria-signoff-grid">
-                            <div class="gloria-signoff-card">
-                                <div>
-                                    <p class="gloria-signoff-label">Mengetahui</p>
-                                    <p class="gloria-signoff-role">Manager</p>
-                                </div>
-                                <div>
-                                    <div class="gloria-signoff-space"></div>
-                                    <p class="gloria-signoff-name">Betty AS. SM,MM</p>
-                                    <p class="gloria-signoff-sub">Manager</p>
-                                </div>
-                            </div>
-                            <div class="gloria-signoff-card">
-                                <div>
-                                    <p class="gloria-signoff-label">Disetujui Oleh</p>
-                                    <p class="gloria-signoff-role">Direktur</p>
-                                </div>
-                                <div>
-                                    <div class="gloria-signoff-space"></div>
-                                    <p class="gloria-signoff-name">Lin Chang Zhuang</p>
-                                    <p class="gloria-signoff-sub">Direktur</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <div id="hostPayrollStats" class="mt-5"></div>
                 </div>
             </div>
 
@@ -2703,8 +2646,20 @@
             el.classList.remove('hidden');delete el.dataset.gloriaLimitedHidden;
         });
         const isOwner = String(email||'').toLowerCase() === 'mohammadziky2@gmail.com';
+        const canViewBank = isOwner || String(email||'').trim().toLowerCase() === 'bettyartanita@gmail.com';
         document.getElementById('masterOwnPinBtn')?.classList.toggle('hidden',!isOwner);
-        ['masterControlPanel','sidebarBankAuth','mobileBankAuth','dashboardBankAuth'].forEach(id=>{const el=document.getElementById(id);if(!el)return;if(isOwner){el.classList.remove('hidden');if(id!=='masterControlPanel')el.classList.add('flex');}else{el.classList.add('hidden');el.classList.remove('flex');}});
+        ['masterControlPanel','sidebarBankAuth','mobileBankAuth','dashboardBankAuth'].forEach(id=>{const el=document.getElementById(id);if(!el)return;const allow=id==='masterControlPanel'?isOwner:canViewBank;if(allow){el.classList.remove('hidden');if(id!=='masterControlPanel')el.classList.add('flex');}else{el.classList.add('hidden');el.classList.remove('flex');}});
+        const bankDesc=document.getElementById('bankViewAccessDesc');if(bankDesc)bankDesc.textContent=isOwner?'Kelola data rekening bank seluruh karyawan (Akses Khusus Master)':'Lihat data rekening bank seluruh karyawan (hanya baca; perubahan khusus Master).';
+        const dashBankName=document.getElementById('dashboardBankRoleTitle');if(dashBankName)dashBankName.textContent=isOwner?'Manajemen Rekening (Khusus Master)':'Data Rekening Karyawan (Hanya Lihat)';
+        const bankHead=document.getElementById('bankActionColumnHeader');if(bankHead)bankHead.textContent=isOwner?'Aksi Edit':'Akses';
+        ['sidebarBankAuth','mobileBankAuth'].forEach(id=>{
+            const badge=document.querySelector('#'+id+' span.ml-auto');
+            if(badge)badge.textContent=isOwner?'Master':'Lihat';
+        });
+        const bankDashboardDescription=document.getElementById('dashboardBankDescription');
+        if(bankDashboardDescription)bankDashboardDescription.textContent=isOwner?
+            'Input dan perbarui data rekening bank karyawan. Data ini akan otomatis tertaut dan muncul ke dalam Slip Gaji Individu & Host.':
+            'Lihat rekening bank karyawan dengan akses baca. Pengubahan rekening tetap khusus Master.';
         const geminiKey=document.getElementById('geminiApiKey'); if(geminiKey&&geminiKey.parentElement){geminiKey.parentElement.classList.toggle('hidden',!isOwner); geminiKey.parentElement.classList.toggle('md:flex',isOwner);}
         const authorizedHostEmails=['bettyartanita@gmail.com','mohammadziky2@gmail.com','ysdd@gmail.com']; const isHost=authorizedHostEmails.includes(String(email||'').toLowerCase());
         ['dashboardHostAuth','dashboardHostExcelAuth','sidebarHostAuth','mobileHostAuth'].forEach(id=>{const el=document.getElementById(id);if(!el)return;if(isHost){el.classList.remove('hidden');el.classList.add('flex');}else{el.classList.add('hidden');el.classList.remove('flex');}});
@@ -2875,13 +2830,14 @@
                 <td class="p-4"><div class="flex items-center"><div class="h-8 w-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold mr-3">${escapeLateHtml(String(emp.name||'?').charAt(0).toUpperCase())}</div><span class="font-medium text-gray-800">${escapeLateHtml(emp.name)}</span></div></td>
                 <td class="p-4"><span class="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">${escapeLateHtml(emp.division)}</span></td>
                 <td class="p-4 text-sm">${bankInfo}</td>
-                <td class="p-4 text-right"><button onclick="openEditBankModal(decodeURIComponent('${handlerKey(emp.id)}'))" class="text-blue-600 hover:text-white bg-blue-50 hover:bg-blue-600 border border-blue-200 px-3 py-1.5 rounded transition shadow-sm font-semibold text-xs"><i class="ph ph-pencil-simple mr-1"></i> Edit Rekening</button></td>
+                <td class="p-4 text-right">${String(state.user?.email||'').trim().toLowerCase()==='mohammadziky2@gmail.com'?`<button onclick="openEditBankModal(decodeURIComponent('${handlerKey(emp.id)}'))" class="text-blue-600 hover:text-white bg-blue-50 hover:bg-blue-600 border border-blue-200 px-3 py-1.5 rounded transition shadow-sm font-semibold text-xs"><i class="ph ph-pencil-simple mr-1"></i> Edit Rekening</button>`:'<span class="text-xs font-semibold text-slate-500">Hanya lihat</span>'}</td>
             `;
             tbody.appendChild(tr);
         });
     };
 
     window.openEditBankModal = (id) => {
+        if(String(state.user?.email||'').trim().toLowerCase()!=='mohammadziky2@gmail.com'){showMessage('Akses rekening hanya untuk dilihat. Perubahan hanya melalui Master.','error');return;}
         const emp = state.employees.find(e => e.id === id);
         if(!emp) return;
         document.getElementById('editBankEmpId').value = emp.id;
@@ -2894,6 +2850,7 @@
 
     document.getElementById('editBankForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
+        if(String(state.user?.email||'').trim().toLowerCase()!=='mohammadziky2@gmail.com'){showMessage('Hanya Master yang dapat mengubah rekening.','error');return;}
         const btn = e.target.querySelector('button[type="submit"]');
         btn.innerText = "Menyimpan..."; btn.disabled = true;
         const id = document.getElementById('editBankEmpId').value;
@@ -3863,6 +3820,7 @@
                 if(adminChartInstance)adminChartInstance.destroy();
                 adminChartInstance=new Chart(document.getElementById('adminAttendanceChart').getContext('2d'),{type:'doughnut',data:{labels:['Hadir','Izin','Sakit','Libur'],datasets:[{data:[Number(d.hadir||0),Number(d.izin||0),Number(d.sakit||0),Number(d.libur||0)],backgroundColor:['#16a34a','#f97316','#eab308','#6b7280']}]}});
             }
+            gloriaRenderStatsOnPage('salary',d);
             document.getElementById('salaryResult').classList.remove('hidden');
             showMessage('Kalkulasi gaji berhasil dihitung dari backend.','success');
         }catch(error){showMessage(error.message||'Gagal menghitung data gaji.','error');}
@@ -3902,6 +3860,26 @@
 .gloria-a4-small{font-size:10px;color:var(--a4-muted);line-height:1.35}
 .gloria-a4-minilist{margin:4px 0 0;padding-left:14px}
 .gloria-a4-minilist li{margin:2px 0;overflow-wrap:anywhere}
+/* GLORIA v10: grafik ringkas readonly pada laporan gaji, menggantikan tanda tangan. */
+.gloria-pay-chart{margin-top:12px;border:1px solid var(--a4-border,#d9e2ef);background:var(--a4-soft,#f8fafc);color:var(--a4-ink,#172337);border-radius:9px;padding:11px 13px;font-family:Arial,Helvetica,sans-serif}
+.gloria-pay-chart-title{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-weight:800;font-size:12px;margin-bottom:9px;color:var(--a4-accent,#233d73)}
+.gloria-pay-chart-desc{font-weight:400;color:var(--a4-muted,#536176);font-size:9.5px}
+.gloria-pay-chart-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:8px}
+.gloria-pay-chart-stat{background:#fff;border:1px solid var(--a4-border,#d9e2ef);border-radius:6px;padding:7px 8px;min-width:0}
+.gloria-pay-chart-stat b{display:block;font-size:12px;color:var(--a4-ink,#172337);overflow-wrap:anywhere}
+.gloria-pay-chart-stat span{font-size:9px;color:var(--a4-muted,#536176)}
+.gloria-pay-chart-bars{height:69px;display:flex;align-items:end;justify-content:space-around;gap:5px;border-bottom:1px solid var(--a4-border,#d9e2ef);padding:0 3px}
+.gloria-pay-chart-col{height:100%;display:flex;flex:1;max-width:60px;min-width:0;align-items:center;justify-content:end;flex-direction:column;gap:3px}
+.gloria-pay-chart-rect{width:64%;max-width:30px;min-height:2px;border-radius:4px 4px 0 0;background:#3466a8}
+.gloria-pay-chart-tick{font-size:9px;color:var(--a4-muted,#536176);white-space:nowrap}
+.gloria-pay-chart-att-row{display:grid;grid-template-columns:64px minmax(0,1fr) 75px;align-items:center;gap:9px;margin:6px 0;font-size:11px}
+.gloria-pay-chart-track{background:#e5e9ef;border-radius:7px;height:9px;overflow:hidden}
+.gloria-pay-chart-progress{height:100%;min-width:0;background:#3466a8;border-radius:7px}
+.gloria-pay-chart-att-row strong{text-align:right;font-variant-numeric:tabular-nums}
+.gloria-pay-chart-legend{margin-top:7px;font-size:9px;line-height:1.4;color:var(--a4-muted,#536176)}
+.gloria-a4-sheet.a4-blackwhite .gloria-pay-chart-rect,.gloria-a4-sheet.a4-blackwhite .gloria-pay-chart-progress{background:#222!important}
+.gloria-a4-sheet.a4-blackwhite .gloria-pay-chart-track{background:#dedede}
+@media (max-width:560px){.gloria-pay-chart-stats{grid-template-columns:repeat(3,minmax(0,1fr))}.gloria-pay-chart-stat b{font-size:10px}}
 .gloria-a4-bottom{margin-top:18px;padding-top:10px;border-top:1px solid var(--a4-border);font-size:10px;color:var(--a4-muted);display:flex;justify-content:space-between;gap:15px}
 .gloria-a4-print-theme{font-size:9px;font-weight:800;letter-spacing:.3px}
 @media print{@page{size:A4 portrait;margin:0}html,body{margin:0!important;padding:0!important;background:#fff!important;width:210mm!important;height:297mm!important;overflow:hidden!important}body{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}.gloria-a4-sheet{margin:0!important;box-shadow:none!important;break-before:avoid!important;break-after:avoid!important;page-break-before:avoid!important;page-break-after:avoid!important}}`;
@@ -3915,12 +3893,40 @@
     function gloriaA4KV(key,value){return `<div class="gloria-a4-kv"><span>${gloriaA4Escape(key)}</span><strong>${gloriaA4Escape(value)}</strong></div>`;}
     function gloriaA4PayRow(label,id){return `<div class="gloria-a4-pay-row"><span>${gloriaA4Escape(label)}</span><b>${gloriaA4Escape(gloriaA4Value(id))}</b></div>`;}
     function gloriaA4Pill(label,id){return `<div class="gloria-a4-pill"><b>${gloriaA4Escape(gloriaA4Value(id))}</b><span>${gloriaA4Escape(label)}</span></div>`;}
-    function gloriaA4Signatories(){
-        return [{label:'Mengetahui',role:'Manager',name:'Betty AS. SM,MM',sub:'Manager'},{label:'Disetujui Oleh',role:'Direktur',name:'Lin Chang Zhuang',sub:'Direktur'}];
+    // GLORIA v10: statistik laporan murni dari hasil backend (tidak menyimpan / menghitung ulang gaji).
+    function gloriaSafeNum(v){const n=Number(v);return Number.isFinite(n)&&n>0?n:0;}
+    function gloriaStatText(n){return gloriaSafeNum(n).toLocaleString('id-ID',{maximumFractionDigits:1});}
+    function gloriaChartEmployee(type){
+        if(type==='host')return lastHostSalarySnapshot;
+        return Array.isArray(state.salary)?state.salary[0]:null;
     }
-    function gloriaA4SignatureBlock(){
-        const cards=gloriaA4Signatories().map(sig=>`<div class="gloria-a4-sign-card"><div><div class="gloria-a4-sign-label">${gloriaA4Escape(sig.label)}</div><div class="gloria-a4-sign-role">${gloriaA4Escape(sig.role)}</div></div><div><div class="gloria-a4-sign-space"></div><div class="gloria-a4-sign-name">${gloriaA4Escape(sig.name)}</div><div class="gloria-a4-sign-sub">${gloriaA4Escape(sig.sub)}</div></div></div>`).join('');
-        return `<div class="gloria-a4-signatures">${cards}</div>`;
+    function gloriaStatsHtml(type, source){
+        if(!source)return `<section class="gloria-pay-chart"><div class="gloria-pay-chart-title">Statistik Periode</div><div class="gloria-pay-chart-legend">Hitung slip gaji terlebih dahulu untuk menampilkan data grafik.</div></section>`;
+        const host=type==='host'||source.division==='Host Live';
+        if(host){
+            const raw=type==='host'?source.rows:source.hostRows;
+            const perf=Array.isArray(raw)?raw:[];
+            // Agregasi seluruh tanggal tercatat, lalu kelompokkan menjadi maks. 8 batang.
+            const dates=new Map();
+            perf.forEach(r=>{const k=String(r.date||'').slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(k))return;const x=dates.get(k)||{gmv:0,resi:0};x.gmv+=gloriaSafeNum(r.gmv);x.resi+=gloriaSafeNum(r.resi);dates.set(k,x);});
+            const sorted=Array.from(dates.entries()).sort((a,b)=>a[0].localeCompare(b[0]));
+            const groupCount=Math.min(8,sorted.length);
+            const buckets=Array.from({length:groupCount},()=>({gmv:0,resi:0,label:''}));
+            sorted.forEach(([day,data],i)=>{const idx=Math.min(groupCount-1,Math.floor(i*groupCount/sorted.length));buckets[idx].gmv+=data.gmv;buckets[idx].resi+=data.resi;const s=day.slice(5).split('-').reverse().join('/');if(!buckets[idx].label)buckets[idx].label=s;});
+            const max=Math.max(1,...buckets.map(x=>x.gmv));
+            const bars=buckets.map(x=>`<div class="gloria-pay-chart-col"><div class="gloria-pay-chart-rect" style="height:${Math.max(2,Math.round(x.gmv/max*54))}px" title="GMV Rp ${gloriaStatText(x.gmv)}"></div><span class="gloria-pay-chart-tick">${gloriaA4Escape(x.label)}</span></div>`).join('');
+            const totalGMV=gloriaSafeNum(source.totalGMV),totalResi=gloriaSafeNum(source.totalResi);
+            const commission=gloriaSafeNum(type==='host'?source.commission:source.hostCommission);
+            return `<section class="gloria-pay-chart" aria-label="Statistik performa pendapatan Host Live"><div class="gloria-pay-chart-title"><span>GRAFIK PERFORMA PENDAPATAN HOST LIVE</span><span class="gloria-pay-chart-desc">GMV menurut tanggal tercatat</span></div><div class="gloria-pay-chart-stats"><div class="gloria-pay-chart-stat"><b>${gloriaA4Escape(window.formatRupiah(totalGMV))}</b><span>Total GMV periode</span></div><div class="gloria-pay-chart-stat"><b>${gloriaStatText(totalResi)}</b><span>Total resi</span></div><div class="gloria-pay-chart-stat"><b>${gloriaA4Escape(window.formatRupiah(commission))}</b><span>Komisi Host Live</span></div></div>${bars?`<div class="gloria-pay-chart-bars">${bars}</div>`:'<div class="gloria-pay-chart-legend">Belum ada catatan GMV harian dalam periode ini.</div>'}<p class="gloria-pay-chart-legend">${buckets.length<sorted.length?'Batang mengelompokkan tanggal tercatat secara berurutan. ':''}Total dan performa mengikuti data backend pada periode terpilih.</p></section>`;
+        }
+        const values=[['Hadir',source.hadir,'#16a34a'],['Izin',source.izin,'#f59e0b'],['Sakit',source.sakit,'#2563eb'],['Libur',source.libur,'#64748b']].map(([label,value,color])=>({label,value:gloriaSafeNum(value),color}));
+        const sum=values.reduce((a,b)=>a+b.value,0);
+        const rows=values.map(x=>`<div class="gloria-pay-chart-att-row"><span>${x.label}</span><div class="gloria-pay-chart-track"><div class="gloria-pay-chart-progress" style="width:${sum?Math.min(100,100*x.value/sum).toFixed(2):0}%;background:${x.color}"></div></div><strong>${gloriaStatText(x.value)} hari</strong></div>`).join('');
+        return `<section class="gloria-pay-chart" aria-label="Statistik kehadiran karyawan"><div class="gloria-pay-chart-title"><span>STATISTIK KEHADIRAN KARYAWAN</span><span class="gloria-pay-chart-desc">${gloriaA4Escape(source.division||'Non-Host')}</span></div>${rows}<p class="gloria-pay-chart-legend">Statistik berdasarkan rekap status kehadiran yang dihitung backend pada periode slip. Nilai 0,5 hari tetap diperhitungkan.</p></section>`;
+    }
+    function gloriaRenderStatsOnPage(type,source){
+        const el=document.getElementById(type==='host'?'hostPayrollStats':'salaryPayrollStats');
+        if(el)el.innerHTML=gloriaStatsHtml(type,source);
     }
     function gloriaA4DeductionDetails(id){
         const els=Array.from(document.querySelectorAll('#'+id+' > div'));
@@ -3938,7 +3944,7 @@
         const name=gloriaA4Value(isHost?'calcHostName':'slipName');
         const period=gloriaA4Value(isHost?'calcHostMonthDisplay':'slipMonthDisplay');
         const theme=gloriaSlipTheme(type);
-        const header=`<div class="gloria-a4-head"><div><div class="gloria-a4-brand">GLORIA</div><div class="gloria-a4-brand-sub">INTERNASIONAL ABADI</div></div><div><div class="gloria-a4-doc-title">${isHost?'Slip Gaji Host Live':'Slip Gaji Karyawan'}</div><div class="gloria-a4-doc-sub">Periode ${gloriaA4Escape(period)}</div></div></div>`;
+        const header=`<div class="gloria-a4-head"><div><div class="gloria-a4-brand">GIA</div></div><div><div class="gloria-a4-doc-title">${isHost?'Slip Gaji Host Live':'Slip Gaji Karyawan'}</div><div class="gloria-a4-doc-sub">Periode ${gloriaA4Escape(period)}</div></div></div>`;
         let main='';
         if(isHost){
             const warnings=gloriaA4Value('calcHostPayrollWarnings');
@@ -3957,9 +3963,9 @@
             <div class="gloria-a4-section gloria-a4-box"><div class="gloria-a4-section-title">Rincian Potongan Berdasarkan Kehadiran</div>${gloriaA4DeductionDetails('salaryPayrollDailyDetail')}</div>
             ${!document.getElementById('salaryPayrollWarnings')?.classList.contains('hidden')&&warnings!=='-'?`<div class="gloria-a4-note"><b>Peringatan data:</b> ${gloriaA4Escape(gloriaA4Short(warnings,300))}</div>`:''}`;
         }
-        const signatures=gloriaA4SignatureBlock();
+        const performanceChart=gloriaStatsHtml(type,gloriaChartEmployee(type));
         const footer=`<div class="gloria-a4-bottom"><span>Ringkasan slip berdasarkan kalkulasi GLORIA. Detail harian dan evaluasi lengkap tetap tersedia di aplikasi. Verifikasi sebelum pembayaran.</span><span class="gloria-a4-print-theme">${theme==='bw'?'HITAM PUTIH':'BERWARNA'} · A4 · 1 HALAMAN</span></div>`;
-        return {html:`<div class="gloria-a4-inner">${header}${main}${signatures}${footer}</div>`,theme,name,period};
+        return {html:`<div class="gloria-a4-inner">${header}${main}${performanceChart}${footer}</div>`,theme,name,period};
     }
     function getA4SlipNode(type){
         const built=gloriaA4BuildContent(type),node=document.createElement('div');
@@ -4138,12 +4144,13 @@
             document.getElementById('hostEvaluationNext').textContent=nex==null?'Anda telah mencapai tingkat tertinggi pada metode komisi ini.':
                 `Menuju target berikutnya: ${method==='GMV'?window.formatRupiah(nex):Number(nex).toLocaleString('id-ID')+' resi'} (sisa ${method==='GMV'?window.formatRupiah(c.evaluation.remaining):Number(c.evaluation.remaining).toLocaleString('id-ID')+' resi'}).`;
             lastHostSalarySnapshot={...c,basicSalary:base,bonus,finalBasicSalary:p.finalBasicSalary,absenceDeduction:p.absenceDeduction,deductionDays:p.deductionDays,totalSalary:p.finalBasicSalary+bonus+Number(c.commission||0)};
-            document.getElementById('calcHostBankDetails').innerHTML=emp&&emp.bankName?`${escapeLateHtml(emp.bankName)} - ${escapeLateHtml(emp.bankAccount||'')}<span class="text-xs text-gray-500 font-medium"> a/n ${escapeLateHtml(emp.bankAccountName||'')}</span>`:(String(state.user?.email||'').toLowerCase()==='mohammadziky2@gmail.com'?'<span class="text-red-500 italic text-xs">Rekening belum diatur</span>':'<span class="text-slate-500 italic text-xs">Informasi rekening hanya tersedia untuk akun Master</span>');
+            document.getElementById('calcHostBankDetails').innerHTML=emp&&emp.bankName?`${escapeLateHtml(emp.bankName)} - ${escapeLateHtml(emp.bankAccount||'')}<span class="text-xs text-gray-500 font-medium"> a/n ${escapeLateHtml(emp.bankAccountName||'')}</span>`:(['mohammadziky2@gmail.com','bettyartanita@gmail.com'].includes(String(state.user?.email||'').trim().toLowerCase())?'<span class="text-red-500 italic text-xs">Rekening belum diatur</span>':'<span class="text-slate-500 italic text-xs">Informasi rekening hanya tersedia untuk akun berizin</span>');
             localStorage.setItem('gloria_host_commission_method',method);
             currentHostSalaryDraftPayload={employeeId:empId,startDate:perfStart,endDate:perfEnd,attendanceStartDate:attStart,attendanceEndDate:attEnd,method,basicSalary:base,bonus};
             const owner=String(state.user?.email||'').toLowerCase()==='mohammadziky2@gmail.com';
             document.getElementById('saveHostSalaryDraftBtn').classList.toggle('hidden',!owner);
             document.getElementById('loadHostSalaryDraftsBtn').classList.toggle('hidden',!owner);
+            gloriaRenderStatsOnPage('host',c);
             document.getElementById('hostSalaryResult').classList.remove('hidden');
         }catch(error){showMessage(error.message||'Gagal menghitung komisi Host Live.','error');}
     };
@@ -4197,8 +4204,8 @@
         if (hostOnlyTabs.has(tabId) && (!state.user || !authorizedHostEmails.includes(String(state.user.email||'').toLowerCase()))) { showMessage("Akses Ditolak: fitur Host Live hanya untuk akun yang diotorisasi.", "error"); return; }
         
         if (tabId === 'bankAccount') {
-            if (!state.user || state.user.email.toLowerCase() !== 'mohammadziky2@gmail.com') {
-                showMessage("Akses Ditolak: Halaman terkunci khusus Master Owner.", "error"); return;
+            if (!state.user || !['mohammadziky2@gmail.com','bettyartanita@gmail.com'].includes(String(state.user.email||'').trim().toLowerCase())) {
+                showMessage("Akses Ditolak: Halaman rekening hanya untuk pengguna berizin.", "error"); return;
             }
         }
 
