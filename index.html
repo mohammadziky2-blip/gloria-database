@@ -20,6 +20,44 @@
     <!-- Excel asli (.xlsx) khusus halaman Data Excel Host Live -->
     <script defer src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 
+    <style id="gloriaA4OnePageStyle">
+
+/* GLORIA v08: Dokumen A4 satu halaman, hanya untuk output slip gaji. */
+.gloria-a4-sheet{--a4-accent:#233d73;--a4-soft:#eef3fb;--a4-ink:#172337;--a4-muted:#526175;--a4-border:#ccd5e2;box-sizing:border-box;width:210mm;height:297mm;min-width:210mm;min-height:297mm;max-height:297mm;overflow:hidden;background:#fff;padding:15mm 14mm;color:var(--a4-ink);font-family:Arial,Helvetica,sans-serif;box-shadow:none;line-height:1.42}
+.gloria-a4-sheet *{box-sizing:border-box}
+.gloria-a4-sheet.a4-blackwhite{--a4-accent:#111;--a4-soft:#fff;--a4-ink:#111;--a4-muted:#333;--a4-border:#666}
+.gloria-a4-inner{width:100%;transform-origin:top left;font-size:12.4px}
+.gloria-a4-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding-bottom:16px;border-bottom:3px solid var(--a4-accent)}
+.gloria-a4-brand{font-size:28px;letter-spacing:2px;font-weight:900;line-height:1.08;color:var(--a4-accent)}
+.gloria-a4-brand-sub{font-size:10px;letter-spacing:1.1px;font-weight:700;margin-top:4px;color:var(--a4-muted)}
+.gloria-a4-doc-title{text-align:right;font-weight:900;font-size:17px;text-transform:uppercase}
+.gloria-a4-doc-sub{text-align:right;font-size:11px;color:var(--a4-muted);margin-top:5px;max-width:310px;overflow-wrap:anywhere}
+.gloria-a4-section{margin-top:15px}
+.gloria-a4-section-title{font-weight:800;color:var(--a4-accent);text-transform:uppercase;letter-spacing:.6px;font-size:11px;margin:0 0 7px}
+.gloria-a4-two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.gloria-a4-box{border:1px solid var(--a4-border);border-radius:7px;padding:13px;min-width:0}
+.gloria-a4-kv{display:grid;grid-template-columns:40% 60%;gap:7px;padding:5px 0;border-bottom:1px dotted var(--a4-border);overflow-wrap:anywhere}
+.gloria-a4-kv:last-child{border-bottom:0}
+.gloria-a4-kv span{color:var(--a4-muted)}
+.gloria-a4-kv strong{font-weight:700;text-align:right;overflow-wrap:anywhere}
+.gloria-a4-pills{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.gloria-a4-pill{border:1px solid var(--a4-border);border-radius:7px;text-align:center;padding:8px 4px;background:var(--a4-soft)}
+.gloria-a4-pill b{display:block;font-size:12px;margin-bottom:4px;overflow-wrap:anywhere}
+.gloria-a4-pill span{font-size:10px;color:var(--a4-muted)}
+.gloria-a4-pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 17px}
+.gloria-a4-pay-row{display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px solid var(--a4-border);overflow-wrap:anywhere}
+.gloria-a4-pay-row b{text-align:right;flex-shrink:0}
+.gloria-a4-total{margin-top:10px;padding:15px 16px;background:var(--a4-accent);color:#fff;border-radius:8px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px}
+.gloria-a4-total b{font-size:24px;text-align:right;overflow-wrap:anywhere}
+.gloria-a4-sheet.a4-blackwhite .gloria-a4-total{background:#fff;color:#111;border:2px solid #111}
+.gloria-a4-note{background:var(--a4-soft);border-left:3px solid var(--a4-accent);padding:8px 10px;margin-top:9px;overflow-wrap:anywhere}
+.gloria-a4-small{font-size:10px;color:var(--a4-muted);line-height:1.35}
+.gloria-a4-minilist{margin:4px 0 0;padding-left:14px}
+.gloria-a4-minilist li{margin:2px 0;overflow-wrap:anywhere}
+.gloria-a4-bottom{margin-top:18px;padding-top:10px;border-top:1px solid var(--a4-border);font-size:10px;color:var(--a4-muted);display:flex;justify-content:space-between;gap:15px}
+.gloria-a4-print-theme{font-size:9px;font-weight:800;letter-spacing:.3px}
+
+    </style>
     <style>
         /* Custom styles for animations and layout */
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
@@ -1319,6 +1357,9 @@
                             </div>
                             <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 border border-emerald-100"><i class="ph-fill ph-check-circle"></i> A4 • 210 × 297 mm</span>
                         </div>
+                        <label class="mb-3 flex flex-wrap items-center gap-3 text-sm font-bold text-slate-700">Tampilan cetak / unduhan:
+                            <select id="gloriaSalaryPrintTheme" class="rounded-xl border border-indigo-200 bg-white px-3 py-2 text-sm font-semibold"><option value="color">Berwarna</option><option value="bw">Hitam Putih</option></select>
+                            <span class="text-xs font-medium text-slate-500">Ringkasan A4 satu halaman, untuk PDF, PNG, dan cetak</span></label>
                         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
                             <button onclick="previewSalaryA4()" class="rounded-xl border border-blue-200 bg-white hover:bg-blue-50 text-blue-700 py-3 px-4 font-bold flex items-center justify-center gap-2 transition shadow-sm"><i class="ph ph-eye text-xl"></i> Preview A4</button>
                             <button onclick="printSalaryA4()" class="rounded-xl bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 font-bold flex items-center justify-center gap-2 transition shadow-sm"><i class="ph ph-printer text-xl"></i> Print A4</button>
@@ -1422,6 +1463,9 @@
                         <button onclick="downloadHostSalaryImage()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg font-bold flex items-center transition-colors shadow-sm text-sm"><i class="ph ph-image mr-1.5"></i>PNG</button>
                     </div>
 
+                    <label class="mb-4 flex flex-wrap items-center gap-3 text-sm font-bold text-slate-700" data-html2canvas-ignore="true">Tampilan cetak / unduhan:
+                        <select id="gloriaHostPrintTheme" class="rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm font-semibold"><option value="color">Berwarna</option><option value="bw">Hitam Putih</option></select>
+                        <span class="text-xs text-slate-500">A4 satu halaman · PDF, PNG, dan Print</span></label>
                     <div id="hostSalarySaveActions" class="mb-4 flex flex-col gap-2" data-html2canvas-ignore="true">
                         <button id="saveHostSalaryDraftBtn" type="button" onclick="saveCurrentHostSalaryDraft()" class="hidden bg-amber-500 hover:bg-amber-600 text-slate-950 px-4 py-3 rounded-lg font-bold">Simpan Draft Gaji Host ke Google Sheets (Master)</button>
                         <button id="loadHostSalaryDraftsBtn" type="button" onclick="loadHostSalaryDrafts()" class="hidden border border-slate-300 bg-white text-slate-700 px-4 py-2 rounded-lg font-semibold">Lihat 100 Draft Terakhir</button>
@@ -2018,7 +2062,7 @@
         <div class="h-full w-full max-w-6xl mx-auto flex flex-col overflow-hidden rounded-2xl bg-slate-100 shadow-2xl">
             <div class="shrink-0 bg-white border-b border-slate-200 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div><div class="flex items-center gap-2"><i class="ph ph-file-pdf text-xl text-red-600"></i><h3 class="font-extrabold text-slate-800">Preview Dokumen A4</h3></div><p class="text-xs text-slate-500">Periksa hasil akhir sebelum mencetak atau menyimpan PDF.</p></div>
-                <div class="flex flex-wrap gap-2"><button id="a4PreviewPrintBtn" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold flex items-center gap-2"><i class="ph ph-printer"></i>Print A4</button><button id="a4PreviewPdfBtn" class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold flex items-center gap-2"><i class="ph ph-file-pdf"></i>Download PDF</button><button onclick="closeA4Preview()" class="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold"><i class="ph ph-x"></i></button></div>
+                <div class="flex flex-wrap items-center gap-2"><label class="text-xs font-semibold">Warna <select id="a4PreviewTheme" class="border border-slate-200 p-2 rounded-lg"><option value="color">Berwarna</option><option value="bw">Hitam Putih</option></select></label><button id="a4PreviewPrintBtn" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold flex items-center gap-2"><i class="ph ph-printer"></i>Print A4</button><button id="a4PreviewPdfBtn" class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold flex items-center gap-2"><i class="ph ph-file-pdf"></i>Download PDF</button><button onclick="closeA4Preview()" class="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold"><i class="ph ph-x"></i></button></div>
             </div>
             <div class="flex-1 overflow-auto p-4 md:p-8 flex justify-center"><div id="a4PreviewPage" class="bg-white shadow-xl w-[210mm] min-h-[297mm] shrink-0 p-[12mm]"></div></div>
         </div>
@@ -3744,37 +3788,166 @@
         }catch(error){showMessage(error.message||'Gagal menghitung data gaji.','error');}
     };
 
-    // ===== A4 SLIP EXPORT / PRINT ADD-ON =====
-    const A4_PRINT_STYLE = `@page{size:A4 portrait;margin:12mm}*{box-sizing:border-box}html,body{margin:0;padding:0;background:#fff;font-family:Arial,Helvetica,sans-serif;color:#111827}body{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}.a4-document{width:186mm;margin:0 auto;background:#fff;font-size:10pt;line-height:1.35}.a4-document button,.a4-document [data-html2canvas-ignore="true"]{display:none!important}.a4-document .shadow,.a4-document .shadow-sm,.a4-document .shadow-lg,.a4-document .shadow-xl{box-shadow:none!important}.a4-document canvas{max-width:100%!important;height:auto!important}.a4-document .p-8{padding:7mm!important}.a4-document .p-6{padding:4.5mm!important}.a4-document .mb-8{margin-bottom:5mm!important}.a4-document .py-4{padding-top:2.5mm!important;padding-bottom:2.5mm!important}.a4-document .py-2{padding-top:1.5mm!important;padding-bottom:1.5mm!important}.a4-document .text-3xl{font-size:18pt!important}.a4-document .text-2xl{font-size:14pt!important}.a4-document .text-xl{font-size:12pt!important}.a4-document .text-lg{font-size:11pt!important}.a4-document .text-sm{font-size:9pt!important}.a4-document .text-xs{font-size:8pt!important}`;
-    function getA4SlipNode(type){const id=type==='host'?'hostSalaryResult':'salaryResult';const src=document.getElementById(id);if(!src||src.classList.contains('hidden'))throw new Error('Slip gaji belum dibuat. Silakan klik Kalkulasi Data terlebih dahulu.');const clone=src.cloneNode(true);clone.classList.remove('hidden');clone.removeAttribute('id');const originalCanvases=src.querySelectorAll('canvas'),clonedCanvases=clone.querySelectorAll('canvas');originalCanvases.forEach((canvas,i)=>{try{const picture=document.createElement('img');picture.src=canvas.toDataURL('image/png');picture.alt='Grafik performa';picture.style.cssText='display:block;max-width:100%;height:auto;max-height:220px;margin:0 auto';clonedCanvases[i]?.replaceWith(picture)}catch(e){}});clone.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id'));clone.classList.add('a4-document');clone.querySelectorAll('[data-html2canvas-ignore="true"],button').forEach(e=>e.remove());clone.style.cssText='width:186mm;max-width:186mm;margin:0 auto;background:#fff;box-shadow:none;border:0;';return clone;}
-    function buildA4Html(type){const node=getA4SlipNode(type);const css=Array.from(document.querySelectorAll('style')).map(e=>e.outerHTML).join('');return '<!doctype html><html><head><meta charset="utf-8"><title>Slip Gaji A4</title>'+css+'<style>'+A4_PRINT_STYLE+'</style></head><body><div class="a4-document">'+node.innerHTML+'</div></body></html>';}
-    function openA4PrintWindow(type){const win=window.open('','_blank','width=1000,height=900');if(!win)throw new Error('Popup diblokir browser. Izinkan popup untuk Gloria Database lalu coba lagi.');win.document.open();win.document.write(buildA4Html(type));win.document.close();setTimeout(()=>{win.focus();win.print();},700);}
-    function openA4Preview(type){try{const modal=document.getElementById('a4PreviewModal'),page=document.getElementById('a4PreviewPage');page.innerHTML='';page.appendChild(getA4SlipNode(type));modal.classList.remove('hidden');document.getElementById('a4PreviewPrintBtn').onclick=()=>{try{openA4PrintWindow(type)}catch(e){showMessage(e.message,'error')}};document.getElementById('a4PreviewPdfBtn').onclick=()=>type==='host'?downloadHostSalaryA4PDF():downloadSalaryA4PDF()}catch(e){showMessage(e.message||'Gagal membuka preview A4.','error')}}
-    window.closeA4Preview=()=>document.getElementById('a4PreviewModal')?.classList.add('hidden');window.previewSalaryA4=()=>openA4Preview('salary');window.previewHostSalaryA4=()=>openA4Preview('host');window.printSalaryA4=()=>{try{openA4PrintWindow('salary')}catch(e){showMessage(e.message,'error')}};window.printHostSalaryA4=()=>{try{openA4PrintWindow('host')}catch(e){showMessage(e.message,'error')}};
-    async function createA4PDF(type){const node=getA4SlipNode(type),holder=document.createElement('div');holder.style.cssText='position:fixed;left:-10000px;top:0;width:186mm;background:#fff;padding:0;margin:0;z-index:-1;';holder.appendChild(node);document.body.appendChild(holder);try{const canvas=await html2canvas(node,{scale:2.5,useCORS:true,allowTaint:true,backgroundColor:'#ffffff',logging:false,windowWidth:900});const jsPDF=window.jspdf?.jsPDF;if(!jsPDF)throw new Error('Modul PDF belum tersedia. Periksa koneksi internet lalu coba lagi.');const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true}),margin=12,contentW=186,pxPerMm=canvas.width/contentW,maxH=273,contentH=canvas.height/pxPerMm;if(contentH<=maxH){pdf.addImage(canvas.toDataURL('image/jpeg',.95),'JPEG',margin,margin,contentW,contentH,undefined,'FAST')}else{const slicePx=Math.floor(maxH*pxPerMm);let offset=0,page=0;while(offset<canvas.height){const h=Math.min(slicePx,canvas.height-offset),slice=document.createElement('canvas');slice.width=canvas.width;slice.height=h;const ctx=slice.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,slice.width,slice.height);ctx.drawImage(canvas,0,offset,canvas.width,h,0,0,canvas.width,h);if(page++)pdf.addPage();pdf.addImage(slice.toDataURL('image/jpeg',.95),'JPEG',margin,margin,contentW,h/pxPerMm,undefined,'FAST');offset+=h}}const name=type==='host'?(document.getElementById('calcHostName')?.innerText||'Host'):(document.getElementById('slipName')?.innerText||'Karyawan');const period=type==='host'?(document.getElementById('calcHostMonthDisplay')?.innerText||''):(document.getElementById('slipMonthDisplay')?.innerText||'');const safe=String(name).replace(/[^a-z0-9_-]+/gi,'_').replace(/^_+|_+$/g,'');pdf.save(`Slip_Gaji_A4_${safe}_${String(period).replace(/[^0-9-]/g,'')||'Dokumen'}.pdf`)}finally{holder.remove()}}
-    window.downloadSalaryA4PDF=async()=>{showMessage('Menyiapkan PDF A4...','info');try{await createA4PDF('salary');showMessage('PDF A4 berhasil dibuat.','success')}catch(e){console.error(e);showMessage(e.message||'Gagal membuat PDF A4.','error')}};window.downloadHostSalaryA4PDF=async()=>{showMessage('Menyiapkan PDF A4...','info');try{await createA4PDF('host');showMessage('PDF A4 berhasil dibuat.','success')}catch(e){console.error(e);showMessage(e.message||'Gagal membuat PDF A4.','error')}};
 
-    window.downloadSlipImage = async () => {
-        showMessage('Menyiapkan gambar...', 'info');
-        try {
-            const canvas = await html2canvas(document.getElementById('salaryResult'), { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff' });
-            const link = document.createElement('a'); link.download = `Slip_${document.getElementById('slipName').innerText}_${document.getElementById('slipMonthDisplay').innerText}.png`;
-            link.href = canvas.toDataURL('image/png'); link.click();
-        } catch (e) {
-            showMessage("Gagal mengunduh gambar", "error");
+    // ===== GLORIA v08: OUTPUT SLIP A4 SATU HALAMAN (TIDAK MENGUBAH DATA / RUMUS) =====
+    const GLORIA_A4_STYLE = `/* GLORIA v08: Dokumen A4 satu halaman, hanya untuk output slip gaji. */
+.gloria-a4-sheet{--a4-accent:#233d73;--a4-soft:#eef3fb;--a4-ink:#172337;--a4-muted:#526175;--a4-border:#ccd5e2;box-sizing:border-box;width:210mm;height:297mm;min-width:210mm;min-height:297mm;max-height:297mm;overflow:hidden;background:#fff;padding:15mm 14mm;color:var(--a4-ink);font-family:Arial,Helvetica,sans-serif;box-shadow:none;line-height:1.42}
+.gloria-a4-sheet *{box-sizing:border-box}
+.gloria-a4-sheet.a4-blackwhite{--a4-accent:#111;--a4-soft:#fff;--a4-ink:#111;--a4-muted:#333;--a4-border:#666}
+.gloria-a4-inner{width:100%;transform-origin:top left;font-size:12.4px}
+.gloria-a4-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding-bottom:16px;border-bottom:3px solid var(--a4-accent)}
+.gloria-a4-brand{font-size:28px;letter-spacing:2px;font-weight:900;line-height:1.08;color:var(--a4-accent)}
+.gloria-a4-brand-sub{font-size:10px;letter-spacing:1.1px;font-weight:700;margin-top:4px;color:var(--a4-muted)}
+.gloria-a4-doc-title{text-align:right;font-weight:900;font-size:17px;text-transform:uppercase}
+.gloria-a4-doc-sub{text-align:right;font-size:11px;color:var(--a4-muted);margin-top:5px;max-width:310px;overflow-wrap:anywhere}
+.gloria-a4-section{margin-top:15px}
+.gloria-a4-section-title{font-weight:800;color:var(--a4-accent);text-transform:uppercase;letter-spacing:.6px;font-size:11px;margin:0 0 7px}
+.gloria-a4-two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.gloria-a4-box{border:1px solid var(--a4-border);border-radius:7px;padding:13px;min-width:0}
+.gloria-a4-kv{display:grid;grid-template-columns:40% 60%;gap:7px;padding:5px 0;border-bottom:1px dotted var(--a4-border);overflow-wrap:anywhere}
+.gloria-a4-kv:last-child{border-bottom:0}
+.gloria-a4-kv span{color:var(--a4-muted)}
+.gloria-a4-kv strong{font-weight:700;text-align:right;overflow-wrap:anywhere}
+.gloria-a4-pills{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.gloria-a4-pill{border:1px solid var(--a4-border);border-radius:7px;text-align:center;padding:8px 4px;background:var(--a4-soft)}
+.gloria-a4-pill b{display:block;font-size:12px;margin-bottom:4px;overflow-wrap:anywhere}
+.gloria-a4-pill span{font-size:10px;color:var(--a4-muted)}
+.gloria-a4-pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 17px}
+.gloria-a4-pay-row{display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px solid var(--a4-border);overflow-wrap:anywhere}
+.gloria-a4-pay-row b{text-align:right;flex-shrink:0}
+.gloria-a4-total{margin-top:10px;padding:15px 16px;background:var(--a4-accent);color:#fff;border-radius:8px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px}
+.gloria-a4-total b{font-size:24px;text-align:right;overflow-wrap:anywhere}
+.gloria-a4-sheet.a4-blackwhite .gloria-a4-total{background:#fff;color:#111;border:2px solid #111}
+.gloria-a4-note{background:var(--a4-soft);border-left:3px solid var(--a4-accent);padding:8px 10px;margin-top:9px;overflow-wrap:anywhere}
+.gloria-a4-small{font-size:10px;color:var(--a4-muted);line-height:1.35}
+.gloria-a4-minilist{margin:4px 0 0;padding-left:14px}
+.gloria-a4-minilist li{margin:2px 0;overflow-wrap:anywhere}
+.gloria-a4-bottom{margin-top:18px;padding-top:10px;border-top:1px solid var(--a4-border);font-size:10px;color:var(--a4-muted);display:flex;justify-content:space-between;gap:15px}
+.gloria-a4-print-theme{font-size:9px;font-weight:800;letter-spacing:.3px}
+@media print{@page{size:A4 portrait;margin:0}html,body{margin:0!important;padding:0!important;background:#fff!important;width:210mm!important;height:297mm!important;overflow:hidden!important}body{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}.gloria-a4-sheet{margin:0!important;box-shadow:none!important;break-before:avoid!important;break-after:avoid!important;page-break-before:avoid!important;page-break-after:avoid!important}}`;
+    function gloriaSlipTheme(type){
+        const select=document.getElementById(type==='host'?'gloriaHostPrintTheme':'gloriaSalaryPrintTheme');
+        return select?.value==='bw'?'bw':'color';
+    }
+    function gloriaA4Escape(raw){return String(raw==null?'':raw).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+    function gloriaA4Value(id){return (document.getElementById(id)?.textContent||'').trim()||'-';}
+    function gloriaA4Short(str,limit){const s=String(str||'').replace(/\s+/g,' ').trim();return s.length>limit?s.slice(0,limit-1)+'…':s;}
+    function gloriaA4KV(key,value){return `<div class="gloria-a4-kv"><span>${gloriaA4Escape(key)}</span><strong>${gloriaA4Escape(value)}</strong></div>`;}
+    function gloriaA4PayRow(label,id){return `<div class="gloria-a4-pay-row"><span>${gloriaA4Escape(label)}</span><b>${gloriaA4Escape(gloriaA4Value(id))}</b></div>`;}
+    function gloriaA4Pill(label,id){return `<div class="gloria-a4-pill"><b>${gloriaA4Escape(gloriaA4Value(id))}</b><span>${gloriaA4Escape(label)}</span></div>`;}
+    function gloriaA4DeductionDetails(id){
+        const els=Array.from(document.querySelectorAll('#'+id+' > div'));
+        if(!els.length)return '<div class="gloria-a4-small">Tidak ada rincian potongan harian.</div>';
+        const rows=els.slice(0,5).map(n=>`<li>${gloriaA4Escape(gloriaA4Short(n.textContent,100))}</li>`).join('');
+        const more=els.length>5?`<div class="gloria-a4-small">+ ${els.length-5} rincian lainnya dapat dilihat di aplikasi GLORIA.</div>`:'';
+        return `<ul class="gloria-a4-minilist">${rows}</ul>${more}`;
+    }
+    function gloriaA4BuildContent(type){
+        if(type!=='salary'&&type!=='host')throw new Error('Jenis dokumen slip tidak dikenal.');
+        const isHost=type==='host';
+        const id=isHost?'hostSalaryResult':'salaryResult';
+        const root=document.getElementById(id);
+        if(!root||root.classList.contains('hidden'))throw new Error('Hitung gaji dahulu sebelum mencetak atau mengunduh slip.');
+        const name=gloriaA4Value(isHost?'calcHostName':'slipName');
+        const period=gloriaA4Value(isHost?'calcHostMonthDisplay':'slipMonthDisplay');
+        const theme=gloriaSlipTheme(type);
+        const header=`<div class="gloria-a4-head"><div><div class="gloria-a4-brand">GLORIA</div><div class="gloria-a4-brand-sub">INTERNASIONAL ABADI</div></div><div><div class="gloria-a4-doc-title">${isHost?'Slip Gaji Host Live':'Slip Gaji Karyawan'}</div><div class="gloria-a4-doc-sub">Periode ${gloriaA4Escape(period)}</div></div></div>`;
+        let main='';
+        if(isHost){
+            const warnings=gloriaA4Value('calcHostPayrollWarnings');
+            main=`<div class="gloria-a4-section gloria-a4-two"><div class="gloria-a4-box"><div class="gloria-a4-section-title">Identitas dan Pembayaran</div>${gloriaA4KV('Nama Host',name)}${gloriaA4KV('Divisi','Host Live')}${gloriaA4KV('Rekening',gloriaA4Value('calcHostBankDetails'))}</div><div class="gloria-a4-box"><div class="gloria-a4-section-title">Kinerja dan Kehadiran</div>${gloriaA4KV('Total hadir',gloriaA4Value('calcHostHadir'))}${gloriaA4KV('Total resi',gloriaA4Value('calcHostResi'))}${gloriaA4KV('Total GMV',gloriaA4Value('calcHostGMV'))}</div></div>
+            <div class="gloria-a4-section gloria-a4-box"><div class="gloria-a4-section-title">Perhitungan gaji pokok · basis 26 hari</div><div class="gloria-a4-pay-grid">${gloriaA4PayRow('Gaji pokok awal','calcHostInputBaseDisplay')}${gloriaA4PayRow('Tarif per hari','calcHostDayRate')}${gloriaA4PayRow('Hari dipotong','calcHostDeductionDays')}${gloriaA4PayRow('Potongan absensi','calcHostDeductionTotal')}${gloriaA4PayRow('Gaji pokok final','calcHostBaseDisplay')}${gloriaA4PayRow('Bonus tambahan','calcHostBonusDisplay')}${gloriaA4PayRow('Komisi Host Live','calcHostCommissionDisplay')}${gloriaA4PayRow('Metode komisi','calcHostCommissionMethodDisplay')}</div><div class="gloria-a4-small" style="margin-top:7px">Tier: ${gloriaA4Escape(gloriaA4Value('calcHostCommissionTier'))} · Tarif: ${gloriaA4Escape(gloriaA4Value('calcHostCommissionRate'))} · Dasar: ${gloriaA4Escape(gloriaA4Value('calcHostCommissionBasis'))}</div></div>
+            <div class="gloria-a4-total"><span>TOTAL DITERIMA</span><b>${gloriaA4Escape(gloriaA4Value('calcHostTotalDisplay'))}</b></div>
+            <div class="gloria-a4-section gloria-a4-two"><div class="gloria-a4-box"><div class="gloria-a4-section-title">Ringkasan potongan kehadiran</div>${gloriaA4DeductionDetails('calcHostPayrollDailyDetail')}</div><div class="gloria-a4-box"><div class="gloria-a4-section-title">Evaluasi performa</div><b>${gloriaA4Escape(gloriaA4Short(gloriaA4Value('hostEvaluationTitle'),100))}</b><div class="gloria-a4-small" style="margin-top:5px">${gloriaA4Escape(gloriaA4Short(gloriaA4Value('hostEvaluationMessage'),320))}</div><div class="gloria-a4-small" style="margin-top:5px">${gloriaA4Escape(gloriaA4Short(gloriaA4Value('hostEvaluationNext'),130))}</div></div></div>
+            ${!document.getElementById('calcHostPayrollWarnings')?.classList.contains('hidden')&&warnings!=='-'?`<div class="gloria-a4-note"><b>Catatan perhitungan:</b> ${gloriaA4Escape(gloriaA4Short(warnings,310))}</div>`:''}`;
+        }else{
+            const isIndividualHost=!document.getElementById('slipHostContainer')?.classList.contains('hidden');
+            const warnings=gloriaA4Value('salaryPayrollWarnings');
+            main=`<div class="gloria-a4-section gloria-a4-two"><div class="gloria-a4-box"><div class="gloria-a4-section-title">Identitas dan Rekening</div>${gloriaA4KV('Nama lengkap',name)}${gloriaA4KV('Divisi',gloriaA4Value('slipDivision'))}${gloriaA4KV('Bank tujuan',gloriaA4Value('slipBankName'))}${gloriaA4KV('No. rekening',gloriaA4Value('slipBankAccount'))}${gloriaA4KV('Atas nama',gloriaA4Value('slipBankAccountName'))}</div><div class="gloria-a4-box"><div class="gloria-a4-section-title">Ringkasan Kehadiran</div>${gloriaA4KV('Hadir',gloriaA4Value('slipHadir'))}${gloriaA4KV('Izin',gloriaA4Value('slipIzin'))}${gloriaA4KV('Sakit',gloriaA4Value('slipSakit'))}${gloriaA4KV('Libur',gloriaA4Value('slipLibur'))}${gloriaA4KV('Lembur',gloriaA4Value('slipLemburAdmin'))}${!document.getElementById('slipLateContainer')?.classList.contains('hidden')?gloriaA4KV('Terlambat',gloriaA4Value('slipLateTotal')):''}</div></div>
+            <div class="gloria-a4-section gloria-a4-box"><div class="gloria-a4-section-title">Rincian Perhitungan Gaji</div><div class="gloria-a4-pay-grid">${gloriaA4PayRow('Gaji pokok awal','slipBaseInput')}${gloriaA4PayRow('Tarif per hari (÷26)','slipDayRate')}${gloriaA4PayRow('Total hari potongan','slipDeductionDays')}${gloriaA4PayRow('Potongan absensi','slipDeductionMoney')}${gloriaA4PayRow('Gaji pokok final','slipFinalBase')}${isIndividualHost?gloriaA4PayRow('Komisi Host Live','slipCommissionFinal'):''}</div></div>
+            <div class="gloria-a4-total"><span>TOTAL KALKULASI</span><b>${gloriaA4Escape(gloriaA4Value('slipTotalFinal'))}</b></div>
+            ${isIndividualHost?`<div class="gloria-a4-section gloria-a4-box"><div class="gloria-a4-section-title">Ringkasan Performa Host Live</div><div class="gloria-a4-pay-grid">${gloriaA4PayRow('Total Resi','slipTotalResi')}${gloriaA4PayRow('Total GMV','slipTotalGMV')}${gloriaA4PayRow('Metode komisi','slipCommissionMethod')}${gloriaA4PayRow('Tier komisi','slipHostCommissionTier')}${gloriaA4PayRow('Tarif komisi','slipHostCommissionRate')}${gloriaA4PayRow('Total komisi','slipHostCommission')}</div><div class="gloria-a4-small" style="margin-top:7px"><b>${gloriaA4Escape(gloriaA4Short(gloriaA4Value('individualHostEvaluationTitle'),100))}</b> — ${gloriaA4Escape(gloriaA4Short(gloriaA4Value('individualHostEvaluationMessage'),240))}</div></div>`:''}
+            <div class="gloria-a4-section gloria-a4-box"><div class="gloria-a4-section-title">Rincian Potongan Berdasarkan Kehadiran</div>${gloriaA4DeductionDetails('salaryPayrollDailyDetail')}</div>
+            ${!document.getElementById('salaryPayrollWarnings')?.classList.contains('hidden')&&warnings!=='-'?`<div class="gloria-a4-note"><b>Peringatan data:</b> ${gloriaA4Escape(gloriaA4Short(warnings,300))}</div>`:''}`;
         }
-    };
-    
-    window.downloadHostSalaryImage = async () => {
-        showMessage('Menyiapkan gambar...', 'info');
-        try {
-            const canvas = await html2canvas(document.getElementById('hostSalaryResult'), { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff' });
-            const link = document.createElement('a'); link.download = `Slip_Gaji_Host_${document.getElementById('calcHostName').innerText}.png`;
-            link.href = canvas.toDataURL('image/png'); link.click();
-        } catch (e) {
-            showMessage("Gagal mengunduh gambar", "error");
-        }
-    };
+        const footer=`<div class="gloria-a4-bottom"><span>Ringkasan slip berdasarkan kalkulasi GLORIA. Detail harian dan evaluasi lengkap tetap tersedia di aplikasi. Verifikasi sebelum pembayaran.</span><span class="gloria-a4-print-theme">${theme==='bw'?'HITAM PUTIH':'BERWARNA'} · A4 · 1 HALAMAN</span></div>`;
+        return {html:`<div class="gloria-a4-inner">${header}${main}${footer}</div>`,theme,name,period};
+    }
+    function getA4SlipNode(type){
+        const built=gloriaA4BuildContent(type),node=document.createElement('div');
+        node.className='gloria-a4-sheet'+(built.theme==='bw'?' a4-blackwhite':'');
+        node.innerHTML=built.html;return node;
+    }
+    function gloriaA4FitNode(sheet){
+        const inner=sheet.querySelector('.gloria-a4-inner');
+        if(!inner)return;
+        inner.style.transform='none';inner.style.width='100%';
+        const cs=getComputedStyle(sheet),available=sheet.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
+        if(!available||!inner.scrollHeight)return;
+        const scale=Math.min(1,(available-2)/inner.scrollHeight);
+        if(scale<1){inner.style.width=(100/scale)+'%';inner.style.transform=`scale(${scale})`;}
+    }
+    function gloriaA4ThemePreview(type){
+        const val=document.getElementById('a4PreviewTheme')?.value;
+        const dest=document.getElementById(type==='host'?'gloriaHostPrintTheme':'gloriaSalaryPrintTheme');
+        if(dest&&val)dest.value=val;
+        const page=document.getElementById('a4PreviewPage');if(!page)return;
+        page.innerHTML='';const node=getA4SlipNode(type);page.appendChild(node);gloriaA4FitNode(node);
+    }
+    function openA4Preview(type){
+        try{
+            const modal=document.getElementById('a4PreviewModal'),page=document.getElementById('a4PreviewPage');
+            if(!modal||!page)throw new Error('Preview A4 tidak tersedia.');
+            const theme=document.getElementById('a4PreviewTheme');if(theme)theme.value=gloriaSlipTheme(type);
+            page.style.cssText='width:210mm;min-width:210mm;height:297mm;min-height:297mm;padding:0;flex-shrink:0;background:#fff;box-shadow:0 8px 30px #0002';
+            page.innerHTML='';const sheet=getA4SlipNode(type);page.appendChild(sheet);modal.classList.remove('hidden');
+            gloriaA4FitNode(sheet);
+            if(theme)theme.onchange=()=>gloriaA4ThemePreview(type);
+            document.getElementById('a4PreviewPrintBtn').onclick=()=>type==='host'?printHostSalaryA4():printSalaryA4();
+            document.getElementById('a4PreviewPdfBtn').onclick=()=>type==='host'?downloadHostSalaryA4PDF():downloadSalaryA4PDF();
+        }catch(e){showMessage(e.message||'Gagal membuka preview A4.','error');}
+    }
+    window.closeA4Preview=()=>document.getElementById('a4PreviewModal')?.classList.add('hidden');
+    window.previewSalaryA4=()=>openA4Preview('salary');window.previewHostSalaryA4=()=>openA4Preview('host');
+    function openA4PrintWindow(type){
+        const sheet=getA4SlipNode(type),popup=window.open('','_blank','width=880,height=920');
+        if(!popup)throw new Error('Popup diblokir browser. Izinkan popup untuk GLORIA.');
+        const doc=`<!doctype html><html lang="id"><head><meta charset="utf-8"><title>GLORIA - Slip Gaji A4</title><style>${GLORIA_A4_STYLE}</style></head><body>${sheet.outerHTML}<script>window.addEventListener('load',function(){var s=document.querySelector('.gloria-a4-sheet'),i=s.querySelector('.gloria-a4-inner'),cs=getComputedStyle(s),max=s.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom),h=i.scrollHeight;if(h>max){var z=Math.max(.1,(max-2)/h);i.style.width=(100/z)+'%';i.style.transform='scale('+z+')'}setTimeout(function(){window.focus();window.print()},180)});<\/script></body></html>`;
+        popup.document.open();popup.document.write(doc);popup.document.close();
+    }
+    window.printSalaryA4=()=>{try{openA4PrintWindow('salary')}catch(e){showMessage(e.message,'error')}};
+    window.printHostSalaryA4=()=>{try{openA4PrintWindow('host')}catch(e){showMessage(e.message,'error')}};
+    async function gloriaA4Canvas(type){
+        const sheet=getA4SlipNode(type),holder=document.createElement('div');
+        holder.style.cssText='position:fixed;left:-10000px;top:0;background:#fff;z-index:-9999;pointer-events:none;';
+        holder.appendChild(sheet);document.body.appendChild(holder);
+        try{
+            gloriaA4FitNode(sheet);
+            if(typeof html2canvas!=='function')throw new Error('Modul pembuatan dokumen belum dimuat.');
+            return await html2canvas(sheet,{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',logging:false});
+        }finally{holder.remove();}
+    }
+    function gloriaA4FileName(type,ext){
+        const name=gloriaA4Value(type==='host'?'calcHostName':'slipName').replace(/[^a-z0-9_-]+/gi,'_').slice(0,55);
+        const period=gloriaA4Value(type==='host'?'calcHostMonthDisplay':'slipMonthDisplay').replace(/[^0-9-]+/g,'_').slice(0,45);
+        return `GLORIA_Slip_A4_${name}_${period}_${gloriaSlipTheme(type)==='bw'?'HitamPutih':'Berwarna'}.${ext}`;
+    }
+    async function createA4PDF(type){
+        const canvas=await gloriaA4Canvas(type),jsPDF=window.jspdf?.jsPDF;
+        if(!jsPDF)throw new Error('Modul PDF belum tersedia. Periksa koneksi internet.');
+        const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true});
+        // Satu gambar memenuhi satu lembar A4; jangan pecah konten ke halaman tambahan.
+        pdf.addImage(canvas.toDataURL('image/jpeg',.94),'JPEG',0,0,210,297,undefined,'FAST');
+        pdf.save(gloriaA4FileName(type,'pdf'));
+    }
+    window.downloadSalaryA4PDF=async()=>{try{showMessage('Membuat PDF satu halaman A4...','info');await createA4PDF('salary');showMessage('PDF slip A4 satu halaman dibuat.','success')}catch(e){console.error(e);showMessage(e.message||'Gagal membuat PDF A4.','error')}};
+    window.downloadHostSalaryA4PDF=async()=>{try{showMessage('Membuat PDF satu halaman A4...','info');await createA4PDF('host');showMessage('PDF slip A4 satu halaman dibuat.','success')}catch(e){console.error(e);showMessage(e.message||'Gagal membuat PDF A4.','error')}};
+    async function gloriaDownloadA4PNG(type){
+        try{showMessage('Membuat gambar A4 satu halaman...','info');const canvas=await gloriaA4Canvas(type);const a=document.createElement('a');a.download=gloriaA4FileName(type,'png');a.href=canvas.toDataURL('image/png');a.click();showMessage('Gambar A4 berhasil dibuat.','success')}
+        catch(e){console.error(e);showMessage(e.message||'Gagal membuat gambar A4.','error')}
+    }
+    window.downloadSlipImage=()=>gloriaDownloadA4PNG('salary');
+    window.downloadHostSalaryImage=()=>gloriaDownloadA4PNG('host');
 
     window.downloadSlipExcel = () => {
         const start=document.getElementById('salaryStartDate').value,end=document.getElementById('salaryEndDate').value,empId=document.getElementById('salaryEmployee').value;
