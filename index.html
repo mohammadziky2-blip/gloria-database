@@ -54,7 +54,15 @@
 .gloria-a4-small{font-size:10px;color:var(--a4-muted);line-height:1.35}
 .gloria-a4-minilist{margin:4px 0 0;padding-left:14px}
 .gloria-a4-minilist li{margin:2px 0;overflow-wrap:anywhere}
-.gloria-a4-bottom{margin-top:18px;padding-top:10px;border-top:1px solid var(--a4-border);font-size:10px;color:var(--a4-muted);display:flex;justify-content:space-between;gap:15px}
+.gloria-a4-signatures{margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.gloria-a4-sign-card{border:1px solid var(--a4-border);border-radius:8px;padding:10px 11px 9px;background:linear-gradient(180deg,#fff 0%,var(--a4-soft) 100%);min-height:124px;display:flex;flex-direction:column;justify-content:space-between}
+.gloria-a4-sign-label{font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--a4-muted)}
+.gloria-a4-sign-role{font-size:13px;font-weight:800;color:var(--a4-ink);margin-top:4px}
+.gloria-a4-sign-space{height:48px;border-bottom:1.5px solid var(--a4-ink);margin-top:8px;position:relative}
+.gloria-a4-sign-space:before{content:'Tanda tangan manual';position:absolute;left:0;bottom:4px;font-size:8.5px;color:var(--a4-muted)}
+.gloria-a4-sign-name{font-size:12px;font-weight:900;text-transform:uppercase;margin-top:6px;line-height:1.25}
+.gloria-a4-sign-sub{font-size:9.5px;color:var(--a4-muted);margin-top:2px}
+.gloria-a4-bottom{margin-top:14px;padding-top:9px;border-top:1px solid var(--a4-border);font-size:10px;color:var(--a4-muted);display:flex;justify-content:space-between;gap:15px}
 .gloria-a4-print-theme{font-size:9px;font-weight:800;letter-spacing:.3px}
 
     </style>
@@ -125,6 +133,21 @@
             background-position: right center; 
             box-shadow: 0 10px 20px -5px rgba(212, 175, 55, 0.5); 
         }
+
+
+        /* GLORIA v09: blok tanda tangan resmi slip gaji */
+        .gloria-signoff-wrap{margin-top:1.75rem;padding-top:1.1rem;border-top:1px solid #dbe3ef}
+        .gloria-signoff-title{font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:#64748b;margin-bottom:.35rem}
+        .gloria-signoff-note{font-size:11px;line-height:1.45;color:#64748b;margin-bottom:1rem}
+        .gloria-signoff-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.5rem}
+        .gloria-signoff-card{border:1px solid #dbe3ef;border-radius:1rem;background:linear-gradient(180deg,#ffffff 0%,#f8fafc 100%);padding:1rem 1rem .85rem;min-height:185px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 6px 20px rgba(15,23,42,.05)}
+        .gloria-signoff-label{font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.14em}
+        .gloria-signoff-role{margin-top:.45rem;font-size:16px;font-weight:800;color:#0f172a;line-height:1.25}
+        .gloria-signoff-space{height:84px;border-bottom:1.8px solid #0f172a;margin-top:1rem;position:relative}
+        .gloria-signoff-space:before{content:'Tanda tangan manual';position:absolute;bottom:.45rem;left:0;font-size:10px;color:#94a3b8;letter-spacing:.04em}
+        .gloria-signoff-name{margin-top:.7rem;font-size:15px;font-weight:900;color:#0f172a;text-transform:uppercase;line-height:1.3}
+        .gloria-signoff-sub{font-size:11px;color:#64748b;margin-top:.2rem}
+        @media (max-width:767px){.gloria-signoff-grid{grid-template-columns:1fr}.gloria-signoff-card{min-height:168px}}
     </style>
 </head>
 <body class="text-gray-800 h-screen flex flex-col overflow-hidden">
@@ -1349,6 +1372,35 @@
                         </div>
                     </div>
 
+                    <div class="gloria-signoff-wrap">
+                        <p class="gloria-signoff-title">Pengesahan Dokumen</p>
+                        <p class="gloria-signoff-note">Dokumen ini menggunakan format resmi perusahaan dan disiapkan untuk pembubuhan tanda tangan manual menggunakan pulpen setelah dicetak.</p>
+                        <div class="gloria-signoff-grid">
+                            <div class="gloria-signoff-card">
+                                <div>
+                                    <p class="gloria-signoff-label">Mengetahui</p>
+                                    <p class="gloria-signoff-role">Manager</p>
+                                </div>
+                                <div>
+                                    <div class="gloria-signoff-space"></div>
+                                    <p class="gloria-signoff-name">Betty AS. SM,MM</p>
+                                    <p class="gloria-signoff-sub">Manager</p>
+                                </div>
+                            </div>
+                            <div class="gloria-signoff-card">
+                                <div>
+                                    <p class="gloria-signoff-label">Disetujui Oleh</p>
+                                    <p class="gloria-signoff-role">Direktur</p>
+                                </div>
+                                <div>
+                                    <div class="gloria-signoff-space"></div>
+                                    <p class="gloria-signoff-name">Lin Chang Zhuang</p>
+                                    <p class="gloria-signoff-sub">Direktur</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="mt-6 rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-blue-50/60 p-4 md:p-5 shadow-sm" data-html2canvas-ignore="true">
                         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
                             <div class="flex items-center gap-2">
@@ -1554,6 +1606,34 @@
                     <div class="bg-gradient-to-r from-green-600 to-emerald-600 text-white p-6 rounded-xl flex justify-between items-center shadow-lg">
                         <span class="font-bold text-xl">TOTAL DITERIMA</span>
                         <span class="font-black text-3xl" id="calcHostTotalDisplay">Rp 0</span>
+                    </div>
+                    <div class="gloria-signoff-wrap">
+                        <p class="gloria-signoff-title">Pengesahan Dokumen</p>
+                        <p class="gloria-signoff-note">Rekap gaji Host Live ini disusun dengan format yang rapi dan profesional untuk pembubuhan tanda tangan manual menggunakan pulpen setelah dicetak.</p>
+                        <div class="gloria-signoff-grid">
+                            <div class="gloria-signoff-card">
+                                <div>
+                                    <p class="gloria-signoff-label">Mengetahui</p>
+                                    <p class="gloria-signoff-role">Manager</p>
+                                </div>
+                                <div>
+                                    <div class="gloria-signoff-space"></div>
+                                    <p class="gloria-signoff-name">Betty AS. SM,MM</p>
+                                    <p class="gloria-signoff-sub">Manager</p>
+                                </div>
+                            </div>
+                            <div class="gloria-signoff-card">
+                                <div>
+                                    <p class="gloria-signoff-label">Disetujui Oleh</p>
+                                    <p class="gloria-signoff-role">Direktur</p>
+                                </div>
+                                <div>
+                                    <div class="gloria-signoff-space"></div>
+                                    <p class="gloria-signoff-name">Lin Chang Zhuang</p>
+                                    <p class="gloria-signoff-sub">Direktur</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -3835,6 +3915,13 @@
     function gloriaA4KV(key,value){return `<div class="gloria-a4-kv"><span>${gloriaA4Escape(key)}</span><strong>${gloriaA4Escape(value)}</strong></div>`;}
     function gloriaA4PayRow(label,id){return `<div class="gloria-a4-pay-row"><span>${gloriaA4Escape(label)}</span><b>${gloriaA4Escape(gloriaA4Value(id))}</b></div>`;}
     function gloriaA4Pill(label,id){return `<div class="gloria-a4-pill"><b>${gloriaA4Escape(gloriaA4Value(id))}</b><span>${gloriaA4Escape(label)}</span></div>`;}
+    function gloriaA4Signatories(){
+        return [{label:'Mengetahui',role:'Manager',name:'Betty AS. SM,MM',sub:'Manager'},{label:'Disetujui Oleh',role:'Direktur',name:'Lin Chang Zhuang',sub:'Direktur'}];
+    }
+    function gloriaA4SignatureBlock(){
+        const cards=gloriaA4Signatories().map(sig=>`<div class="gloria-a4-sign-card"><div><div class="gloria-a4-sign-label">${gloriaA4Escape(sig.label)}</div><div class="gloria-a4-sign-role">${gloriaA4Escape(sig.role)}</div></div><div><div class="gloria-a4-sign-space"></div><div class="gloria-a4-sign-name">${gloriaA4Escape(sig.name)}</div><div class="gloria-a4-sign-sub">${gloriaA4Escape(sig.sub)}</div></div></div>`).join('');
+        return `<div class="gloria-a4-signatures">${cards}</div>`;
+    }
     function gloriaA4DeductionDetails(id){
         const els=Array.from(document.querySelectorAll('#'+id+' > div'));
         if(!els.length)return '<div class="gloria-a4-small">Tidak ada rincian potongan harian.</div>';
@@ -3870,8 +3957,9 @@
             <div class="gloria-a4-section gloria-a4-box"><div class="gloria-a4-section-title">Rincian Potongan Berdasarkan Kehadiran</div>${gloriaA4DeductionDetails('salaryPayrollDailyDetail')}</div>
             ${!document.getElementById('salaryPayrollWarnings')?.classList.contains('hidden')&&warnings!=='-'?`<div class="gloria-a4-note"><b>Peringatan data:</b> ${gloriaA4Escape(gloriaA4Short(warnings,300))}</div>`:''}`;
         }
+        const signatures=gloriaA4SignatureBlock();
         const footer=`<div class="gloria-a4-bottom"><span>Ringkasan slip berdasarkan kalkulasi GLORIA. Detail harian dan evaluasi lengkap tetap tersedia di aplikasi. Verifikasi sebelum pembayaran.</span><span class="gloria-a4-print-theme">${theme==='bw'?'HITAM PUTIH':'BERWARNA'} · A4 · 1 HALAMAN</span></div>`;
-        return {html:`<div class="gloria-a4-inner">${header}${main}${footer}</div>`,theme,name,period};
+        return {html:`<div class="gloria-a4-inner">${header}${main}${signatures}${footer}</div>`,theme,name,period};
     }
     function getA4SlipNode(type){
         const built=gloriaA4BuildContent(type),node=document.createElement('div');
