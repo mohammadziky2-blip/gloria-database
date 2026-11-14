@@ -3529,14 +3529,32 @@
     window.deleteEmployee = async (id) => {
         if(String(state.user?.email||'').toLowerCase()!=='mohammadziky2@gmail.com'){showMessage('Hanya Master yang boleh menghapus karyawan.','error');return;}
         try {
-            const empName = state.employees.find(e => e.id === id)?.name || id;
-            
-            if(!window.confirm('Hapus karyawan '+empName+'? Data dengan riwayat absensi tidak dapat dihapus.'))return;
+            const empName = state.employees.find(e => String(e.id) === String(id))?.name || id;
+            if(!window.confirm('Hapus '+empName+' dari daftar karyawan aktif? Data identitas akan disimpan di arsip DeletedEmployees. Riwayat absensi, gaji, GMV, dan resi tetap disimpan.'))return;
             const removed=await apiCall('deleteEmployee', { id });
-            if(removed.deleted===false)throw new Error('Data karyawan tidak ditemukan.');
-            logActivity("Hapus Karyawan", `Menghapus data karyawan: ${empName}`);
-            refreshData(true).catch(()=>{}); showMessage("Karyawan dihapus.", "success");
-        } catch (error) { if (!state.isMockMode) await refreshData(true).catch(()=>{}); showMessage(error.message || "Gagal menghapus.", "error"); }
+            if(removed.deleted!==true)throw new Error(removed.message || 'Data karyawan tidak ditemukan.');
+
+            // Tampilkan penghapusan segera hanya SETELAH backend menyatakan berhasil.
+            state.employees=state.employees.filter(e=>String(e.id)!==String(id));
+            renderEmployees();
+            updateEmployeeDropdown();
+            updateDashboard();
+            logActivity('Hapus Karyawan', `Mengarsip dan menghapus data karyawan: ${empName}`);
+            try {
+                await refreshData(true);
+                if(state.employees.some(e=>String(e.id)===String(id)))
+                    throw new Error('Data lama masih dikirim server. Periksa deployment backend.');
+                showMessage('Karyawan berhasil dihapus dari daftar aktif; riwayat tetap tersimpan.','success');
+            } catch(refreshError) {
+                // Hapus di backend sudah berhasil: jangan tampilkan pesan "gagal menghapus".
+                state.employees=state.employees.filter(e=>String(e.id)!==String(id));
+                renderEmployees(); updateEmployeeDropdown(); updateDashboard();
+                showMessage('Karyawan sudah dihapus, tetapi pembaruan data belum terverifikasi. Muat ulang halaman untuk memastikan.','info');
+                console.warn('GLORIA refresh setelah hapus:',refreshError);
+            }
+        } catch (error) {
+            showMessage(error.message || 'Gagal menghapus karyawan.', 'error');
+        }
     };
     
     let gloriaLastAttendanceEmployee='';
