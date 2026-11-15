@@ -2110,7 +2110,7 @@
     // GitHub Pages: URL /exec di gloria-config.js; komunikasi melalui iframe bridge Apps Script.
     // Hosting langsung Apps Script tetap memakai google.script.run tanpa URL.
     const GAS_URL = String(window.GLORIA_CONFIG?.gasWebAppUrl || '').trim();
-    const EXPECTED_BACKEND_BUILD_ID = 'GLORIA-2026.11.15.01';
+    const EXPECTED_BACKEND_BUILD_ID = 'GLORIA-2026.11.15.02';
     const EXPECTED_BACKEND_SCHEMA = '2026.11.15.1'; 
     
     let state = {
@@ -2279,12 +2279,22 @@
     let gloriaBridgeEndpoint = null;
     let gloriaBridgeIframe = null;
     let gloriaBridgeOrigin = '';
+    let gloriaBridgeNonce = '';
     let gloriaBridgeVersionMismatch = '';
     let gloriaBridgeCounter = 0;
     const gloriaPendingRequests = new Map();
 
     function gloriaGoogleBridgeOrigin(origin) {
         return /^https:\/\/(?:script\.google\.com|(?:(?:[a-z0-9-]+\.)*script\.googleusercontent\.com|[a-z0-9-]+-script\.googleusercontent\.com))$/.test(String(origin || ''));
+    }
+
+    function gloriaCreateBridgeNonce() {
+        if (!window.crypto || typeof window.crypto.getRandomValues !== 'function') {
+            throw new Error('Browser tidak mendukung generator nonce aman. Perbarui browser atau gunakan Chrome versi terbaru.');
+        }
+        const bytes = new Uint8Array(24);
+        window.crypto.getRandomValues(bytes);
+        return Array.from(bytes, value => value.toString(16).padStart(2, '0')).join('');
     }
 
     function gloriaValidGasUrl() {
@@ -2298,9 +2308,14 @@
 
     function gloriaOnBridgeMessage(event) {
         const message = event.data;
-        if (!message || message.channel !== GLORIA_BRIDGE_CHANNEL || !gloriaGoogleBridgeOrigin(event.origin)) return;
+        if (!message || message.channel !== GLORIA_BRIDGE_CHANNEL || message.nonce !== gloriaBridgeNonce || !gloriaGoogleBridgeOrigin(event.origin)) return;
         if (message.kind === 'ready') {
-            if (!gloriaBridgePromise || gloriaBridgeEndpoint || !gloriaBridgeIframe || event.source !== gloriaBridgeIframe.contentWindow) return;
+            // Apps Script HTML Service dapat menempatkan dokumen pengguna di frame
+            // internal. Karena itu event.source tidak selalu sama dengan iframe
+            // pembungkus yang dibuat GitHub Pages. Nonce per-load + origin Google
+            // + build ID mengikat pesan ke Bridge yang benar; source READY yang
+            // terverifikasi kemudian dipakai sebagai endpoint komunikasi dua arah.
+            if (!gloriaBridgePromise || gloriaBridgeEndpoint || !gloriaBridgeIframe || !event.source || typeof event.source.postMessage !== 'function') return;
             if (message.buildId !== EXPECTED_BACKEND_BUILD_ID) {
                 gloriaBridgeVersionMismatch = 'Versi bridge/backend tidak cocok. Ditemukan '+String(message.buildId||'-')+', diharapkan '+EXPECTED_BACKEND_BUILD_ID+'. Perbarui deployment Apps Script.';
                 window.dispatchEvent(new CustomEvent('gloria-bridge-version-mismatch'));
@@ -2339,6 +2354,7 @@
                     gloriaBridgePromise = null;
                     gloriaBridgeEndpoint = null;
                     gloriaBridgeOrigin = '';
+                    gloriaBridgeNonce = '';
                     if (gloriaBridgeIframe) { gloriaBridgeIframe.remove(); gloriaBridgeIframe = null; }
                     reject(error);
                 } else resolve(gloriaBridgeEndpoint);
@@ -2348,9 +2364,15 @@
             window.addEventListener('gloria-bridge-ready', onReady);
             window.addEventListener('gloria-bridge-version-mismatch', onVersionMismatch);
             const timeout = setTimeout(() => finish(new Error(gloriaBridgeVersionMismatch || 'Jembatan Google Apps Script tidak merespons. Periksa deployment /exec, file GloriaBridge.html, izin akses "Anyone", dan kemungkinan iframe diblokir browser.')), 35000);
+            try {
+                gloriaBridgeNonce = gloriaCreateBridgeNonce();
+            } catch (nonceError) {
+                finish(nonceError);
+                return;
+            }
             const frame = document.createElement('iframe');
             gloriaBridgeIframe = frame;
-            frame.src = GAS_URL.replace(/\/$/,'') + '?bridge=1';
+            frame.src = GAS_URL.replace(/\/$/,'') + '?bridge=1&nonce=' + encodeURIComponent(gloriaBridgeNonce);
             frame.setAttribute('aria-hidden', 'true');
             frame.setAttribute('title', 'GLORIA backend transport');
             frame.referrerPolicy = 'strict-origin-when-cross-origin';
@@ -2371,7 +2393,7 @@
             }, action === 'backupDatabase' ? 180000 : 90000);
             gloriaPendingRequests.set(id, {resolve,reject,timeout});
             try {
-                endpoint.postMessage({channel:GLORIA_BRIDGE_CHANNEL,kind:'request',id,action,data,authToken},gloriaBridgeOrigin);
+                endpoint.postMessage({channel:GLORIA_BRIDGE_CHANNEL,nonce:gloriaBridgeNonce,kind:'request',id,action,data,authToken},gloriaBridgeOrigin);
             } catch (error) {
                 clearTimeout(timeout);
                 gloriaPendingRequests.delete(id);
