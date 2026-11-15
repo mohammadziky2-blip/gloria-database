@@ -864,6 +864,13 @@
 
             <!-- Halaman GAPOK: khusus Master + autentikasi kedua di backend. -->
             <div id="gapokView" class="view-section hidden fade-in space-y-5">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <button type="button" onclick="switchTab('dashboard')" aria-label="Kembali ke Dashboard" class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-extrabold text-slate-800 shadow-sm transition hover:border-amber-400 hover:bg-amber-50 hover:text-amber-900 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2">
+                        <i class="ph ph-arrow-left text-lg" aria-hidden="true"></i>
+                        Kembali ke Dashboard
+                    </button>
+                    <span class="rounded-full border border-amber-300/60 bg-amber-50 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-amber-900">Halaman khusus Master</span>
+                </div>
                 <div class="rounded-2xl bg-gradient-to-r from-slate-950 via-amber-950 to-slate-900 text-white p-6 shadow-lg border border-amber-400/40">
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4"><div><p class="text-amber-300 text-[11px] font-black tracking-[.2em] uppercase">GLORIA · MASTER ONLY</p><h2 class="text-2xl font-black mt-1">GAPOK — Data Gaji Pokok Karyawan</h2><p class="text-amber-100/80 text-sm mt-2">Data gaji pokok tersimpan terpisah, terhubung ke slip gaji Host Live dan karyawan lainnya.</p></div><div class="flex flex-wrap gap-2"><button onclick="changeGapokPassword()" class="px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-xs font-bold"><i class="ph ph-key mr-1"></i> Ganti Sandi</button><button onclick="lockGapokPage()" class="px-3 py-2 rounded-lg bg-rose-500/20 border border-rose-300/30 text-rose-100 text-xs font-bold"><i class="ph ph-lock mr-1"></i> Kunci GAPOK</button></div></div>
                 </div>
