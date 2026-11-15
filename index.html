@@ -9,16 +9,11 @@
     <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Tesseract.js for OCR/AI Image Reading -->
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     
     <!-- Chart.js & html2canvas for Export & Graphs -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <!-- Excel asli (.xlsx) khusus halaman Data Excel Host Live -->
-    <script defer src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 
     <style id="gloriaA4OnePageStyle">
 
@@ -2210,8 +2205,8 @@
     // GitHub Pages: URL /exec di gloria-config.js; komunikasi melalui iframe bridge Apps Script.
     // Hosting langsung Apps Script tetap memakai google.script.run tanpa URL.
     const GAS_URL = String(window.GLORIA_CONFIG?.gasWebAppUrl || '').trim();
-    const EXPECTED_BACKEND_BUILD_ID = 'GLORIA-2026.11.15.02';
-    const EXPECTED_BACKEND_SCHEMA = '2026.11.15.2'; 
+    const EXPECTED_BACKEND_BUILD_ID = 'GLORIA-2026.11.15.03';
+    const EXPECTED_BACKEND_SCHEMA = '2026.11.15.3'; 
     
     let state = {
         user: null,
@@ -2468,6 +2463,61 @@
         return gloriaBridgePromise;
     }
 
+    // Dependensi berat dimuat saat fitur dipakai, bukan saat Dashboard pertama dibuka.
+    const GLORIA_LAZY_LIBRARIES = {
+        tesseract: { url:'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js', ready:()=>!!window.Tesseract?.createWorker },
+        chart: { url:'https://cdn.jsdelivr.net/npm/chart.js', ready:()=>typeof window.Chart==='function' },
+        html2canvas: { url:'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', ready:()=>typeof window.html2canvas==='function' },
+        jspdf: { url:'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', ready:()=>!!window.jspdf?.jsPDF },
+        exceljs: { url:'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js', ready:()=>!!window.ExcelJS }
+    };
+    const gloriaLibraryPromises = new Map();
+    function loadGloriaLibrary(name) {
+        const item=GLORIA_LAZY_LIBRARIES[name];
+        if(!item) return Promise.reject(new Error('Modul '+name+' tidak dikenal.'));
+        if(item.ready()) return Promise.resolve(true);
+        if(gloriaLibraryPromises.has(name)) return gloriaLibraryPromises.get(name);
+        const promise=new Promise((resolve,reject)=>{
+            const script=document.createElement('script');script.src=item.url;script.async=true;script.crossOrigin='anonymous';
+            script.onload=()=>item.ready()?resolve(true):reject(new Error('Modul '+name+' termuat tetapi tidak dapat digunakan.'));
+            script.onerror=()=>reject(new Error('Gagal memuat modul '+name+'. Periksa koneksi internet lalu coba kembali.'));
+            document.head.appendChild(script);
+        }).catch(error=>{gloriaLibraryPromises.delete(name);throw error;});
+        gloriaLibraryPromises.set(name,promise);return promise;
+    }
+
+    // Cache memori hanya untuk permintaan baca. Semua cache dihapus setelah mutasi sukses.
+    const GLORIA_READ_TTL = {
+        getMonthlyBackup:12000, getHostPerformance:20000, getHostSchedule:12000,
+        getGapokData:10000, getGapokHistory:10000, getHostSalaryDrafts:10000, getSalary:10000
+    };
+    const GLORIA_WRITE_ACTIONS = new Set([
+        'addEmployee','updateEmployee','deleteEmployee','editEmployeeBank',
+        'addAttendance','updateAttendance','editAttendance','deleteAttendance','addAttendanceBulk','deleteAttendanceBulk',
+        'addLateAttendance','updateLateAttendance','deleteLateAttendance',
+        'saveHostScheduleImage','clearHostScheduleImage','saveGapokSalary','saveSalary','saveHostSalaryDraft',
+        'saveSettings','blockUser','unblockUser','addAllowedUser','removeAllowedUser'
+    ]);
+    const gloriaApiReadCache=new Map(),gloriaApiInFlight=new Map();
+    let gloriaApiCacheGeneration=0,monthlyReportRenderSeq=0,monthlySearchTimer=null;
+    const monthlyBackupCache=new Map();
+    function clearGloriaApiReadCache(){
+        gloriaApiCacheGeneration++;gloriaApiReadCache.clear();monthlyBackupCache.clear();
+        gloriaApiInFlight.clear();
+    }
+    function storeGloriaApiReadCache(key,value,ttl){
+        gloriaApiReadCache.set(key,{value:value,expiresAt:Date.now()+ttl});
+        while(gloriaApiReadCache.size>100)gloriaApiReadCache.delete(gloriaApiReadCache.keys().next().value);
+    }
+    function storeMonthlyBackupCache(month,entry){
+        monthlyBackupCache.set(month,entry);
+        while(monthlyBackupCache.size>4)monthlyBackupCache.delete(monthlyBackupCache.keys().next().value);
+    }
+    function gloriaApiRequestKey(action,data){
+        let payload='';try{payload=JSON.stringify(data||{});}catch(_){payload=String(Date.now());}
+        return action+'|'+String(state.authToken||'')+'|'+payload;
+    }
+
     async function gloriaCallViaBridge(action, data, authToken) {
         const endpoint = await getGloriaBridge();
         const id = `gloria_${Date.now()}_${++gloriaBridgeCounter}`;
@@ -2487,7 +2537,7 @@
         });
     }
 
-    async function apiCall(action, data = {}) {
+    async function apiCallRaw(action, data = {}) {
         if (state.isMockMode) return mockApiCall(action, data);
         if (!['login','refreshSession','ping'].includes(action) && !state.authToken) {
             throw new Error('Sesi login tidak ditemukan. Silakan login kembali.');
@@ -2526,6 +2576,27 @@
         throw lastError || new Error('Gagal menghubungi server.');
     }
 
+    async function apiCall(action,data={}) {
+        const ttl=Number(GLORIA_READ_TTL[action]||0);
+        const dedupeRead=ttl>0||['getData','refreshSession','ping'].includes(action);
+        if(dedupeRead){
+            const key=gloriaApiRequestKey(action,data),now=Date.now();
+            const cached=gloriaApiReadCache.get(key);
+            if(cached&&cached.expiresAt>now)return cached.value;
+            if(gloriaApiInFlight.has(key))return gloriaApiInFlight.get(key);
+            const generation=gloriaApiCacheGeneration;
+            let pending;
+            pending=apiCallRaw(action,data).then(result=>{
+                if(ttl>0&&generation===gloriaApiCacheGeneration)storeGloriaApiReadCache(key,result,ttl);
+                return result;
+            }).finally(()=>{if(gloriaApiInFlight.get(key)===pending)gloriaApiInFlight.delete(key);});
+            gloriaApiInFlight.set(key,pending);return pending;
+        }
+        const result=await apiCallRaw(action,data);
+        if(GLORIA_WRITE_ACTIONS.has(action)&&result&&result.success!==false)clearGloriaApiReadCache();
+        return result;
+    }
+
     window.testGloriaConnection = async function() {
         const status = document.getElementById('gloriaConnectionInfo');
         const button = document.getElementById('gloriaTestConnection');
@@ -2549,6 +2620,7 @@
                     if(savedEmp) { try { state.employees = JSON.parse(savedEmp); } catch(e){} }
                     let savedAtt = localStorage.getItem('gloria_mock_att');
                     if(savedAtt) { try { state.attendance = JSON.parse(savedAtt); } catch(e){} }
+                    rebuildAttendanceDateIndex();
                     resolve({ success: true, employees: state.employees, attendance: state.attendance, lateAttendance: state.lateAttendance || [], activeUsers: state.activeUsers, historyLog: state.historyLog, blockedUsers: state.blockedUsers, backendBuildId: EXPECTED_BACKEND_BUILD_ID, schemaVersion: EXPECTED_BACKEND_SCHEMA });
                 }
                 else if(action === 'addEmployee') { 
@@ -2559,6 +2631,7 @@
                 else if(action === 'addAttendance') { 
                     const id = "MOCK_" + Date.now(); state.attendance.push({id, ...data}); 
                     if (state.isMockMode) localStorage.setItem('gloria_mock_att', JSON.stringify(state.attendance));
+                    rebuildAttendanceDateIndex();
                     resolve({ success: true, id }); 
                 }
                 else if(action === 'deleteEmployee') { 
@@ -2569,12 +2642,14 @@
                 else if(action === 'deleteAttendance') { 
                     state.attendance = state.attendance.filter(a => a.id !== data.id); 
                     if (state.isMockMode) localStorage.setItem('gloria_mock_att', JSON.stringify(state.attendance));
+                    rebuildAttendanceDateIndex();
                     resolve({ success: true }); 
                 }
                 else if(action === 'editAttendance') {
                     const idx = state.attendance.findIndex(a => a.id === data.id);
                     if (idx !== -1) state.attendance[idx] = { ...state.attendance[idx], ...data };
                     if (state.isMockMode) localStorage.setItem('gloria_mock_att', JSON.stringify(state.attendance));
+                    rebuildAttendanceDateIndex();
                     resolve({ success: true });
                 }
                 else if(action === 'editEmployeeBank') {
@@ -2590,10 +2665,12 @@
                     const row = { ...data, employeeName: data.employeeName || '', division: data.division || '', minutesLate: Number(data.minutesLate || 0) };
                     if (idx >= 0) state.lateAttendance[idx] = { ...state.lateAttendance[idx], ...row };
                     else state.lateAttendance.push(row);
+                    rebuildLateAttendanceDateIndex();
                     resolve({ success: true, id: data.id, data: row });
                 }
                 else if(action === 'deleteLateAttendance') {
                     state.lateAttendance = state.lateAttendance.filter(x => String(x.id) !== String(data.id));
+                    rebuildLateAttendanceDateIndex();
                     resolve({ success: true, deleted: true, id: data.id });
                 }
                 else if(action === 'calculateHostCommission') {
@@ -2901,7 +2978,7 @@
             document.getElementById('loginPassword').value = '';
             state.user = null;
             state.authToken = '';
-            state.employees=[];state.attendance=[];state.lateAttendance=[];
+            state.employees=[];state.attendance=[];state.lateAttendance=[];rebuildAttendanceDateIndex();rebuildLateAttendanceDateIndex();
             state.hostPerformance=[];state.hostSchedule=[];state.salary=[];
             state.activeUsers=[];state.allowedUsers=[];state.blockedUsers=[];
             state.auditLog=[];state.historyLog=[];state.settings={};
@@ -2917,12 +2994,42 @@
         }
     };
 
+    // Indeks tanggal menghindari pemindaian seluruh riwayat absensi setiap kali
+    // Dashboard/Input Kehadiran dibuka atau pengguna memeriksa duplikasi tanggal.
+    let attendanceDateIndex=new Map(),lateAttendanceDateIndex=new Map();
+    function rebuildLateAttendanceDateIndex(){
+        const next=new Map();
+        (state.lateAttendance||[]).forEach(record=>{const date=window.normalizeDateStr(record.date);if(!date)return;let rows=next.get(date);if(!rows){rows=[];next.set(date,rows);}rows.push(record);});
+        lateAttendanceDateIndex=next;
+    }
+    function lateAttendanceForDate(date){
+        const key=String(date||'');
+        if(!lateAttendanceDateIndex.size&&(state.lateAttendance||[]).length)rebuildLateAttendanceDateIndex();
+        return lateAttendanceDateIndex.get(key)||[];
+    }
+    function rebuildAttendanceDateIndex(){
+        const next=new Map();
+        (state.attendance||[]).forEach(record=>{
+            const date=window.normalizeDateStr(record.date);if(!date)return;
+            let rows=next.get(date);if(!rows){rows=[];next.set(date,rows);}rows.push(record);
+        });
+        attendanceDateIndex=next;
+    }
+    function attendanceForDate(date){
+        const key=String(date||'');
+        if(!attendanceDateIndex.size&&(state.attendance||[]).length)rebuildAttendanceDateIndex();
+        return attendanceDateIndex.get(key)||[];
+    }
+
     function applyServerData(res) {
+        clearGloriaApiReadCache();
         hostExcelMatrixCache=null; // Data attendance/host telah dimuat ulang; invalidasi matriks lama.
         state.employees=res.employees||[]; state.attendance=res.attendance||[]; state.lateAttendance=res.lateAttendance||[];
+        rebuildLateAttendanceDateIndex();
         state.hostPerformance=res.hostPerformance||[]; state.hostSchedule=res.hostSchedule||[]; state.salary=res.salary||[]; state.settings=res.settings||{};
         state.auditLog=res.auditLog||res.historyLog||[]; state.historyLog=state.auditLog; state.activeUsers=res.activeUsers||[]; state.blockedUsers=res.blockedUsers||[]; state.allowedUsers=res.allowedUsers||[];
         state.employees.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''))); state.attendance.sort((a,b)=>new Date(window.normalizeDateStr(b.date))-new Date(window.normalizeDateStr(a.date)));
+        rebuildAttendanceDateIndex();
         renderEmployees(); updateEmployeeDropdown(); renderTodayAttendance(); updateDashboard(); renderActiveUsers();
         if(state.currentTab==='employeeAttendance' && typeof renderEmployeeAttendanceMatrix==='function') renderEmployeeAttendanceMatrix();
         if(state.currentTab==='lateAttendance' && typeof renderLateAttendance==='function') renderLateAttendance();
@@ -3150,13 +3257,9 @@
         let presentSet = new Set();
         let absentSet = new Set();
         
-        state.attendance.forEach(att => {
-            if (!att.date) return;
-            let recordDateStr = window.normalizeDateStr(att.date);
-            if (recordDateStr === todayStr) { 
-                if (att.status === 'Hadir') presentSet.add(String(att.empId||'').trim());
-                else if (att.status === 'Izin' || att.status === 'Sakit' || att.status === 'Libur') absentSet.add(String(att.empId||'').trim());
-            }
+        attendanceForDate(todayStr).forEach(att => {
+            if (att.status === 'Hadir') presentSet.add(String(att.empId||'').trim());
+            else if (att.status === 'Izin' || att.status === 'Sakit' || att.status === 'Libur') absentSet.add(String(att.empId||'').trim());
         });
         
         const presentEl = document.getElementById('dashPresent'); if (presentEl) presentEl.innerText = presentSet.size;
@@ -3166,7 +3269,7 @@
         const dashLateSummary = document.getElementById('dashLateSummary');
         const dashLateList = document.getElementById('dashLateList');
         if (dashLateSummary || dashLateList) {
-            const lateToday = (state.lateAttendance || []).filter(x => window.normalizeDateStr(x.date) === todayStr)
+            const lateToday = lateAttendanceForDate(todayStr).slice()
                 .sort((a,b) => String(a.employeeName || '').localeCompare(String(b.employeeName || '')));
             if (dashLateSummary) dashLateSummary.innerText = `${lateToday.length} karyawan`;
             if (dashLateList) {
@@ -3398,6 +3501,7 @@
 
                 try {
                     if (!state.ocrWorker) {
+                        await loadGloriaLibrary('tesseract');
                         if(!window.Tesseract?.createWorker)throw new Error('Pustaka OCR tidak berhasil dimuat. Periksa koneksi internet.');
                         state.ocrWorker = await Tesseract.createWorker('ind+eng', 1, {
                             logger: m => {
@@ -3533,120 +3637,107 @@
     };
 
     function renderTodayAttendance() {
-        const tbody = document.getElementById('todayAttendanceBody'); tbody.innerHTML = '';
-        const todayStr = document.getElementById('attDate').value || new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
-        const todayData = state.attendance.filter(a => window.normalizeDateStr(a.date) === todayStr);
-
-        todayData.sort((a, b) => {
-            if (a.empName < b.empName) return -1; if (a.empName > b.empName) return 1;
-            const timeA = new Date(a.timestamp || 0).getTime(); const timeB = new Date(b.timestamp || 0).getTime();
-            return timeA - timeB;
+        const tbody=document.getElementById('todayAttendanceBody');if(!tbody)return;
+        const todayStr=document.getElementById('attDate')?.value||new Date(new Date().getTime()-new Date().getTimezoneOffset()*60000).toISOString().split('T')[0];
+        const todayData=attendanceForDate(todayStr).slice();
+        todayData.sort((a,b)=>{
+            const nameA=String(a.empName||''),nameB=String(b.empName||'');
+            if(nameA<nameB)return -1;if(nameA>nameB)return 1;
+            return new Date(a.timestamp||0).getTime()-new Date(b.timestamp||0).getTime();
         });
-
-        if (todayData.length === 0) { tbody.innerHTML = `<tr><td colspan="13" class="p-6 text-center text-gray-400">Belum ada data diinput.</td></tr>`; return; }
-
-        todayData.forEach(att => {
-            const tr = document.createElement('tr'); tr.className = "hover:bg-gray-50";
-            const statusClass = att.status === 'Hadir' ? 'text-green-600 bg-green-50' : att.status === 'Sakit' ? 'text-yellow-600 bg-yellow-50' : att.status === 'Izin' ? 'text-orange-600 bg-orange-50' : 'text-gray-600 bg-gray-100';
-            const postTime = att.timestamp ? window.formatDetailedTime(att.timestamp) : '-';
-            tr.innerHTML = `
-                <td class="p-3 font-medium text-gray-800"><div>${escapeLateHtml(att.empName)}</div>${(String(att.session1||'').toLowerCase()==='training'||String(att.session2||'').toLowerCase()==='training')?'<span class="inline-flex mt-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-black">TRAINING · 1 HARI</span>':(state.employees.find(e=>String(e.id)===String(att.empId))?.employmentStatus==='Training'?'<span class="inline-flex mt-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-black">MASA TRAINING</span>':'')}</td>
-                <td class="p-3"><span class="px-2 py-1 rounded text-xs font-semibold ${statusClass}">${escapeLateHtml(att.status)}</span></td>
+        if(!todayData.length){tbody.innerHTML='<tr><td colspan="13" class="p-6 text-center text-gray-400">Belum ada data diinput.</td></tr>';return;}
+        const employeeStatusById=new Map((state.employees||[]).map(e=>[String(e.id),String(e.employmentStatus||'Aktif')]));
+        tbody.innerHTML=todayData.map(att=>{
+            const statusClass=att.status==='Hadir'?'text-green-600 bg-green-50':att.status==='Sakit'?'text-yellow-600 bg-yellow-50':att.status==='Izin'?'text-orange-600 bg-orange-50':'text-gray-600 bg-gray-100';
+            const postTime=att.timestamp?window.formatDetailedTime(att.timestamp):'-';
+            const isTrainingSession=String(att.session1||'').toLowerCase()==='training'||String(att.session2||'').toLowerCase()==='training';
+            const trainingBadge=isTrainingSession?'<span class="inline-flex mt-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-black">TRAINING · 1 HARI</span>':(employeeStatusById.get(String(att.empId))==='Training'?'<span class="inline-flex mt-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-black">MASA TRAINING</span>':'');
+            return `<tr class="hover:bg-gray-50">
+                <td class="p-3 font-medium text-gray-800"><div>${escapeLateHtml(att.empName||'')}</div>${trainingBadge}</td>
+                <td class="p-3"><span class="px-2 py-1 rounded text-xs font-semibold ${statusClass}">${escapeLateHtml(att.status||'')}</span></td>
                 <td class="p-3 text-xs text-indigo-700 font-medium whitespace-nowrap bg-indigo-50/30">${escapeLateHtml(postTime)}</td>
-                <td class="p-3 text-gray-600">${escapeLateHtml(att.session1 || '-')}</td>
-                <td class="p-3 text-gray-600">${escapeLateHtml(att.session2 || '-')}</td>
-                <td class="p-3 text-gray-800 font-medium bg-blue-50/40">${escapeLateHtml(att.resi1 ? att.resi1 : '-')}</td>
-                <td class="p-3 text-green-700 font-semibold whitespace-nowrap bg-blue-50/40">${att.gmv1 ? window.formatRupiah(att.gmv1) : '-'}</td>
-                <td class="p-3 text-gray-800 font-medium bg-purple-50/40">${escapeLateHtml(att.resi2 ? att.resi2 : '-')}</td>
-                <td class="p-3 text-green-700 font-semibold whitespace-nowrap bg-purple-50/40">${att.gmv2 ? window.formatRupiah(att.gmv2) : '-'}</td>
-                <td class="p-3 text-gray-700 font-medium text-center">${escapeLateHtml(att.lemburJam ? att.lemburJam + ' Jam' : '-')}</td>
-                <td class="p-3 text-gray-500 text-xs max-w-xs">${escapeLateHtml(att.lemburKet || '-')}</td>
-                <td class="p-3 text-gray-500 text-xs max-w-xs">${escapeLateHtml(att.reason || '-')}</td>
-                <td class="p-3 text-right"><button onclick="deleteAttendance(decodeURIComponent('${handlerKey(att.id)}'))" class="text-red-400 hover:text-red-600"><i class="ph ph-trash"></i></button></td>`;
-            tbody.appendChild(tr);
-        });
+                <td class="p-3 text-gray-600">${escapeLateHtml(att.session1||'-')}</td>
+                <td class="p-3 text-gray-600">${escapeLateHtml(att.session2||'-')}</td>
+                <td class="p-3 text-gray-800 font-medium bg-blue-50/40">${escapeLateHtml(att.resi1?att.resi1:'-')}</td>
+                <td class="p-3 text-green-700 font-semibold whitespace-nowrap bg-blue-50/40">${att.gmv1?window.formatRupiah(att.gmv1):'-'}</td>
+                <td class="p-3 text-gray-800 font-medium bg-purple-50/40">${escapeLateHtml(att.resi2?att.resi2:'-')}</td>
+                <td class="p-3 text-green-700 font-semibold whitespace-nowrap bg-purple-50/40">${att.gmv2?window.formatRupiah(att.gmv2):'-'}</td>
+                <td class="p-3 text-gray-700 font-medium text-center">${escapeLateHtml(att.lemburJam?att.lemburJam+' Jam':'-')}</td>
+                <td class="p-3 text-gray-500 text-xs max-w-xs">${escapeLateHtml(att.lemburKet||'-')}</td>
+                <td class="p-3 text-gray-500 text-xs max-w-xs">${escapeLateHtml(att.reason||'-')}</td>
+                <td class="p-3 text-right"><button onclick="deleteAttendance(decodeURIComponent('${handlerKey(att.id)}'))" class="text-red-400 hover:text-red-600"><i class="ph ph-trash"></i></button></td>
+            </tr>`;
+        }).join('');
     }
 
     async function renderMonthlyReport() {
-        const monthKey=document.getElementById('reportMonth')?.value||'';
-        if(monthKey){ try{ const backup=await apiCall('getMonthlyBackup',{month:monthKey}); state.monthlyBackup=backup; }catch(e){ showMessage(e.message||'Gagal memuat rekap bulanan dari server.','error'); return; } } else { state.monthlyBackup={month:'',attendance:[],lateAttendance:[]}; }
-        const sourceRows=monthKey ? (state.monthlyBackup.attendance||[]) : (state.attendance||[]);
-        const tbody = document.getElementById('reportTableBody'); tbody.innerHTML = '';
-        const selectAllCb = document.getElementById('selectAllReports'); if(selectAllCb) selectAllCb.checked = false;
-        if(typeof window.updateBulkDeleteBtn === 'function') window.updateBulkDeleteBtn();
+        const renderSeq=++monthlyReportRenderSeq;
+        let monthKey=document.getElementById('reportMonth')?.value||'';
+        if(!monthKey){const now=new Date();monthKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;const monthEl=document.getElementById('reportMonth');if(monthEl)monthEl.value=monthKey;}
+        let sourceRows=[];
+        if(monthKey){
+            let cached=monthlyBackupCache.get(monthKey);
+            if(!cached||Date.now()-cached.at>12000){
+                try{const backup=await apiCall('getMonthlyBackup',{month:monthKey});if(renderSeq!==monthlyReportRenderSeq)return;cached={at:Date.now(),data:backup};storeMonthlyBackupCache(monthKey,cached);}
+                catch(e){if(renderSeq===monthlyReportRenderSeq)showMessage(e.message||'Gagal memuat rekap bulanan dari server.','error');return;}
+            }
+            if(renderSeq!==monthlyReportRenderSeq)return;
+            state.monthlyBackup=cached.data;sourceRows=cached.data.attendance||[];
+        }else{state.monthlyBackup={month:'',attendance:[],lateAttendance:[]};sourceRows=state.attendance||[];}
 
-        let monthInput = document.getElementById('reportMonth').value;
-        const searchInput = document.getElementById('reportSearch') ? document.getElementById('reportSearch').value.toLowerCase() : '';
-
-        if(!monthInput) {
-            const now = new Date(); monthInput = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-            document.getElementById('reportMonth').value = monthInput;
-        }
-
-        let filteredData = sourceRows;
-        if (monthInput) filteredData = filteredData.filter(a => window.normalizeDateStr(a.date).startsWith(monthInput));
-        if (searchInput) filteredData = filteredData.filter(a => a.empName.toLowerCase().includes(searchInput));
-
-        filteredData.sort((a, b) => {
-            const dateA = new Date(window.normalizeDateStr(a.date)).getTime(); const dateB = new Date(window.normalizeDateStr(b.date)).getTime();
-            if (dateA !== dateB) return dateB - dateA;
-            if (a.empName < b.empName) return -1; if (a.empName > b.empName) return 1;
-            const timeA = new Date(a.timestamp || 0).getTime(); const timeB = new Date(b.timestamp || 0).getTime();
-            return timeB - timeA;
+        const tbody=document.getElementById('reportTableBody');if(!tbody)return;
+        const selectAllCb=document.getElementById('selectAllReports');if(selectAllCb)selectAllCb.checked=false;
+        if(typeof window.updateBulkDeleteBtn==='function')window.updateBulkDeleteBtn();
+        const searchInput=String(document.getElementById('reportSearch')?.value||'').toLocaleLowerCase('id-ID');
+        let filteredData=sourceRows;
+        if(monthKey)filteredData=filteredData.filter(a=>window.normalizeDateStr(a.date).startsWith(monthKey));
+        if(searchInput)filteredData=filteredData.filter(a=>String(a.empName||'').toLocaleLowerCase('id-ID').includes(searchInput));
+        filteredData=filteredData.slice().sort((a,b)=>{
+            const dateA=new Date(window.normalizeDateStr(a.date)).getTime(),dateB=new Date(window.normalizeDateStr(b.date)).getTime();
+            if(dateA!==dateB)return dateB-dateA;
+            const nameA=String(a.empName||''),nameB=String(b.empName||'');
+            if(nameA<nameB)return -1;if(nameA>nameB)return 1;
+            return new Date(b.timestamp||0).getTime()-new Date(a.timestamp||0).getTime();
         });
-
-        if (filteredData.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="15" class="p-8 text-center text-gray-500">Tidak ada data.</td></tr>`; return;
-        }
-
-        let currentDate = null;
-
-        filteredData.forEach(att => {
-            let normalizedDate = window.normalizeDateStr(att.date);
-            if (currentDate !== normalizedDate) {
-                currentDate = normalizedDate;
-                const sepTr = document.createElement('tr'); sepTr.className = "bg-indigo-100 border-y-4 border-indigo-300";
-                sepTr.innerHTML = `<td colspan="15" class="p-3 text-center font-bold text-indigo-900 uppercase tracking-widest text-xs shadow-inner"><i class="ph-fill ph-calendar-check mr-2 text-base align-text-bottom"></i> DATA TANGGAL: ${escapeLateHtml(window.formatDetailedDate(currentDate))}</td>`;
-                tbody.appendChild(sepTr);
+        if(!filteredData.length){tbody.innerHTML='<tr><td colspan="15" class="p-8 text-center text-gray-500">Tidak ada data.</td></tr>';return;}
+        const employeeStatusById=new Map((state.employees||[]).map(e=>[String(e.id),String(e.employmentStatus||'Aktif')]));
+        let currentDate=null,reportHtml='';
+        filteredData.forEach(att=>{
+            const normalizedDate=window.normalizeDateStr(att.date);
+            if(currentDate!==normalizedDate){
+                currentDate=normalizedDate;
+                reportHtml+=`<tr class="bg-indigo-100 border-y-4 border-indigo-300"><td colspan="15" class="p-3 text-center font-bold text-indigo-900 uppercase tracking-widest text-xs shadow-inner"><i class="ph-fill ph-calendar-check mr-2 text-base align-text-bottom"></i> DATA TANGGAL: ${escapeLateHtml(window.formatDetailedDate(currentDate))}</td></tr>`;
             }
-
-            const tr = document.createElement('tr'); tr.className = "hover:bg-blue-50 transition-colors";
-            const statusStyle = att.status === 'Hadir' ? 'color: #16a34a; font-weight:600' : 'color: #ea580c; font-weight:600';
-            
-            let displayDate = window.formatDetailedDate(normalizedDate);
-            if (att.timestamp) {
-                const d = new Date(att.timestamp); const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-                displayDate += ` ${timeStr}`;
-            }
-
-            tr.innerHTML = `
-                <td class="p-3 border-r border-gray-200 bg-white sticky left-0 z-10 text-center shadow-[2px_0_5px_rgba(0,0,0,0.02)]">
-                    <input type="checkbox" class="report-checkbox w-4 h-4 cursor-pointer rounded text-blue-600 focus:ring-blue-500" value="${escapeLateHtml(att.id)}" onchange="updateBulkDeleteBtn()">
-                </td>
+            const statusStyle=att.status==='Hadir'?'color: #16a34a; font-weight:600':'color: #ea580c; font-weight:600';
+            let displayDate=window.formatDetailedDate(normalizedDate);
+            if(att.timestamp){const d=new Date(att.timestamp);if(!isNaN(d.getTime()))displayDate+=` ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;}
+            const isTrainingSession=String(att.session1||'').toLowerCase()==='training'||String(att.session2||'').toLowerCase()==='training';
+            const trainingBadge=isTrainingSession?'<div class="mt-1"><span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-black">TRAINING · 1 HARI</span></div>':(employeeStatusById.get(String(att.empId))==='Training'?'<div class="mt-1"><span class="px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-black">MASA TRAINING</span></div>':'');
+            reportHtml+=`<tr class="hover:bg-blue-50 transition-colors">
+                <td class="p-3 border-r border-gray-200 bg-white sticky left-0 z-10 text-center shadow-[2px_0_5px_rgba(0,0,0,0.02)]"><input type="checkbox" class="report-checkbox w-4 h-4 cursor-pointer rounded text-blue-600 focus:ring-blue-500" value="${escapeLateHtml(att.id)}" onchange="updateBulkDeleteBtn()"></td>
                 <td class="p-3 border-r border-gray-200 bg-gray-50 sticky left-[48px] z-10 font-medium whitespace-nowrap text-xs">${escapeLateHtml(displayDate)}</td>
-                <td class="p-3 border-r border-gray-200 font-medium text-gray-800">${escapeLateHtml(att.empName)}</td>
-                <td class="p-3 border-r border-gray-200 text-gray-600">${escapeLateHtml(att.empDivision)}</td>
-                <td class="p-3 border-r border-gray-200 text-center" style="${statusStyle}">${escapeLateHtml(att.status)}${(String(att.session1||'').toLowerCase()==='training'||String(att.session2||'').toLowerCase()==='training')?'<div class="mt-1"><span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-black">TRAINING · 1 HARI</span></div>':(state.employees.find(e=>String(e.id)===String(att.empId))?.employmentStatus==='Training'?'<div class="mt-1"><span class="px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-black">MASA TRAINING</span></div>':'')}</td>
-                <td class="p-3 border-r border-gray-200 text-center text-gray-600">${escapeLateHtml(att.session1 || '-')}</td>
-                <td class="p-3 border-r border-gray-200 text-center text-gray-600">${escapeLateHtml(att.session2 || '-')}</td>
-                <td class="p-3 border-r border-gray-200 text-right text-gray-800 font-medium bg-blue-50/30">${escapeLateHtml(att.resi1 ? att.resi1 : '-')}</td>
-                <td class="p-3 border-r border-gray-200 text-right text-green-700 font-semibold whitespace-nowrap bg-blue-50/30">${att.gmv1 ? window.formatRupiah(att.gmv1) : '-'}</td>
-                <td class="p-3 border-r border-gray-200 text-right text-gray-800 font-medium bg-purple-50/30">${escapeLateHtml(att.resi2 ? att.resi2 : '-')}</td>
-                <td class="p-3 border-r border-gray-200 text-right text-green-700 font-semibold whitespace-nowrap bg-purple-50/30">${att.gmv2 ? window.formatRupiah(att.gmv2) : '-'}</td>
-                <td class="p-3 border-r border-gray-200 text-center text-gray-700 font-medium">${escapeLateHtml(att.lemburJam ? att.lemburJam + ' Jam' : '-')}</td>
-                <td class="p-3 border-r border-gray-200 text-gray-500 text-xs">${escapeLateHtml(att.lemburKet || '-')}</td>
-                <td class="p-3 border-r border-gray-200 text-gray-500 text-xs">${escapeLateHtml(att.reason || '-')}</td>
-                <td class="p-3 text-right whitespace-nowrap">
-                    <button onclick="openEditAttendance(decodeURIComponent('${handlerKey(att.id)}'))" class="text-blue-500 hover:text-white p-1.5 rounded bg-blue-50 hover:bg-blue-600 transition shadow-sm border border-blue-200 mr-1"><i class="ph ph-pencil-simple"></i></button>
-                    <button onclick="deleteAttendance(decodeURIComponent('${handlerKey(att.id)}'))" class="text-red-500 hover:text-white p-1.5 rounded bg-red-50 hover:bg-red-600 transition shadow-sm border border-red-200"><i class="ph ph-trash"></i></button>
-                </td>
-            `;
-            tbody.appendChild(tr);
+                <td class="p-3 border-r border-gray-200 font-medium text-gray-800">${escapeLateHtml(att.empName||'')}</td>
+                <td class="p-3 border-r border-gray-200 text-gray-600">${escapeLateHtml(att.empDivision||'')}</td>
+                <td class="p-3 border-r border-gray-200 text-center" style="${statusStyle}">${escapeLateHtml(att.status||'')}${trainingBadge}</td>
+                <td class="p-3 border-r border-gray-200 text-center text-gray-600">${escapeLateHtml(att.session1||'-')}</td>
+                <td class="p-3 border-r border-gray-200 text-center text-gray-600">${escapeLateHtml(att.session2||'-')}</td>
+                <td class="p-3 border-r border-gray-200 text-right text-gray-800 font-medium bg-blue-50/30">${escapeLateHtml(att.resi1?att.resi1:'-')}</td>
+                <td class="p-3 border-r border-gray-200 text-right text-green-700 font-semibold whitespace-nowrap bg-blue-50/30">${att.gmv1?window.formatRupiah(att.gmv1):'-'}</td>
+                <td class="p-3 border-r border-gray-200 text-right text-gray-800 font-medium bg-purple-50/30">${escapeLateHtml(att.resi2?att.resi2:'-')}</td>
+                <td class="p-3 border-r border-gray-200 text-right text-green-700 font-semibold whitespace-nowrap bg-purple-50/30">${att.gmv2?window.formatRupiah(att.gmv2):'-'}</td>
+                <td class="p-3 border-r border-gray-200 text-center text-gray-700 font-medium">${escapeLateHtml(att.lemburJam?att.lemburJam+' Jam':'-')}</td>
+                <td class="p-3 border-r border-gray-200 text-gray-500 text-xs">${escapeLateHtml(att.lemburKet||'-')}</td>
+                <td class="p-3 border-r border-gray-200 text-gray-500 text-xs">${escapeLateHtml(att.reason||'-')}</td>
+                <td class="p-3 text-right whitespace-nowrap"><button onclick="openEditAttendance(decodeURIComponent('${handlerKey(att.id)}'))" class="text-blue-500 hover:text-white p-1.5 rounded bg-blue-50 hover:bg-blue-600 transition shadow-sm border border-blue-200 mr-1"><i class="ph ph-pencil-simple"></i></button><button onclick="deleteAttendance(decodeURIComponent('${handlerKey(att.id)}'))" class="text-red-500 hover:text-white p-1.5 rounded bg-red-50 hover:bg-red-600 transition shadow-sm border border-red-200"><i class="ph ph-trash"></i></button></td>
+            </tr>`;
         });
+        tbody.innerHTML=reportHtml;
     }
 
     document.getElementById('reportMonth').addEventListener('change', renderMonthlyReport);
-    if(document.getElementById('reportSearch')) document.getElementById('reportSearch').addEventListener('input', renderMonthlyReport);
+    if(document.getElementById('reportSearch')) document.getElementById('reportSearch').addEventListener('input',()=>{
+        clearTimeout(monthlySearchTimer);monthlySearchTimer=setTimeout(()=>renderMonthlyReport(),180);
+    });
 
     window.exportToCSV = async () => {
         let monthInput = document.getElementById('reportMonth').value;
@@ -3769,10 +3860,10 @@
         const divisions=[...new Set(selectedEmployees.map(e=>String(e.division)))];if(divisions.length!==1){showMessage('Input massal harus satu divisi. Pilih Admin, Packing, Editor, Staff, PKL, atau Host Live secara terpisah.','error');return;}
         const division=divisions[0],status=document.getElementById('attStatus').value,reason=status!=='Hadir'?document.getElementById('attReason').value.trim():'';if(status!=='Hadir'&&!reason){showMessage('Keterangan wajib diisi untuk status selain Hadir.','error');return;}
         const isHost=division==='Host Live';const base={date:dateInput,status:status,reason:reason,lemburJam:document.getElementById('attLemburJam').value?Number(document.getElementById('attLemburJam').value):'',lemburKet:document.getElementById('attLemburKet').value||'',session1:status==='Hadir'?document.getElementById('attSession1').value:'-',session2:status==='Hadir'?document.getElementById('attSession2').value:'-',resi1:isHost&&document.getElementById('attResi1').value?parseInt(document.getElementById('attResi1').value):'',gmv1:isHost&&document.getElementById('attGMV1').value?parseInt(document.getElementById('attGMV1').value):'',resi2:isHost&&document.getElementById('attResi2').value?parseInt(document.getElementById('attResi2').value):'',gmv2:isHost&&document.getElementById('attGMV2').value?parseInt(document.getElementById('attGMV2').value):''};
-        const existingKeys=new Set((state.attendance||[]).filter(a=>window.normalizeDateStr(a.date)===dateInput).map(a=>String(a.empId)));
+        const existingKeys=new Set(attendanceForDate(dateInput).map(a=>String(a.empId)));
         const items=selectedEmployees.filter(e=>!existingKeys.has(String(e.id))).map((e,i)=>({...base,id:'ATT_BULK_'+Date.now()+'_'+i+'_'+String(e.id),empId:e.id,empName:e.name,empDivision:e.division,timestamp:new Date().toISOString()}));if(!items.length){showMessage('Semua karyawan yang dipilih sudah memiliki absensi pada tanggal tersebut.','error');return;}
         const submitBtn=document.querySelector('#attendanceForm button[type="submit"]');if(submitBtn){submitBtn.disabled=true;submitBtn.innerText='Menyimpan massal...';}
-        try{const r=await apiCall('addAttendanceBulk',{items});const insertedIds=new Set(r.ids||[]);state.attendance=[...(state.attendance||[]),...items.filter(x=>insertedIds.has(x.id))];state.attendance.sort((a,b)=>new Date(window.normalizeDateStr(b.date))-new Date(window.normalizeDateStr(a.date)));renderTodayAttendance();updateDashboard();clearBulkEmployeeSelection();document.getElementById('bulkEmployeePanel')?.classList.add('hidden');showMessage(`${r.inserted||items.length} karyawan berhasil dimasukkan sekaligus.`,'success');document.getElementById('attEmployee').value='';refreshData(true).catch(()=>{});}catch(error){showMessage(error.message||'Gagal menyimpan absensi massal.','error');}finally{if(submitBtn){submitBtn.disabled=false;submitBtn.innerText='Simpan Data';}}
+        try{const r=await apiCall('addAttendanceBulk',{items});const insertedIds=new Set(r.ids||[]);state.attendance=[...(state.attendance||[]),...items.filter(x=>insertedIds.has(x.id))];state.attendance.sort((a,b)=>new Date(window.normalizeDateStr(b.date))-new Date(window.normalizeDateStr(a.date)));rebuildAttendanceDateIndex();renderTodayAttendance();updateDashboard();clearBulkEmployeeSelection();document.getElementById('bulkEmployeePanel')?.classList.add('hidden');showMessage(`${r.inserted||items.length} karyawan berhasil dimasukkan sekaligus.`,'success');document.getElementById('attEmployee').value='';refreshData(true).catch(()=>{});}catch(error){showMessage(error.message||'Gagal menyimpan absensi massal.','error');}finally{if(submitBtn){submitBtn.disabled=false;submitBtn.innerText='Simpan Data';}}
     }
 
     document.getElementById('attendanceForm').addEventListener('submit', async (e) => {
@@ -3786,16 +3877,7 @@
         const empDivision = empSelect.options[empSelect.selectedIndex].dataset.division;
         const empName = empSelect.options[empSelect.selectedIndex].dataset.name;
         
-        const existingDataToday = state.attendance.filter(a => {
-            let recordDateStr = window.normalizeDateStr(a.date);
-            const isDateMatch = recordDateStr === dateInput; // ABSOLUTE DATE MATCH
-            const nameA = String(a.empName || "").trim().toLowerCase();
-            const nameB = String(empName || "").trim().toLowerCase();
-            const divA = String(a.empDivision || "").trim().toLowerCase();
-            const divB = String(empDivision || "").trim().toLowerCase();
-            const isEmpMatch = String(a.empId) === String(empId); // Hindari tabrakan bila dua karyawan bernama sama.
-            return isDateMatch && isEmpMatch;
-        });
+        const existingDataToday = attendanceForDate(dateInput).filter(a => String(a.empId) === String(empId)); // ID karyawan + tanggal menjadi kunci unik.
         
         let isUpdate = false; let existingRecord = null;
         if (empDivision === 'Host Live') { if (existingDataToday.length > 0) { isUpdate = true; existingRecord = existingDataToday[0]; } } 
@@ -4003,6 +4085,7 @@
             const lateTotal=Number(d.totalLateMinutes||0);
             const slipLateContainer=document.getElementById('slipLateContainer'),slipLateTotal=document.getElementById('slipLateTotal'),slipLateList=document.getElementById('slipLateList');
             if(lateData.length){slipLateContainer.classList.remove('hidden');slipLateTotal.innerText=formatLateDurationClient(lateTotal);slipLateList.innerHTML=lateData.slice().sort((a,b)=>String(a.date).localeCompare(String(b.date))).map(a=>`<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-1 bg-white border border-amber-100 rounded-lg p-3"><div><span class="font-bold text-gray-800">${escapeLateHtml(window.normalizeDateStr(a.date))}</span> — terlambat <span class="font-bold text-amber-700">${escapeLateHtml(a.durationText||formatLateDurationClient(a.minutesLate))}</span></div><div class="text-gray-600">${escapeLateHtml(a.reason||'-')}</div></div>`).join('');}else{slipLateContainer.classList.add('hidden');slipLateTotal.innerText='0 menit';slipLateList.innerHTML='';}
+            await loadGloriaLibrary('chart');
             const hostContainer=document.getElementById('slipHostContainer'),adminContainer=document.getElementById('slipAdminContainer');
             if(d.division==='Host Live'){
                 hostContainer.classList.remove('hidden');adminContainer.classList.add('hidden');
@@ -4221,6 +4304,7 @@
         holder.appendChild(sheet);document.body.appendChild(holder);
         try{
             gloriaA4FitNode(sheet);
+            await loadGloriaLibrary('html2canvas');
             if(typeof html2canvas!=='function')throw new Error('Modul pembuatan dokumen belum dimuat.');
             return await html2canvas(sheet,{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',logging:false});
         }finally{holder.remove();}
@@ -4231,7 +4315,9 @@
         return `GLORIA_Slip_A4_${name}_${period}_${gloriaSlipTheme(type)==='bw'?'HitamPutih':'Berwarna'}.${ext}`;
     }
     async function createA4PDF(type){
-        const canvas=await gloriaA4Canvas(type),jsPDF=window.jspdf?.jsPDF;
+        const canvas=await gloriaA4Canvas(type);
+        await loadGloriaLibrary('jspdf');
+        const jsPDF=window.jspdf?.jsPDF;
         if(!jsPDF)throw new Error('Modul PDF belum tersedia. Periksa koneksi internet.');
         const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true});
         // Satu gambar memenuhi satu lembar A4; jangan pecah konten ke halaman tambahan.
@@ -4802,6 +4888,7 @@
     window.exportEmployeeAttendanceExcel = async () => {
         try{
             window.renderEmployeeAttendanceMatrix();const d=employeeAttendanceSnapshot;if(!d)throw new Error('Pilih periode yang valid.');if(!d.employees.length)throw new Error('Tidak ada karyawan sesuai filter.');
+            await loadGloriaLibrary('exceljs');
             if(typeof ExcelJS==='undefined')throw new Error('Pustaka Excel belum termuat. Periksa koneksi internet lalu coba lagi.');
             const wb=new ExcelJS.Workbook();wb.creator='GLORIA Internasional Abadi';wb.subject='Rekap Kehadiran Karyawan';
             const ws=wb.addWorksheet('Kehadiran',{views:[{state:'frozen',xSplit:1,ySplit:5}]});
@@ -4822,6 +4909,7 @@
     window.exportEmployeeAttendanceImage = async () => {
         try{
             window.renderEmployeeAttendanceMatrix();const d=employeeAttendanceSnapshot;if(!d)throw new Error('Pilih periode yang valid.');if(!d.employees.length)throw new Error('Tidak ada karyawan sesuai filter.');
+            await loadGloriaLibrary('html2canvas');
             if(typeof html2canvas!=='function')throw new Error('Pustaka gambar belum dimuat.');
             const table=document.getElementById('employeeAttendanceMatrixTable');
             const pixels=table.scrollWidth*table.scrollHeight;
@@ -4982,13 +5070,7 @@
         if(!empId) { showMessage("Pilih host yang libur terlebih dahulu.", "error"); return; }
         const empName = empSelect.options[empSelect.selectedIndex].dataset.name;
         
-        const existingDataToday = state.attendance.filter(a => {
-            const recordDateStr = window.normalizeDateStr(a.date);
-            const isDateMatch = recordDateStr === dateInput; // ABSOLUTE DATE MATCH
-            const nameA = String(a.empName || "").trim().toLowerCase(); const nameB = String(empName || "").trim().toLowerCase();
-            const divA = String(a.empDivision || "").trim().toLowerCase(); const divB = "host live";
-            return isDateMatch && String(a.empId) === String(empId);
-        });
+        const existingDataToday = attendanceForDate(dateInput).filter(a => String(a.empId) === String(empId));
 
         if (existingDataToday.length > 0) { showMessage("Peringatan: Host sudah ada absensi. Hapus di Rekap Bulanan terlebih dahulu.", "error"); return; }
 
@@ -4999,6 +5081,7 @@
         try {
             // Optimistic Local Save + rollback penuh bila server gagal.
             state.attendance.push(data);
+            rebuildAttendanceDateIndex();
             renderTodayAttendance();
             if (state.isMockMode) localStorage.setItem('gloria_mock_att', JSON.stringify(state.attendance));
 
@@ -5010,6 +5093,7 @@
         } catch (error) {
             // Jangan biarkan state lokal menampilkan data yang gagal tersimpan.
             state.attendance = attendanceSnapshot;
+            rebuildAttendanceDateIndex();
             if (state.isMockMode) localStorage.setItem('gloria_mock_att', JSON.stringify(state.attendance));
             renderTodayAttendance();
             showMessage(error.message || "Gagal menyimpan data libur. Data lokal dikembalikan.", "error");
@@ -5173,6 +5257,7 @@
         const btn=document.getElementById('hostExcelXlsxBtn');
         try {
             const m=hostExcelCurrentMatrix();
+            await loadGloriaLibrary('exceljs');
             if(typeof ExcelJS==='undefined')throw new Error('Pustaka pembuat Excel belum termuat. Pastikan koneksi internet tersedia, atau gunakan tombol CSV.');
             btn.disabled=true;
             const wb=new ExcelJS.Workbook();wb.creator='GLORIA Internasional Abadi';wb.subject='Rekap seluruh GMV dan resi Host Live';
@@ -5280,9 +5365,11 @@
     };
     // ========================= END HOST EXCEL KESELURUHAN =========================
 
+    let hostReportRenderSeq=0;
     window.renderHostMonthlyReport = async () => {
+        const renderSeq=++hostReportRenderSeq;
         const monthInput = document.getElementById('hostReportMonth').value; if (!monthInput) return;
-        let performanceRows=[]; try{ const r=await apiCall('getHostPerformance',{month:monthInput}); performanceRows=r.data||[]; state.hostPerformance=performanceRows; }catch(e){ showMessage(e.message||'Gagal memuat performa Host dari server.','error'); return; }
+        let performanceRows=[]; try{ const r=await apiCall('getHostPerformance',{month:monthInput}); if(renderSeq!==hostReportRenderSeq)return;performanceRows=r.data||[]; state.hostPerformance=performanceRows; }catch(e){ if(renderSeq===hostReportRenderSeq)showMessage(e.message||'Gagal memuat performa Host dari server.','error'); return; }
         const [yearStr, monthStr] = monthInput.split('-'); const daysInMonth = new Date(parseInt(yearStr), parseInt(monthStr), 0).getDate();
         const thead = document.getElementById('hostReportThead'); const tbody = document.getElementById('hostReportTbody');
         if (!thead || !tbody) return;
@@ -5299,6 +5386,8 @@
         }
 
         let totalGrandResi = 0; let totalGrandGMV = 0; let bodyHTML = '';
+        const hostDailyIndex=new Map();
+        performanceRows.forEach(a=>{const key=String(a.employeeId)+'|'+String(a.date||'').slice(0,10);let v=hostDailyIndex.get(key);if(!v){v={resi:0,gmv:0,training:false};hostDailyIndex.set(key,v);}v.resi+=Number(a.resi||0);v.gmv+=Number(a.gmv||0);v.training=v.training||a.training===true;});
 
         hostEmployees.forEach((host, index) => {
             const bgClass = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
@@ -5308,10 +5397,9 @@
             let hostTotalResi = 0; let hostTotalGMV = 0;
             for (let i = 1; i <= daysInMonth; i++) {
                 const dateStr = `${yearStr}-${monthStr}-${String(i).padStart(2, '0')}`;
-                const atts = performanceRows.filter(a => String(a.date||'').slice(0,10) === dateStr && String(a.employeeId) === String(host.id));
-                const trainingDay=atts.some(a=>a.training===true);
-                let dayResi = 0; let dayGMV = 0;
-                atts.forEach(a => { dayResi += Number(a.resi||0); dayGMV += Number(a.gmv||0); });
+                const daily=hostDailyIndex.get(String(host.id)+'|'+dateStr)||{resi:0,gmv:0,training:false};
+                const trainingDay=daily.training;
+                const dayResi=daily.resi,dayGMV=daily.gmv;
                 hostTotalResi += dayResi; hostTotalGMV += dayGMV;
                 resiRow += `<td class="p-2 border-r border-gray-200 border-b border-gray-100 text-center font-medium ${dayResi > 0 ? 'text-gray-800' : 'text-gray-300'}">${dayResi || '-'}${trainingDay?'<div class="text-[9px] font-black text-amber-700">TRAINING</div>':''}</td>`;
                 gmvRow += `<td class="p-2 border-r border-gray-200 text-center font-medium ${dayGMV > 0 ? 'text-green-600' : 'text-gray-300'}">${dayGMV > 0 ? window.formatRupiah(dayGMV).replace('Rp', '').trim() : '-'}</td>`;
@@ -5334,6 +5422,8 @@
         if(hostEmployees.length === 0){ showMessage("Tidak ada data host.", "error"); return; }
 
         let csvContent = "";
+        const hostDailyIndex=new Map();
+        performanceRows.forEach(a=>{const key=String(a.employeeId)+'|'+String(a.date||'').slice(0,10);let v=hostDailyIndex.get(key);if(!v){v={resi:0,gmv:0,training:false};hostDailyIndex.set(key,v);}v.resi+=Number(a.resi||0);v.gmv+=Number(a.gmv||0);v.training=v.training||a.training===true;});
         let header = ["Nama Host", "Tipe Data"];
         for(let i = 1; i <= daysInMonth; i++) header.push(`Tgl ${i}`);
         header.push("TOTAL BULAN INI"); csvContent += header.join(",") + "\n";
@@ -5343,11 +5433,8 @@
             let hostTotalResi = 0; let hostTotalGMV = 0; let hostTrainingDays=0;
             for (let i = 1; i <= daysInMonth; i++) {
                 const dateStr = `${yearStr}-${monthStr}-${String(i).padStart(2, '0')}`;
-                const atts = performanceRows.filter(a => {
-                    const recordDateStr = String(a.date||'').slice(0,10); return recordDateStr === dateStr && String(a.employeeId) === String(host.id);
-                });
-                let dayResi = 0; let dayGMV = 0; const training=atts.some(a=>a.training===true);
-                atts.forEach(a => { dayResi += Number(a.resi||0); dayGMV += Number(a.gmv||0); });
+                const daily=hostDailyIndex.get(String(host.id)+'|'+dateStr)||{resi:0,gmv:0,training:false};
+                const dayResi=daily.resi,dayGMV=daily.gmv,training=daily.training;
                 hostTotalResi += dayResi; hostTotalGMV += dayGMV; if(training)hostTrainingDays++;
                 rowResi.push(dayResi || 0); rowGMV.push(dayGMV || 0); rowTraining.push(training?'TRAINING':'-');
             }
@@ -5358,8 +5445,9 @@
         showMessage("Mengunduh CSV...", "success");
     };
 
-    let rankingChartInstance = null;
+    let rankingChartInstance = null,hostRankingRenderSeq=0;
     window.renderHostRanking = async () => {
+        const renderSeq=++hostRankingRenderSeq;
         const monthInput = document.getElementById('rankingMonth').value;
         const metric = document.getElementById('rankingMetricSelect') ? document.getElementById('rankingMetricSelect').value : 'resi';
         if (!monthInput) return;
@@ -5370,23 +5458,21 @@
         const prevMonthInput = `${prevY}-${String(prevM).padStart(2, '0')}`;
         let performanceRows=[];
         try {
-            const curr=await apiCall('getHostPerformance',{month:monthInput});
-            const prev=await apiCall('getHostPerformance',{month:prevMonthInput});
+            const [curr,prev]=await Promise.all([
+                apiCall('getHostPerformance',{month:monthInput}),
+                apiCall('getHostPerformance',{month:prevMonthInput})
+            ]);
+            if(renderSeq!==hostRankingRenderSeq)return;
             performanceRows=(curr.data||[]).concat(prev.data||[]);
             state.hostPerformance=performanceRows;
-        } catch(e) { showMessage(e.message||'Gagal memuat ranking Host dari server.','error'); return; }
+        } catch(e) { if(renderSeq===hostRankingRenderSeq)showMessage(e.message||'Gagal memuat ranking Host dari server.','error'); return; }
 
+        const totalsByEmployee=new Map();
+        performanceRows.forEach(row=>{const id=String(row.employeeId);let v=totalsByEmployee.get(id);if(!v){v={currResi:0,currGMV:0,prevResi:0,prevGMV:0};totalsByEmployee.set(id,v);}const date=String(row.date||'').slice(0,10);if(date.startsWith(monthInput)){v.currResi+=Number(row.resi||0);v.currGMV+=Number(row.gmv||0);}else if(date.startsWith(prevMonthInput)){v.prevResi+=Number(row.resi||0);v.prevGMV+=Number(row.gmv||0);}});
         const hostEmployees = state.employees.filter(e => e.division === 'Host Live');
         let stats = hostEmployees.map(host => {
-            let currResi=0,currGMV=0,prevResi=0,prevGMV=0;
-            performanceRows.forEach(row=>{
-                const recordDateStr=String(row.date||'').slice(0,10);
-                if(String(row.employeeId)!==String(host.id)) return;
-                const totalR=Number(row.resi||0), totalG=Number(row.gmv||0);
-                if(recordDateStr.startsWith(monthInput)){currResi+=totalR;currGMV+=totalG;}
-                else if(recordDateStr.startsWith(prevMonthInput)){prevResi+=totalR;prevGMV+=totalG;}
-            });
-            return {name:host.name,currResi,currGMV,prevResi,prevGMV};
+            const v=totalsByEmployee.get(String(host.id))||{currResi:0,currGMV:0,prevResi:0,prevGMV:0};
+            return {name:host.name,currResi:v.currResi,currGMV:v.currGMV,prevResi:v.prevResi,prevGMV:v.prevGMV};
         });
 
         stats.sort((a, b) => {
@@ -5440,6 +5526,8 @@
         tbody.innerHTML = tableHTML;
 
         const ctx = document.getElementById('rankingChart'); if (!ctx) return;
+        try{await loadGloriaLibrary('chart');}catch(e){showMessage(e.message||'Modul grafik gagal dimuat.','error');return;}
+        if(renderSeq!==hostRankingRenderSeq)return;
         if (rankingChartInstance) rankingChartInstance.destroy();
         
         const labels = stats.map(s => s.name); const chartData = stats.map(s => metric === 'resi' ? s.currResi : s.currGMV);
@@ -5460,6 +5548,7 @@
     window.downloadRankingImage = async () => {
         showMessage('Menyiapkan gambar...', 'info');
         try {
+            await loadGloriaLibrary('html2canvas');
             const canvas = await html2canvas(document.getElementById('rankingContentArea'), { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#f3f4f6' });
             const link = document.createElement('a'); link.download = `Peringkat_Host_${document.getElementById('rankingMetricSelect').value.toUpperCase()}_${document.getElementById('rankingMonth').value}.png`;
             link.href = canvas.toDataURL('image/png'); link.click(); showMessage('Gambar diunduh.', 'success');
@@ -5472,22 +5561,13 @@
         const [currYear, currMonth] = monthInput.split('-'); let prevM = parseInt(currMonth) - 1; let prevY = parseInt(currYear);
         if (prevM === 0) { prevM = 12; prevY -= 1; } const prevMonthInput = `${prevY}-${String(prevM).padStart(2, '0')}`;
 
-        let performanceRows=[]; try{ const curr=await apiCall('getHostPerformance',{month:monthInput}); const prev=await apiCall('getHostPerformance',{month:prevMonthInput}); performanceRows=(curr.data||[]).concat(prev.data||[]); }catch(e){showMessage(e.message||'Gagal memuat ranking Host dari server.','error');return;}
+        let performanceRows=[]; try{ const [curr,prev]=await Promise.all([apiCall('getHostPerformance',{month:monthInput}),apiCall('getHostPerformance',{month:prevMonthInput})]); performanceRows=(curr.data||[]).concat(prev.data||[]); }catch(e){showMessage(e.message||'Gagal memuat ranking Host dari server.','error');return;}
 
         const hostEmployees = state.employees.filter(e => e.division === 'Host Live');
         if(hostEmployees.length === 0){ showMessage("Tidak ada data host.", "error"); return; }
-        
-        let stats = hostEmployees.map(host => {
-            let currResi = 0, currGMV = 0, prevResi = 0, prevGMV = 0;
-            performanceRows.forEach(a => {
-                const recordDateStr = String(a.date||'').slice(0,10);
-                if (String(a.employeeId) === String(host.id)) {
-                    const totalR = Number(a.resi||0); const totalG = Number(a.gmv||0);
-                    if (recordDateStr.startsWith(monthInput)) { currResi += totalR; currGMV += totalG; } else if (recordDateStr.startsWith(prevMonthInput)) { prevResi += totalR; prevGMV += totalG; }
-                }
-            });
-            return { name: host.name, currResi, currGMV, prevResi, prevGMV };
-        });
+        const totalsByEmployee=new Map();
+        performanceRows.forEach(a=>{const id=String(a.employeeId);let v=totalsByEmployee.get(id);if(!v){v={currResi:0,currGMV:0,prevResi:0,prevGMV:0};totalsByEmployee.set(id,v);}const date=String(a.date||'').slice(0,10);if(date.startsWith(monthInput)){v.currResi+=Number(a.resi||0);v.currGMV+=Number(a.gmv||0);}else if(date.startsWith(prevMonthInput)){v.prevResi+=Number(a.resi||0);v.prevGMV+=Number(a.gmv||0);}});
+        let stats = hostEmployees.map(host => {const v=totalsByEmployee.get(String(host.id))||{currResi:0,currGMV:0,prevResi:0,prevGMV:0};return {name:host.name,currResi:v.currResi,currGMV:v.currGMV,prevResi:v.prevResi,prevGMV:v.prevGMV};});
 
         stats.sort((a, b) => {
             if (metric === 'resi') return b.currResi !== a.currResi ? b.currResi - a.currResi : b.currGMV - a.currGMV;
@@ -5557,8 +5637,8 @@ function processAttrs(el){
     if(seen!==next)el.setAttribute(key,next);
   }
 }
-function translateTree(root){
-  if(!root)return;
+function translateTree(root,force=false){
+  if((current==='id'&&!force)||!root)return;
   if(root.nodeType===3){processText(root);return;}
   if(root.nodeType!==1&&root.nodeType!==9&&root.nodeType!==11)return;
   if(root.nodeType===1&&root.matches(SKIP))return;
@@ -5577,13 +5657,24 @@ function updateSelector(){
  if(label)label.textContent=DICTIONARY['Bahasa Aplikasi']?.[current]||'Bahasa Aplikasi';
  if(info)info.textContent=DICTIONARY['Ubah bahasa tampilan saja. Data dan perhitungan tetap asli.']?.[current]||'Ubah bahasa tampilan saja. Data dan perhitungan tetap asli.';
 }
-let queue=new Set(),scheduled=false;
+let queue=new Set(),scheduled=false,observer=null;
 function processQueue(){scheduled=false;const todo=Array.from(queue);queue.clear();for(const el of todo)translateTree(el);}
-function schedule(n){if(!n)return;queue.add(n);if(!scheduled){scheduled=true;Promise.resolve().then(processQueue);}}
+function schedule(n){if(current==='id'||!n)return;queue.add(n);if(!scheduled){scheduled=true;Promise.resolve().then(processQueue);}}
+function startObserver(){
+ if(observer||current==='id')return;
+ observer=new MutationObserver(events=>{for(const event of events){
+   if(event.type==='characterData')schedule(event.target);
+   else if(event.type==='attributes')schedule(event.target);
+   else if(event.type==='childList')for(const n of event.addedNodes)if(n.nodeType===1||n.nodeType===3)schedule(n);
+ }});
+ observer.observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:ATTRS});
+}
+function stopObserver(){if(observer){observer.disconnect();observer=null;}queue.clear();scheduled=false;}
 function setLanguage(lang){
  if(!LANGUAGES.has(lang))return;current=lang;
  try{localStorage.setItem(PREF,lang);}catch(_){}
- translateTree(document.body);updateSelector();
+ if(current==='id'){stopObserver();translateTree(document.body,true);}else{translateTree(document.body);startObserver();}
+ updateSelector();
  // Translate the names of chart metrics without modifying chart data or employee names.
  try{if(window.Chart&&window.Chart.instances){Object.values(window.Chart.instances).forEach(c=>{
   if(!c||!c.data)return;const values=[...(c.data.datasets||[])];
@@ -5594,13 +5685,8 @@ function setLanguage(lang){
 window.gloriaSetLanguage=setLanguage;
 window.gloriaTranslateTree=translateTree;
 function start(){
-  updateSelector();translateTree(document.body);
-  const observer=new MutationObserver(events=>{for(const event of events){
-    if(event.type==='characterData')schedule(event.target);
-    else if(event.type==='attributes')schedule(event.target);
-    else if(event.type==='childList')for(const n of event.addedNodes)if(n.nodeType===1||n.nodeType===3)schedule(n);
-  }});
-  observer.observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:ATTRS});
+  updateSelector();
+  if(current!=='id'){translateTree(document.body);startObserver();}
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
