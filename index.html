@@ -341,7 +341,7 @@
                     <button onclick="switchTab('reports'); closeMobileMenu()" class="nav-btn w-full flex items-center p-3 text-gray-700 rounded-lg hover:bg-blue-50">
                         <i class="ph ph-chart-bar mr-3"></i> Rekap Bulanan
                     </button>
-                    <button onclick="switchTab('salary'); closeMobileMenu()" class="nav-btn w-full flex items-center p-3 text-gray-700 rounded-lg hover:bg-blue-50">
+                    <button id="mobileSalaryAuth" data-tab="salary" onclick="switchTab('salary'); closeMobileMenu()" class="nav-btn w-full flex items-center p-3 text-gray-700 rounded-lg hover:bg-blue-50">
                         <i class="ph ph-receipt mr-3"></i> Slip Gaji Individu
                     </button>
                     <button id="mobileHostAuth" onclick="switchTab('hostSalary'); closeMobileMenu()" class="nav-btn w-full flex items-center p-3 text-gray-700 rounded-lg hover:bg-blue-50 hidden">
@@ -661,7 +661,7 @@
                                     Gloria AI Assistant <span class="ml-2 px-2 py-0.5 text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full font-medium">Real-time</span><span id="serverStatusBadge" class="ml-2 px-2 py-0.5 text-[10px] bg-slate-700/60 text-slate-300 border border-slate-600 rounded-full font-medium">Server</span>
                                 </h4>
                                 <p class="text-xs text-slate-300">Asisten cerdas tingkat lanjut untuk analisis performa & data operasional.</p>
-                                <p class="text-[10px] text-slate-400 mt-1">Saat Anda mengirim pertanyaan, data operasional relevan dikirim ke layanan Gemini Google. Jangan masukkan rahasia atau data pribadi yang tidak diperlukan.</p>
+                                <p class="text-[10px] text-slate-400 mt-1">Saat Anda bertanya, agregat performa Host yang disamarkan dikirim ke Gemini Google. Nama, ID, rekening, dan alasan keterlambatan tidak dikirim.</p>
                             </div>
                         </div>
                         <div class="hidden md:flex items-center space-x-2">
@@ -750,6 +750,7 @@
                                     <button onclick="runHealthCheck()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold">Health Check</button>
                                     <button onclick="runDatabaseAudit()" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold">Audit Database</button>
                                     <button onclick="runDatabaseBackup()" class="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-lg text-xs font-bold">Backup Database</button>
+                                    <button onclick="installDailyBackup()" class="px-3 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-xs font-bold">Pasang Backup Harian</button>
                                 </div>
                             </div>
                             <pre id="serverDiagnosticOutput" class="hidden mt-4 max-h-64 overflow-auto bg-black/30 text-emerald-200 p-3 rounded-lg text-[11px] leading-relaxed whitespace-pre-wrap"></pre>
@@ -2109,8 +2110,8 @@
     // GitHub Pages: URL /exec di gloria-config.js; komunikasi melalui iframe bridge Apps Script.
     // Hosting langsung Apps Script tetap memakai google.script.run tanpa URL.
     const GAS_URL = String(window.GLORIA_CONFIG?.gasWebAppUrl || '').trim();
-    const EXPECTED_BACKEND_BUILD_ID = 'GLORIA-2026.10.14.06';
-    const EXPECTED_BACKEND_SCHEMA = '2026.10.5'; 
+    const EXPECTED_BACKEND_BUILD_ID = 'GLORIA-2026.11.15.01';
+    const EXPECTED_BACKEND_SCHEMA = '2026.11.15.1'; 
     
     let state = {
         user: null,
@@ -2278,6 +2279,7 @@
     let gloriaBridgeEndpoint = null;
     let gloriaBridgeIframe = null;
     let gloriaBridgeOrigin = '';
+    let gloriaBridgeVersionMismatch = '';
     let gloriaBridgeCounter = 0;
     const gloriaPendingRequests = new Map();
 
@@ -2298,9 +2300,10 @@
         const message = event.data;
         if (!message || message.channel !== GLORIA_BRIDGE_CHANNEL || !gloriaGoogleBridgeOrigin(event.origin)) return;
         if (message.kind === 'ready') {
-            if (!gloriaBridgePromise || gloriaBridgeEndpoint) return;
+            if (!gloriaBridgePromise || gloriaBridgeEndpoint || !gloriaBridgeIframe || event.source !== gloriaBridgeIframe.contentWindow) return;
             if (message.buildId !== EXPECTED_BACKEND_BUILD_ID) {
-                // Build lama akan dilaporkan saat menunggu bridge selesai.
+                gloriaBridgeVersionMismatch = 'Versi bridge/backend tidak cocok. Ditemukan '+String(message.buildId||'-')+', diharapkan '+EXPECTED_BACKEND_BUILD_ID+'. Perbarui deployment Apps Script.';
+                window.dispatchEvent(new CustomEvent('gloria-bridge-version-mismatch'));
                 return;
             }
             gloriaBridgeEndpoint = event.source;
@@ -2322,6 +2325,7 @@
         if (gloriaBridgeEndpoint) return Promise.resolve(gloriaBridgeEndpoint);
         if (!gloriaValidGasUrl()) return Promise.reject(new Error('URL backend belum diisi / tidak valid. Edit file gloria-config.js di GitHub dan isi URL deployment Apps Script yang berakhir /exec.'));
         if (gloriaBridgePromise) return gloriaBridgePromise;
+        gloriaBridgeVersionMismatch = '';
         gloriaBridgePromise = new Promise((resolve, reject) => {
             // Handler ready didaftarkan lebih dulu agar tidak kehilangan pesan cepat.
             let completed = false;
@@ -2330,6 +2334,7 @@
                 completed = true;
                 clearTimeout(timeout);
                 window.removeEventListener('gloria-bridge-ready', onReady);
+                window.removeEventListener('gloria-bridge-version-mismatch', onVersionMismatch);
                 if (error) {
                     gloriaBridgePromise = null;
                     gloriaBridgeEndpoint = null;
@@ -2339,8 +2344,10 @@
                 } else resolve(gloriaBridgeEndpoint);
             };
             const onReady = () => finish(null);
+            const onVersionMismatch = () => finish(new Error(gloriaBridgeVersionMismatch || 'Versi bridge/backend tidak cocok.'));
             window.addEventListener('gloria-bridge-ready', onReady);
-            const timeout = setTimeout(() => finish(new Error('Jembatan Google Apps Script tidak merespons. Periksa deployment /exec, file GloriaBridge.html, izin akses "Anyone", dan kemungkinan iframe diblokir browser.')), 35000);
+            window.addEventListener('gloria-bridge-version-mismatch', onVersionMismatch);
+            const timeout = setTimeout(() => finish(new Error(gloriaBridgeVersionMismatch || 'Jembatan Google Apps Script tidak merespons. Periksa deployment /exec, file GloriaBridge.html, izin akses "Anyone", dan kemungkinan iframe diblokir browser.')), 35000);
             const frame = document.createElement('iframe');
             gloriaBridgeIframe = frame;
             frame.src = GAS_URL.replace(/\/$/,'') + '?bridge=1';
@@ -2421,7 +2428,14 @@
             const result = await apiCall('ping');
             if (result.backendBuildId !== EXPECTED_BACKEND_BUILD_ID) throw new Error('Versi backend berbeda. Wajib deploy backend build ' + EXPECTED_BACKEND_BUILD_ID + '.');
             if (result.schemaVersion !== EXPECTED_BACKEND_SCHEMA) throw new Error('Schema backend tidak sesuai.');
-            if (status) { status.textContent = '✓ Koneksi backend berhasil (' + result.backendBuildId + '). Silakan login untuk uji akses database.'; status.className = 'text-[11px] mt-1 text-emerald-300'; }
+            if (!result.databaseConnected) throw new Error(result.databaseError || 'Server aktif, tetapi Google Spreadsheet belum dapat diakses. Periksa Script Property SPREADSHEET_ID dan izin database.');
+            if (!result.databaseReady) {
+                const issues=[];
+                if ((result.missingSheets||[]).length) issues.push('sheet belum ada: '+result.missingSheets.join(', '));
+                if ((result.headerIssues||[]).length) issues.push('header tidak cocok: '+result.headerIssues.slice(0,5).join('; '));
+                throw new Error('Spreadsheet terhubung, tetapi struktur database belum siap ('+issues.join(' | ')+'). Buat backup terlebih dahulu, lalu jalankan Audit Database. Jangan mengubah atau memigrasikan sheet lama tanpa memeriksa hasil audit.');
+            }
+            if (status) { status.textContent = '✓ Server dan Google Sheets terhubung (' + result.backendBuildId + ').'; status.className = 'text-[11px] mt-1 text-emerald-300'; }
         } catch (error) {
             if (status) { status.textContent = '✕ ' + String(error.message || error); status.className = 'text-[11px] mt-1 text-red-300'; }
         } finally { if (button) button.disabled = false; }
@@ -2661,6 +2675,8 @@
         });
         const isOwner = String(email||'').toLowerCase() === 'mohammadziky2@gmail.com';
         const canViewBank = isOwner || String(email||'').trim().toLowerCase() === 'bettyartanita@gmail.com';
+        document.querySelectorAll('.nav-btn[data-tab="salary"]').forEach(btn=>btn.classList.toggle('hidden',!isOwner));
+        document.getElementById('quickSalaryCard')?.classList.toggle('hidden',!isOwner);
         document.getElementById('masterOwnPinBtn')?.classList.toggle('hidden',!isOwner);
         ['masterControlPanel','sidebarBankAuth','mobileBankAuth','dashboardBankAuth'].forEach(id=>{const el=document.getElementById(id);if(!el)return;const allow=id==='masterControlPanel'?isOwner:canViewBank;if(allow){el.classList.remove('hidden');if(id!=='masterControlPanel')el.classList.add('flex');}else{el.classList.add('hidden');el.classList.remove('flex');}});
         const bankDesc=document.getElementById('bankViewAccessDesc');if(bankDesc)bankDesc.textContent=isOwner?'Kelola data rekening bank seluruh karyawan (Akses Khusus Master)':'Lihat data rekening bank seluruh karyawan (hanya baca; perubahan khusus Master).';
@@ -3192,6 +3208,10 @@
     window.runDatabaseBackup = async () => {
         try { const r=await apiCall('backupDatabase'); const el=document.getElementById('serverDiagnosticOutput'); el.textContent=JSON.stringify(r,null,2); el.classList.remove('hidden'); showMessage('Backup spreadsheet berhasil dibuat di Google Drive.','success'); }
         catch(e){showMessage(e.message||'Backup database gagal.','error');}
+    };
+    window.installDailyBackup = async () => {
+        try { const r=await apiCall('installDailyBackup'); const el=document.getElementById('serverDiagnosticOutput'); el.textContent=JSON.stringify(r,null,2); el.classList.remove('hidden'); showMessage(r.alreadyInstalled?'Backup harian sudah terpasang.':'Trigger backup harian berhasil dipasang.', 'success'); }
+        catch(e){showMessage(e.message||'Gagal memasang backup harian. Jalankan otorisasi Apps Script jika diminta.','error');}
     };
 
     window.renderHistoryLog = () => {
@@ -4233,6 +4253,8 @@
         }
 
         const authorizedHostEmails = ['bettyartanita@gmail.com', 'mohammadziky2@gmail.com', 'ysdd@gmail.com'];
+        const isMaster = String(state.user?.email||'').trim().toLowerCase() === 'mohammadziky2@gmail.com';
+        if (tabId === 'salary' && !isMaster) { showMessage('Akses Ditolak: Slip & Rekap Gaji Individu hanya tersedia untuk akun Master.', 'error'); return; }
         const hostOnlyTabs = new Set(['hostSalary','schedule','hostReport','hostRanking','hostExcel']);
         if (hostOnlyTabs.has(tabId) && (!state.user || !authorizedHostEmails.includes(String(state.user.email||'').toLowerCase()))) { showMessage("Akses Ditolak: fitur Host Live hanya untuk akun yang diotorisasi.", "error"); return; }
         
