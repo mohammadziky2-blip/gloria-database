@@ -1961,8 +1961,8 @@
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md transform scale-95 transition-transform duration-300">
         <div class="p-6 border-b border-slate-100"><div class="flex items-center gap-3"><div class="w-11 h-11 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center"><i class="ph ph-lock-key text-2xl"></i></div><div><h3 id="gapokPasswordTitle" class="text-xl font-black text-slate-900">Keamanan GAPOK</h3><p id="gapokPasswordDescription" class="text-xs text-slate-500 mt-1">Masukkan kata sandi khusus Master.</p></div></div></div>
         <form id="gapokPasswordForm" class="p-6 space-y-4">
-            <div id="gapokCurrentPasswordWrap"><label class="block text-sm font-semibold text-slate-700 mb-1">Kata Sandi GAPOK</label><input type="password" id="gapokPassword" autocomplete="current-password" class="w-full border border-slate-300 rounded-xl px-3 py-3" placeholder="Masukkan kata sandi khusus"></div>
-            <div id="gapokNewPasswordWrap" class="hidden"><label class="block text-sm font-semibold text-slate-700 mb-1">Kata Sandi Baru</label><input type="password" id="gapokNewPassword" autocomplete="new-password" minlength="8" class="w-full border border-slate-300 rounded-xl px-3 py-3" placeholder="Minimal 8 karakter, huruf dan angka"><label class="block text-sm font-semibold text-slate-700 mt-3 mb-1">Konfirmasi Kata Sandi</label><input type="password" id="gapokConfirmPassword" autocomplete="new-password" minlength="8" class="w-full border border-slate-300 rounded-xl px-3 py-3" placeholder="Ulangi kata sandi baru"></div>
+            <div id="gapokCurrentPasswordWrap"><label class="block text-sm font-semibold text-slate-700 mb-1">PIN / Sandi GAPOK Saat Ini</label><input type="password" id="gapokPassword" autocomplete="current-password" class="w-full border border-slate-300 rounded-xl px-3 py-3" placeholder="Masukkan PIN atau sandi lama"></div>
+            <div id="gapokNewPasswordWrap" class="hidden"><label class="block text-sm font-semibold text-slate-700 mb-1">PIN Baru GAPOK</label><input type="password" id="gapokNewPassword" autocomplete="new-password" inputmode="numeric" pattern="[0-9]{4,6}" minlength="4" maxlength="6" class="w-full border border-slate-300 rounded-xl px-3 py-3 tracking-[.35em] text-lg" placeholder="4–6 angka" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,6)"><label class="block text-sm font-semibold text-slate-700 mt-3 mb-1">Konfirmasi PIN</label><input type="password" id="gapokConfirmPassword" autocomplete="new-password" inputmode="numeric" pattern="[0-9]{4,6}" minlength="4" maxlength="6" class="w-full border border-slate-300 rounded-xl px-3 py-3 tracking-[.35em] text-lg" placeholder="Ulangi PIN 4–6 angka" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,6)"><p class="text-xs text-slate-500 mt-2">Gunakan angka saja, 4 sampai 6 digit.</p></div>
             <div class="flex justify-end gap-2 pt-2"><button type="button" onclick="cancelGapokAuth()" class="px-4 py-2 rounded-lg bg-slate-100 text-slate-700 font-semibold">Batal</button><button id="gapokPasswordSubmit" type="submit" class="px-5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold">Buka GAPOK</button></div>
         </form>
     </div>
@@ -2205,8 +2205,8 @@
     // GitHub Pages: URL /exec di gloria-config.js; komunikasi melalui iframe bridge Apps Script.
     // Hosting langsung Apps Script tetap memakai google.script.run tanpa URL.
     const GAS_URL = String(window.GLORIA_CONFIG?.gasWebAppUrl || '').trim();
-    const EXPECTED_BACKEND_BUILD_ID = 'GLORIA-2026.11.15.03';
-    const EXPECTED_BACKEND_SCHEMA = '2026.11.15.3'; 
+    const EXPECTED_BACKEND_BUILD_ID = 'GLORIA-2026.11.15.04';
+    const EXPECTED_BACKEND_SCHEMA = '2026.11.15.4'; 
     
     let state = {
         user: null,
@@ -2241,6 +2241,7 @@
     let gapokPendingHistoryEmployee = '';
     let gapokAuthMode = 'unlock';
     let gapokPendingFill = null;
+    let gapokPinUpgradePending = false;
     let gapokAutoLockTimer = null;
     const gapokAutoFilledFields = new Set();
 
@@ -2489,7 +2490,7 @@
     // Cache memori hanya untuk permintaan baca. Semua cache dihapus setelah mutasi sukses.
     const GLORIA_READ_TTL = {
         getMonthlyBackup:12000, getHostPerformance:20000, getHostSchedule:12000,
-        getGapokData:10000, getGapokHistory:10000, getHostSalaryDrafts:10000, getSalary:10000
+        getGapokData:10000, getGapokHistory:10000, getGapokSalaryForPayroll:8000, getHostSalaryDrafts:10000, getSalary:10000
     };
     const GLORIA_WRITE_ACTIONS = new Set([
         'addEmployee','updateEmployee','deleteEmployee','editEmployeeBank',
@@ -2522,10 +2523,11 @@
         const endpoint = await getGloriaBridge();
         const id = `gloria_${Date.now()}_${++gloriaBridgeCounter}`;
         return new Promise((resolve, reject) => {
+            const timeoutMs = action === 'backupDatabase' ? 180000 : (action === 'getData' ? 45000 : 30000);
             const timeout = setTimeout(() => {
                 gloriaPendingRequests.delete(id);
-                reject(new Error('Server tidak merespons permintaan ' + action + '. Coba ulang, lalu periksa Apps Script > Executions.'));
-            }, action === 'backupDatabase' ? 180000 : 90000);
+                reject(new Error('Server tidak merespons permintaan ' + action + ' dalam '+Math.round(timeoutMs/1000)+' detik. Periksa Apps Script > Executions dan koneksi Web App.'));
+            }, timeoutMs);
             gloriaPendingRequests.set(id, {resolve,reject,timeout});
             try {
                 endpoint.postMessage({channel:GLORIA_BRIDGE_CHANNEL,kind:'request',id,action,data,authToken},gloriaBridgeOrigin);
@@ -2542,7 +2544,8 @@
         if (!['login','refreshSession','ping'].includes(action) && !state.authToken) {
             throw new Error('Sesi login tidak ditemukan. Silakan login kembali.');
         }
-        const maxAttempts = ['ping','getData','refreshSession'].includes(action) ? 2 : 1;
+        // getData tidak diulang otomatis setelah timeout; retry 90 detik berulang membuat aplikasi terasa macet.
+        const maxAttempts = ['ping','refreshSession'].includes(action) ? 2 : 1;
         let lastError;
         for (let i = 0; i < maxAttempts; i++) {
             try {
@@ -2938,7 +2941,7 @@
             const userDisplay=document.getElementById('currentUserDisplay'); if(userDisplay)userDisplay.innerText=email; applyUserAccessUI(email);
             document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('mainApp').classList.remove('hidden');
             const localDate=new Date(new Date().getTime()-new Date().getTimezoneOffset()*60000).toISOString().split('T')[0]; const attDate=document.getElementById('attDate'); if(attDate)attDate.value=localDate;
-            state.employees.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''))); state.attendance.sort((a,b)=>new Date(window.normalizeDateStr(b.date))-new Date(window.normalizeDateStr(a.date)));
+            state.employees.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));
             renderEmployees(); updateEmployeeDropdown(); updateDashboard(); renderActiveUsers(); if(email==='mohammadziky2@gmail.com'&&typeof window.renderAllowedUsers==='function')window.renderAllowedUsers();
             const requestedTab=localStorage.getItem('gloria_current_tab')||localStorage.getItem('gloria_last_view')||'dashboard';
             const savedTab = isLimitedUser(email) || (requestedTab==='gapok'&&String(email||'').toLowerCase()!=='mohammadziky2@gmail.com') ? 'dashboard' : requestedTab;
@@ -3007,6 +3010,33 @@
         if(!lateAttendanceDateIndex.size&&(state.lateAttendance||[]).length)rebuildLateAttendanceDateIndex();
         return lateAttendanceDateIndex.get(key)||[];
     }
+    function upsertLateAttendanceState(record){
+        if(!record||!record.id)return;
+        const normalized={...record,id:String(record.id),date:window.normalizeDateStr(record.date)};
+        const id=String(normalized.id),idx=(state.lateAttendance||[]).findIndex(x=>String(x.id)===id);
+        const previous=idx>=0?state.lateAttendance[idx]:null;
+        if(previous){
+            const oldDate=window.normalizeDateStr(previous.date),oldRows=lateAttendanceDateIndex.get(oldDate);
+            if(oldRows){const at=oldRows.findIndex(x=>String(x.id)===id);if(at>=0)oldRows.splice(at,1);if(!oldRows.length)lateAttendanceDateIndex.delete(oldDate);}
+            state.lateAttendance[idx]=normalized;
+        }else{
+            if(!Array.isArray(state.lateAttendance))state.lateAttendance=[];
+            state.lateAttendance.push(normalized);
+        }
+        let rows=lateAttendanceDateIndex.get(normalized.date);
+        if(!rows){rows=[];lateAttendanceDateIndex.set(normalized.date,rows);}
+        const at=rows.findIndex(x=>String(x.id)===id);
+        if(at>=0)rows[at]=normalized;else rows.push(normalized);
+    }
+    function removeLateAttendanceState(id){
+        id=String(id||'');
+        const idx=(state.lateAttendance||[]).findIndex(x=>String(x.id)===id);
+        if(idx<0)return null;
+        const removed=state.lateAttendance.splice(idx,1)[0],date=window.normalizeDateStr(removed.date);
+        const rows=lateAttendanceDateIndex.get(date);
+        if(rows){const at=rows.findIndex(x=>String(x.id)===id);if(at>=0)rows.splice(at,1);if(!rows.length)lateAttendanceDateIndex.delete(date);}
+        return removed;
+    }
     function rebuildAttendanceDateIndex(){
         const next=new Map();
         (state.attendance||[]).forEach(record=>{
@@ -3020,6 +3050,42 @@
         if(!attendanceDateIndex.size&&(state.attendance||[]).length)rebuildAttendanceDateIndex();
         return attendanceDateIndex.get(key)||[];
     }
+    function upsertAttendanceState(record){
+        if(!record||!record.id)return;
+        const normalized={...record,id:String(record.id),date:window.normalizeDateStr(record.date)};
+        const id=String(normalized.id),idx=(state.attendance||[]).findIndex(x=>String(x.id)===id);
+        const previous=idx>=0?state.attendance[idx]:null;
+        if(previous){
+            const oldDate=window.normalizeDateStr(previous.date),oldRows=attendanceDateIndex.get(oldDate);
+            if(oldRows){const at=oldRows.findIndex(x=>String(x.id)===id);if(at>=0)oldRows.splice(at,1);if(!oldRows.length)attendanceDateIndex.delete(oldDate);}
+            state.attendance[idx]=normalized;
+        }else{
+            if(!Array.isArray(state.attendance))state.attendance=[];
+            state.attendance.push(normalized);
+        }
+        const date=normalized.date;
+        let rows=attendanceDateIndex.get(date);
+        if(!rows){rows=[];attendanceDateIndex.set(date,rows);}
+        const at=rows.findIndex(x=>String(x.id)===id);
+        if(at>=0)rows[at]=normalized;else rows.push(normalized);
+        hostExcelMatrixCache=null;
+    }
+    function removeAttendanceState(id){
+        id=String(id||'');
+        const idx=(state.attendance||[]).findIndex(x=>String(x.id)===id);
+        if(idx<0)return null;
+        const removed=state.attendance.splice(idx,1)[0],date=window.normalizeDateStr(removed.date);
+        const rows=attendanceDateIndex.get(date);
+        if(rows){const at=rows.findIndex(x=>String(x.id)===id);if(at>=0)rows.splice(at,1);if(!rows.length)attendanceDateIndex.delete(date);}
+        hostExcelMatrixCache=null;
+        return removed;
+    }
+    function refreshVisibleAttendanceViews(){
+        if(state.currentTab==='attendance')renderTodayAttendance();
+        if(state.currentTab==='dashboard')updateDashboard();
+        if(state.currentTab==='employeeAttendance'&&typeof window.renderEmployeeAttendanceMatrix==='function')setTimeout(()=>{if(state.currentTab==='employeeAttendance')window.renderEmployeeAttendanceMatrix();},0);
+        if(state.currentTab==='reports')renderMonthlyReport();
+    }
 
     function applyServerData(res) {
         clearGloriaApiReadCache();
@@ -3028,7 +3094,7 @@
         rebuildLateAttendanceDateIndex();
         state.hostPerformance=res.hostPerformance||[]; state.hostSchedule=res.hostSchedule||[]; state.salary=res.salary||[]; state.settings=res.settings||{};
         state.auditLog=res.auditLog||res.historyLog||[]; state.historyLog=state.auditLog; state.activeUsers=res.activeUsers||[]; state.blockedUsers=res.blockedUsers||[]; state.allowedUsers=res.allowedUsers||[];
-        state.employees.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''))); state.attendance.sort((a,b)=>new Date(window.normalizeDateStr(b.date))-new Date(window.normalizeDateStr(a.date)));
+        state.employees.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));
         rebuildAttendanceDateIndex();
         renderEmployees(); updateEmployeeDropdown(); renderTodayAttendance(); updateDashboard(); renderActiveUsers();
         if(state.currentTab==='employeeAttendance' && typeof renderEmployeeAttendanceMatrix==='function') renderEmployeeAttendanceMatrix();
@@ -3090,7 +3156,15 @@
         if(String(state.user?.email||'').trim().toLowerCase()!=='mohammadziky2@gmail.com')return showMessage('Hanya Master yang dapat mengedit karyawan.','error');
         const btn=e.target.querySelector('button[type="submit"]');btn.disabled=true;btn.textContent='Menyimpan...';
         const data={id:document.getElementById('editEmpId').value,name:document.getElementById('editEmpName').value.trim(),division:document.getElementById('editEmpDiv').value,employmentStatus:document.getElementById('editEmpStatus').value};
-        try{await apiCall('updateEmployee',data);await refreshData(true);closeModal('editEmployeeModal');showMessage('Data karyawan dan status berhasil diperbarui.','success');}
+        try{
+            const saved=await apiCall('updateEmployee',data);
+            const employee=state.employees.find(x=>String(x.id)===String(data.id));
+            if(employee){employee.name=data.name;employee.division=data.division;employee.employmentStatus=saved.employmentStatus||data.employmentStatus;}
+            state.employees.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));
+            renderEmployees();updateEmployeeDropdown();updateDashboard();
+            if(state.currentTab==='bankAccount')window.renderBankAccountList();
+            closeModal('editEmployeeModal');showMessage('Data karyawan dan status berhasil diperbarui.','success');
+        }
         catch(err){showMessage(err.message||'Gagal memperbarui karyawan.','error');}
         finally{btn.disabled=false;btn.textContent='Simpan Perubahan';}
     });
@@ -3139,11 +3213,13 @@
 
         try {
             await apiCall('editEmployeeBank', { id, bankName, bankAccount, bankAccountName });
+            const employee=state.employees.find(x=>String(x.id)===String(id));
+            if(employee){employee.bankName=bankName;employee.bankAccount=bankAccount;employee.bankAccountName=bankAccountName;}
             logActivity("Edit Rekening", `Memperbarui data rekening karyawan: ${document.getElementById('editBankEmpName').value}`);
-            refreshData(true).catch(()=>{});
             showMessage("Data rekening berhasil disimpan!", "success");
             closeModal('editBankModal');
             if(state.currentTab === 'bankAccount') window.renderBankAccountList();
+            if(state.currentTab === 'gapok'&&gapokTokenValid())loadGapokData().catch(e=>showMessage(e.message,'error'));
         } catch(error) {
             if (!state.isMockMode) await refreshData(true).catch(()=>{});
             showMessage(error.message || "Gagal menyimpan data rekening.", "error");
@@ -3210,7 +3286,7 @@
                 if(String(emp.employmentStatus||'Aktif')==='Training')displayName += ' · MASA TRAINING';
                 
                 if (isAttForm) {
-                    const hasRecord = state.attendance.some(a => {
+                    const hasRecord = attendanceForDate(selectedDate).some(a => {
                         const recordDateStr = window.normalizeDateStr(a.date);
                         const isDateMatch = recordDateStr === selectedDate; // STRICT
                         const nameA = String(a.empName || "").trim().toLowerCase();
@@ -3621,7 +3697,9 @@
         try{
             const res=await apiCall(editId?'updateLateAttendance':'addLateAttendance',{id:editId||('LATE_'+Date.now()),date,employeeId,employeeName:emp.name,division:emp.division,durationText,reason});
             if(!res.success)throw new Error(res.error||'Gagal menyimpan keterlambatan.');
-            await refreshData(true); resetLateForm(); renderLateAttendance(); showMessage(editId?'Keterlambatan diperbarui.':'Keterlambatan tersimpan.','success');
+            if(res.data)upsertLateAttendanceState(res.data);
+            resetLateForm();renderLateAttendance();if(state.currentTab==='dashboard')updateDashboard();
+            showMessage(editId?'Keterlambatan diperbarui.':'Keterlambatan tersimpan.','success');
         }catch(e){showMessage(e.message||'Gagal menyimpan keterlambatan.','error');}
     };
 
@@ -3633,7 +3711,7 @@
     window.deleteLateAttendance = async (id) => {
         const r=(state.lateAttendance||[]).find(x=>String(x.id)===String(id)); if(!r)return;
         if(!confirm(`Hapus catatan keterlambatan ${r.employeeName} tanggal ${window.normalizeDateStr(r.date)}?`))return;
-        try{const res=await apiCall('deleteLateAttendance',{id});if(!res.success)throw new Error(res.error||'Gagal menghapus.');await refreshData(true);renderLateAttendance();showMessage('Catatan keterlambatan dihapus.','success');}catch(e){showMessage(e.message||'Gagal menghapus keterlambatan.','error');}
+        try{const res=await apiCall('deleteLateAttendance',{id});if(!res.success)throw new Error(res.error||'Gagal menghapus.');removeLateAttendanceState(id);renderLateAttendance();if(state.currentTab==='dashboard')updateDashboard();showMessage('Catatan keterlambatan dihapus.','success');}catch(e){showMessage(e.message||'Gagal menghapus keterlambatan.','error');}
     };
 
     function renderTodayAttendance() {
@@ -3790,9 +3868,13 @@
             const isOwner=String(state.user?.email||'').trim().toLowerCase()==='mohammadziky2@gmail.com';
             const newEmp = { id: "EMP_" + Date.now(), name: name, division: division, employmentStatus:isOwner?(document.getElementById('newEmpStatus')?.value||'Training'):'Training' };
             
-            await apiCall('addEmployee', newEmp);
+            const saved=await apiCall('addEmployee', newEmp);
+            newEmp.employmentStatus=saved.employmentStatus||newEmp.employmentStatus;
+            state.employees.push(newEmp);state.employees.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));
+            renderEmployees();updateEmployeeDropdown();updateDashboard();
             logActivity("Tambah Karyawan", `Karyawan baru: ${name}`);
-            refreshData(true).catch(()=>{}); showMessage("Karyawan ditambahkan!", "success"); closeModal('addEmployeeModal'); e.target.reset(); if(document.getElementById('newEmpStatus'))document.getElementById('newEmpStatus').value='Training';
+            showMessage("Karyawan ditambahkan!", "success"); closeModal('addEmployeeModal'); e.target.reset(); if(document.getElementById('newEmpStatus'))document.getElementById('newEmpStatus').value='Training';
+            if(state.currentTab==='gapok'&&gapokTokenValid())loadGapokData().catch(err=>showMessage(err.message,'error'));
         } catch (error) { if (!state.isMockMode) await refreshData(true).catch(()=>{}); showMessage(error.message || "Gagal menambah karyawan.", "error"); } finally { submitBtn.innerText = "Simpan"; }
     });
 
@@ -3810,18 +3892,8 @@
             updateEmployeeDropdown();
             updateDashboard();
             logActivity('Hapus Karyawan', `Mengarsip dan menghapus data karyawan: ${empName}`);
-            try {
-                await refreshData(true);
-                if(state.employees.some(e=>String(e.id)===String(id)))
-                    throw new Error('Data lama masih dikirim server. Periksa deployment backend.');
-                showMessage('Karyawan berhasil dihapus dari daftar aktif; riwayat tetap tersimpan.','success');
-            } catch(refreshError) {
-                // Hapus di backend sudah berhasil: jangan tampilkan pesan "gagal menghapus".
-                state.employees=state.employees.filter(e=>String(e.id)!==String(id));
-                renderEmployees(); updateEmployeeDropdown(); updateDashboard();
-                showMessage('Karyawan sudah dihapus, tetapi pembaruan data belum terverifikasi. Muat ulang halaman untuk memastikan.','info');
-                console.warn('GLORIA refresh setelah hapus:',refreshError);
-            }
+            if(state.currentTab==='gapok'&&gapokTokenValid())await loadGapokData();
+            showMessage('Karyawan berhasil dihapus dari daftar aktif; riwayat tetap tersimpan.','success');
         } catch (error) {
             showMessage(error.message || 'Gagal menghapus karyawan.', 'error');
         }
@@ -3863,7 +3935,16 @@
         const existingKeys=new Set(attendanceForDate(dateInput).map(a=>String(a.empId)));
         const items=selectedEmployees.filter(e=>!existingKeys.has(String(e.id))).map((e,i)=>({...base,id:'ATT_BULK_'+Date.now()+'_'+i+'_'+String(e.id),empId:e.id,empName:e.name,empDivision:e.division,timestamp:new Date().toISOString()}));if(!items.length){showMessage('Semua karyawan yang dipilih sudah memiliki absensi pada tanggal tersebut.','error');return;}
         const submitBtn=document.querySelector('#attendanceForm button[type="submit"]');if(submitBtn){submitBtn.disabled=true;submitBtn.innerText='Menyimpan massal...';}
-        try{const r=await apiCall('addAttendanceBulk',{items});const insertedIds=new Set(r.ids||[]);state.attendance=[...(state.attendance||[]),...items.filter(x=>insertedIds.has(x.id))];state.attendance.sort((a,b)=>new Date(window.normalizeDateStr(b.date))-new Date(window.normalizeDateStr(a.date)));rebuildAttendanceDateIndex();renderTodayAttendance();updateDashboard();clearBulkEmployeeSelection();document.getElementById('bulkEmployeePanel')?.classList.add('hidden');showMessage(`${r.inserted||items.length} karyawan berhasil dimasukkan sekaligus.`,'success');document.getElementById('attEmployee').value='';refreshData(true).catch(()=>{});}catch(error){showMessage(error.message||'Gagal menyimpan absensi massal.','error');}finally{if(submitBtn){submitBtn.disabled=false;submitBtn.innerText='Simpan Data';}}
+        try{
+            const r=await apiCall('addAttendanceBulk',{items});
+            const savedRecords=Array.isArray(r.records)?r.records:items.filter(x=>(r.ids||[]).includes(x.id));
+            savedRecords.forEach(upsertAttendanceState);
+            refreshVisibleAttendanceViews();
+            clearBulkEmployeeSelection();document.getElementById('bulkEmployeePanel')?.classList.add('hidden');
+            showMessage(`${r.inserted||savedRecords.length} karyawan berhasil dimasukkan sekaligus.`,'success');
+            document.getElementById('attEmployee').value='';
+        }catch(error){showMessage(error.message||'Gagal menyimpan absensi massal.','error');}
+        finally{if(submitBtn){submitBtn.disabled=false;submitBtn.innerText='Simpan Data';}}
     }
 
     document.getElementById('attendanceForm').addEventListener('submit', async (e) => {
@@ -3911,16 +3992,18 @@
         };
 
         try {
+            const saved = isUpdate
+                ? await apiCall('updateAttendance', data)
+                : await apiCall('addAttendance', data);
+            upsertAttendanceState(saved.data||data);
+            refreshVisibleAttendanceViews();
             if (isUpdate) {
-                await apiCall('updateAttendance', data);
                 logActivity("Update Sesi", `Menggabungkan data absensi Sesi menyusul untuk ${data.empName}`);
                 showMessage("Data Sesi berhasil digabungkan!", "success");
             } else {
-                await apiCall('addAttendance', data);
                 logActivity("Input Kehadiran", `Menyimpan absensi ${data.empName} (Status: ${data.status})`);
                 showMessage("Data kehadiran disimpan!", "success");
             }
-            refreshData(true).catch(()=>{});
             document.getElementById('attEmployee').value = ''; document.getElementById('attSession1').value = '-'; document.getElementById('attSession2').value = '-';
             document.getElementById('attLemburJam').value = ''; document.getElementById('attLemburKet').value = ''; document.getElementById('attResi1').value = ''; document.getElementById('attGMV1').value = ''; document.getElementById('attResi2').value = ''; document.getElementById('attGMV2').value = '';
             toggleReasonField();
@@ -3935,7 +4018,8 @@
             if(!window.confirm('Hapus absensi '+attDetails+'? Tindakan ini dicatat di audit log.'))return;
             const deleted=await apiCall('deleteAttendance', { id });
             if(deleted.deleted===false)throw new Error('Absensi tidak ditemukan.');
-            logActivity("Hapus Kehadiran", `Menghapus data absensi: ${attDetails}`); refreshData(true).catch(()=>{}); showMessage("Data dihapus.", "success");
+            removeAttendanceState(id);refreshVisibleAttendanceViews();
+            logActivity("Hapus Kehadiran", `Menghapus data absensi: ${attDetails}`);showMessage("Data dihapus.", "success");
         } catch (error) { if (!state.isMockMode) await refreshData(true).catch(()=>{}); showMessage(error.message || "Gagal menghapus.", "error"); }
     };
     
@@ -3965,8 +4049,7 @@
         try {
             // Tidak mengubah state lokal sampai server mengonfirmasi semua ID.
             const response=await apiCall('deleteAttendanceBulk',{ids:idsToDelete});
-            await refreshData(true);
-            await renderMonthlyReport();
+            idsToDelete.forEach(removeAttendanceState);refreshVisibleAttendanceViews();
             showMessage(`${response.deleted} data diarsipkan dan dihapus. ID arsip: ${response.archiveBatchId}`,'success');
         }catch(e){await refreshData(true).catch(()=>{});showMessage(e.message||'Penghapusan dibatalkan atau gagal. Periksa data arsip.','error');}
         finally{btn.disabled=false;btn.innerHTML='<i class="ph ph-trash mr-2"></i> Hapus Terpilih (<span class="bulkDeleteCountValue">0</span>)';}
@@ -4012,9 +4095,10 @@
         };
 
         try {
-            await apiCall('updateAttendance', data);
+            const saved=await apiCall('updateAttendance', data);
+            upsertAttendanceState(saved.data||data);refreshVisibleAttendanceViews();
             logActivity("Edit Kehadiran", `Mengubah data absensi ${existingData.empName || document.getElementById('editAttEmpName').value} pada tanggal ${data.date}`);
-            refreshData(true).catch(()=>{}); showMessage("Perubahan disimpan!", "success"); closeModal('editAttendanceModal');
+            showMessage("Perubahan disimpan!", "success"); closeModal('editAttendanceModal');
         } catch (error) { if (!state.isMockMode) await refreshData(true).catch(()=>{}); showMessage(error.message || "Gagal menyimpan perubahan.", "error"); } finally { submitBtn.innerText = "Simpan Perubahan"; submitBtn.disabled = false; }
     });
 
@@ -4452,9 +4536,9 @@
         gapokAuthMode=mode;
         const title=document.getElementById('gapokPasswordTitle'),desc=document.getElementById('gapokPasswordDescription'),current=document.getElementById('gapokCurrentPasswordWrap'),next=document.getElementById('gapokNewPasswordWrap'),btn=document.getElementById('gapokPasswordSubmit');
         document.getElementById('gapokPasswordForm').reset();
-        if(mode==='setup'){title.textContent='Buat Kata Sandi GAPOK';desc.textContent='Buat kata sandi khusus 8–128 karakter. Gunakan huruf dan angka.';current.classList.add('hidden');next.classList.remove('hidden');btn.textContent='Buat dan Buka GAPOK';}
-        else if(mode==='change'){title.textContent='Ganti Kata Sandi GAPOK';desc.textContent='Masukkan kata sandi baru untuk keamanan lapis kedua.';current.classList.add('hidden');next.classList.remove('hidden');btn.textContent='Simpan Kata Sandi Baru';}
-        else{title.textContent='Kunci Keamanan GAPOK';desc.textContent='Masukkan kata sandi khusus setelah login sebagai Master.';current.classList.remove('hidden');next.classList.add('hidden');btn.textContent='Buka GAPOK';}
+        if(mode==='setup'){title.textContent='Buat PIN GAPOK';desc.textContent='Buat PIN khusus berupa 4 sampai 6 angka.';current.classList.add('hidden');next.classList.remove('hidden');btn.textContent='Buat dan Buka GAPOK';}
+        else if(mode==='change'){title.textContent='Ganti PIN GAPOK';desc.textContent='Gunakan PIN baru berupa 4 sampai 6 angka.';current.classList.add('hidden');next.classList.remove('hidden');btn.textContent='Simpan PIN Baru';}
+        else{title.textContent='Kunci Keamanan GAPOK';desc.textContent='Masukkan PIN saat ini. Jika masih memakai sandi lama, masukkan sandi lama untuk menggantinya menjadi PIN angka.';current.classList.remove('hidden');next.classList.add('hidden');btn.textContent='Buka GAPOK';}
         openModal('gapokPasswordModal');
         setTimeout(()=>document.getElementById(mode==='unlock'?'gapokPassword':'gapokNewPassword')?.focus(),100);
     }
@@ -4621,44 +4705,96 @@
         }catch(err){showMessage(err.message||'Gagal menyimpan data GAPOK.','error');}
         finally{btn.disabled=false;btn.innerHTML=recordId?'<i class="ph ph-floppy-disk mr-1"></i> Simpan Perubahan':'<i class="ph ph-plus-circle mr-1"></i> Tambah Data';}
     });
-    window.cancelGapokAuth=()=>{gapokPendingFill=null;gapokPendingEditor=null;gapokPendingHistoryEmployee='';document.getElementById('gapokPasswordForm')?.reset();closeModal('gapokPasswordModal');};
+    window.cancelGapokAuth=()=>{gapokPendingFill=null;gapokPendingEditor=null;gapokPendingHistoryEmployee='';if(gapokPinUpgradePending){gapokAccessToken='';gapokAccessExpiresAt=0;gapokPinUpgradePending=false;}document.getElementById('gapokPasswordForm')?.reset();closeModal('gapokPasswordModal');};
     window.changeGapokPassword=()=>{if(!gapokTokenValid())return requestGapokUnlock(null).catch(e=>showMessage(e.message,'error'));showGapokPasswordModal('change');};
     window.lockGapokPage=(silent=false)=>{gapokAccessToken='';gapokAccessExpiresAt=0;gapokRows=[];gapokHistoryCache=[];gapokHistoryEmployee=null;gapokPendingEditor=null;gapokPendingHistoryEmployee='';if(gapokAutoLockTimer){clearTimeout(gapokAutoLockTimer);gapokAutoLockTimer=null;}const body=document.getElementById('gapokTableBody');if(body)body.innerHTML='<tr><td colspan="5" class="p-8 text-center text-slate-400">GAPOK dikunci. Masukkan kata sandi khusus untuk melihat data.</td></tr>';if(!silent)showMessage('Halaman GAPOK dikunci kembali.','success');};
     document.getElementById('gapokPasswordForm')?.addEventListener('submit',async(e)=>{
-        e.preventDefault();if(!isMasterAccount())return showMessage('Hanya Master yang dapat membuka GAPOK.','error');
-        const btn=document.getElementById('gapokPasswordSubmit');btn.disabled=true;btn.textContent='Memverifikasi...';
+        e.preventDefault();
+        if(!isMasterAccount())return showMessage('Hanya Master yang dapat membuka GAPOK.','error');
+        const btn=document.getElementById('gapokPasswordSubmit');
+        const modeAtSubmit=gapokAuthMode;
+        btn.disabled=true;btn.textContent='Memverifikasi...';
         try{
             let r;
-            if(gapokAuthMode==='unlock'){r=await apiCall('verifyGapokPassword',{password:document.getElementById('gapokPassword').value});}
-            else{const a=document.getElementById('gapokNewPassword').value,b=document.getElementById('gapokConfirmPassword').value;if(a!==b)throw new Error('Konfirmasi kata sandi tidak sama.');r=await apiCall('setGapokPassword',{newPassword:a,gapokToken:gapokAuthMode==='change'?gapokAccessToken:''});}
-            gapokAccessToken=r.gapokToken;gapokAccessExpiresAt=Date.now()+(Number(r.expiresInSeconds||600)*1000);if(gapokAutoLockTimer)clearTimeout(gapokAutoLockTimer);gapokAutoLockTimer=setTimeout(()=>window.lockGapokPage(true),Number(r.expiresInSeconds||600)*1000);closeModal('gapokPasswordModal');document.getElementById('gapokPasswordForm').reset();
-            await loadGapokData();showMessage(gapokAuthMode==='setup'?'Kata sandi GAPOK berhasil dibuat.':'Akses GAPOK berhasil dibuka.','success');
-            if(gapokPendingFill){const pending=gapokPendingFill;gapokPendingFill=null;const asOf= pending.targetInputId==='salaryBasicInput'?(document.getElementById('salaryStartDate')?.value||gapokTodayYmd()):(document.getElementById('calcHostPerfStart')?.value||gapokTodayYmd());await loadGapokData(asOf);fillGapokSalary(pending.employeeId,pending.targetInputId);}
+            if(modeAtSubmit==='unlock'){
+                r=await apiCall('verifyGapokPassword',{password:document.getElementById('gapokPassword').value});
+                gapokAccessToken=r.gapokToken;
+                gapokAccessExpiresAt=Date.now()+(Number(r.expiresInSeconds||600)*1000);
+                if(r.pinUpgradeRequired){
+                    gapokPinUpgradePending=true;
+                    showGapokPasswordModal('change');
+                    showMessage('PIN lama berhasil diverifikasi. Buat PIN baru 4–6 angka untuk melanjutkan.','info');
+                    return;
+                }
+            }else{
+                const a=String(document.getElementById('gapokNewPassword').value||'');
+                const b=String(document.getElementById('gapokConfirmPassword').value||'');
+                if(!/^\d{4,6}$/.test(a))throw new Error('PIN GAPOK harus terdiri dari 4 sampai 6 angka.');
+                if(a!==b)throw new Error('Konfirmasi PIN tidak sama.');
+                r=await apiCall('setGapokPassword',{newPassword:a,gapokToken:modeAtSubmit==='change'?gapokAccessToken:''});
+                gapokPinUpgradePending=false;
+                gapokAccessToken=r.gapokToken;
+                gapokAccessExpiresAt=Date.now()+(Number(r.expiresInSeconds||600)*1000);
+            }
+            if(gapokAutoLockTimer)clearTimeout(gapokAutoLockTimer);
+            gapokAutoLockTimer=setTimeout(()=>window.lockGapokPage(true),Math.max(60,Number(r.expiresInSeconds||600))*1000);
+            closeModal('gapokPasswordModal');
+            document.getElementById('gapokPasswordForm').reset();
+            await loadGapokData();
+            showMessage(modeAtSubmit==='setup'?'PIN GAPOK berhasil dibuat.':(modeAtSubmit==='change'?'PIN GAPOK berhasil diperbarui.':'Akses GAPOK berhasil dibuka.'),'success');
             if(gapokPendingEditor){const pending=gapokPendingEditor;gapokPendingEditor=null;await window.openGapokEditor(pending.employeeId,pending.recordId);}
             if(gapokPendingHistoryEmployee){const pending=gapokPendingHistoryEmployee;gapokPendingHistoryEmployee='';await window.openGapokHistory(pending);}
         }catch(err){showMessage(err.message||'Autentikasi GAPOK gagal.','error');}
-        finally{btn.disabled=false;btn.textContent=gapokAuthMode==='unlock'?'Buka GAPOK':gapokAuthMode==='setup'?'Buat dan Buka GAPOK':'Simpan Kata Sandi Baru';}
+        finally{
+            btn.disabled=false;
+            btn.textContent=gapokAuthMode==='unlock'?'Buka GAPOK':gapokAuthMode==='setup'?'Buat dan Buka GAPOK':'Simpan PIN Baru';
+        }
     });
-    function fillGapokSalary(employeeId,targetInputId){
-        if(!isMasterAccount()||!gapokTokenValid())return;
-        const row=gapokRows.find(x=>String(x.employeeId)===String(employeeId));const input=document.getElementById(targetInputId);if(!input)return;
-        if(!row||row.basicSalary===null||row.basicSalary===undefined||row.basicSalary===''){if(gapokAutoFilledFields.has(targetInputId))input.value='';gapokAutoFilledFields.delete(targetInputId);const hint=document.getElementById(targetInputId==='salaryBasicInput'?'salaryGapokHint':'calcHostGapokHint');if(hint)hint.textContent='Gaji pokok belum diatur di GAPOK. Masukkan manual atau atur melalui halaman GAPOK.';showMessage('Gaji pokok karyawan belum diatur di GAPOK. Isi terlebih dahulu pada halaman GAPOK atau masukkan manual.','info');return;}
-        input.value=String(row.basicSalary);gapokAutoFilledFields.add(targetInputId);const hint=document.getElementById(targetInputId==='salaryBasicInput'?'salaryGapokHint':'calcHostGapokHint');if(hint)hint.textContent='Gaji pokok terisi otomatis dari GAPOK'+(row.effectiveFrom?' · berlaku sejak '+formatGapokDate(row.effectiveFrom):'')+'.';showMessage('Gaji pokok terisi otomatis dari GAPOK.','success');
+    function fillGapokSalary(employeeId,targetInputId,record){
+        if(!isMasterAccount())return;
+        const input=document.getElementById(targetInputId);if(!input)return;
+        const amount=record&&record.basicSalary!==null&&record.basicSalary!==undefined&&record.basicSalary!==''
+            ?Number(record.basicSalary):null;
+        if(amount===null||!Number.isFinite(amount)){
+            if(gapokAutoFilledFields.has(targetInputId))input.value='';
+            gapokAutoFilledFields.delete(targetInputId);
+            const hint=document.getElementById(targetInputId==='salaryBasicInput'?'salaryGapokHint':'calcHostGapokHint');
+            if(hint)hint.textContent='Gaji pokok belum diatur di GAPOK. Masukkan manual atau atur melalui halaman GAPOK.';
+            return;
+        }
+        input.value=String(amount);gapokAutoFilledFields.add(targetInputId);
+        const hint=document.getElementById(targetInputId==='salaryBasicInput'?'salaryGapokHint':'calcHostGapokHint');
+        if(hint)hint.textContent='Gaji pokok terisi otomatis dari data GAPOK'+(record.effectiveFrom?' · berlaku sejak '+formatGapokDate(record.effectiveFrom):'')+'.';
     }
+    const gapokPayrollRequestSeq={salaryBasicInput:0,calcHostBase:0};
     async function autoFillGapokSalary(employeeId,targetInputId){
         if(!isMasterAccount()||!employeeId)return;
         const input=document.getElementById(targetInputId);if(!input)return;
-        const asOfDate=targetInputId==='salaryBasicInput'?(document.getElementById('salaryStartDate')?.value||gapokTodayYmd()):(document.getElementById('calcHostPerfStart')?.value||gapokTodayYmd());
-        if(!gapokTokenValid()){if(gapokAccessToken)window.lockGapokPage(true);gapokPendingFill={employeeId,targetInputId};try{await requestGapokUnlock(null);}catch(e){showMessage(e.message||'Tidak dapat membuka GAPOK.','error');}return;}
-        try{await loadGapokData(asOfDate);fillGapokSalary(employeeId,targetInputId);}catch(e){gapokAccessToken='';gapokAccessExpiresAt=0;gapokPendingFill={employeeId,targetInputId};requestGapokUnlock(null).catch(err=>showMessage(err.message||'Akses GAPOK gagal.','error'));}
+        const asOfDate=targetInputId==='salaryBasicInput'
+            ?(document.getElementById('salaryStartDate')?.value||gapokTodayYmd())
+            :(document.getElementById('calcHostPerfStart')?.value||gapokTodayYmd());
+        const seq=(gapokPayrollRequestSeq[targetInputId]||0)+1;
+        gapokPayrollRequestSeq[targetInputId]=seq;
+        const hint=document.getElementById(targetInputId==='salaryBasicInput'?'salaryGapokHint':'calcHostGapokHint');
+        if(hint)hint.textContent='Mengambil gaji pokok karyawan...';
+        try{
+            const result=await apiCall('getGapokSalaryForPayroll',{employeeId:String(employeeId),asOfDate:asOfDate});
+            if(gapokPayrollRequestSeq[targetInputId]!==seq)return;
+            if(String(document.getElementById(targetInputId==='salaryBasicInput'?'salaryEmployee':'calcHostEmployee')?.value)!==String(employeeId))return;
+            fillGapokSalary(employeeId,targetInputId,result);
+        }catch(e){
+            if(gapokPayrollRequestSeq[targetInputId]!==seq)return;
+            if(hint)hint.textContent='Gaji pokok otomatis belum dapat dimuat. Kakak masih dapat memasukkan nominal secara manual.';
+            showMessage(e.message||'Gagal mengambil gaji pokok.','error');
+        }
     }
     document.getElementById('salaryStartDate')?.addEventListener('change',()=>{
         const emp=document.getElementById('salaryEmployee')?.value;
-        if(emp&&isMasterAccount()&&gapokTokenValid())autoFillGapokSalary(emp,'salaryBasicInput');
+        if(emp&&isMasterAccount())autoFillGapokSalary(emp,'salaryBasicInput');
     });
     document.getElementById('calcHostPerfStart')?.addEventListener('change',()=>{
         const emp=document.getElementById('calcHostEmployee')?.value;
-        if(emp&&isMasterAccount()&&gapokTokenValid())autoFillGapokSalary(emp,'calcHostBase');
+        if(emp&&isMasterAccount())autoFillGapokSalary(emp,'calcHostBase');
     });
     function renderTrainingDates(containerId,countId,listId,dates){
         const container=document.getElementById(containerId),count=document.getElementById(countId),list=document.getElementById(listId);if(!container||!count||!list)return;
@@ -4725,19 +4861,24 @@
         localStorage.setItem('gloria_current_tab', tabId);
         localStorage.setItem('gloria_last_view', tabId);
         
-        document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+        // Hide only the active view and avoid a forced synchronous layout on every navigation.
+        document.querySelectorAll('.view-section:not(.hidden)').forEach(el => el.classList.add('hidden'));
         document.querySelectorAll('.nav-btn').forEach(btn => { btn.classList.remove('bg-blue-50', 'text-blue-700', 'font-semibold'); btn.classList.add('text-gray-700'); });
         
         const targetView = document.getElementById(tabId + 'View');
-        if(targetView) { targetView.classList.remove('hidden'); targetView.classList.remove('fade-in'); void targetView.offsetWidth; targetView.classList.add('fade-in'); }
+        if(targetView) {
+            targetView.classList.remove('fade-in');
+            targetView.classList.remove('hidden');
+            setTimeout(()=>{if(state.currentTab===tabId)targetView.classList.add('fade-in');},0);
+        }
         document.querySelectorAll(`.nav-btn[data-tab="${tabId}"]`).forEach(btn => { btn.classList.remove('text-gray-700'); btn.classList.add('bg-blue-50', 'text-blue-700', 'font-semibold'); });
 
-        if (tabId === 'employeeAttendance') { initializeEmployeeAttendanceDates(); renderEmployeeAttendanceMatrix(); }
+        if (tabId === 'employeeAttendance') { initializeEmployeeAttendanceDates(); setTimeout(()=>{if(state.currentTab==='employeeAttendance')renderEmployeeAttendanceMatrix();},0); }
         if (tabId === 'dashboard') updateDashboard();
         if (tabId === 'attendance') { updateEmployeeDropdown(); renderTodayAttendance(); }
         if (tabId === 'lateAttendance') { setLateDefaultDate(); renderLateEmployeeOptions(); renderLateAttendance(); }
         if (tabId === 'reports') renderMonthlyReport();
-        if (tabId === 'bankAccount') window.renderBankAccountList();
+        if (tabId === 'bankAccount') setTimeout(()=>{if(state.currentTab==='bankAccount')window.renderBankAccountList();},0);
         if (tabId === 'gapok') window.openGapokPage();
         if (tabId === 'salary') {
             const now = new Date(); const val = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
@@ -4847,10 +4988,14 @@
         const employees=(state.employees||[]).filter(e=>(div==='all'||String(e.division)===div)&&String(e.name||'').toLocaleLowerCase('id-ID').includes(query))
             .sort((a,b)=>String(a.division||'').localeCompare(String(b.division||''),'id')||String(a.name||'').localeCompare(String(b.name||''),'id'));
         const allowed=new Set(employees.map(e=>String(e.id))),byKey=new Map();
-        for(const rec of (state.attendance||[])){
-            const date=window.normalizeDateStr(rec.date),empId=String(rec.empId||'');
-            if(!dateSet.has(date)||!allowed.has(empId))continue;
-            const key=empId+'|'+date; if(!byKey.has(key))byKey.set(key,[]);byKey.get(key).push(rec);
+        // Hanya baca catatan pada tanggal yang sedang ditampilkan; jangan memindai seluruh histori.
+        for(const date of dates){
+            const dayRecords=attendanceForDate(date);
+            for(const rec of dayRecords){
+                const empId=String(rec.empId||'');
+                if(!allowed.has(empId))continue;
+                const key=empId+'|'+date; if(!byKey.has(key))byKey.set(key,[]);byKey.get(key).push(rec);
+            }
         }
         const total={hadir:0,training:0,libur:0,sakit:0,izin:0,empty:0,conflict:0,unknown:0};
         const rows=dates.map(date=>{
@@ -5085,8 +5230,8 @@
             renderTodayAttendance();
             if (state.isMockMode) localStorage.setItem('gloria_mock_att', JSON.stringify(state.attendance));
 
-            await apiCall('addAttendance', data);
-            await refreshData(true);
+            const saved=await apiCall('addAttendance', data);
+            upsertAttendanceState(saved.data||data);refreshVisibleAttendanceViews();
             logActivity("Input Cepat Libur", `Menandai ${empName} libur pada ${dateInput}`);
             showMessage(`${empName} berhasil ditandai Libur!`, "success");
             empSelect.value = '';
