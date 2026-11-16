@@ -672,7 +672,8 @@
                         </div>
                         <div class="hidden md:flex items-center space-x-2">
                             <i class="ph ph-key text-amber-500 text-lg"></i>
-                            <input type="password" id="geminiApiKey" placeholder="Masukkan Gemini API Key" class="bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 w-48 transition-colors" onchange="saveApiKey(this.value)" title="Dapatkan dari Google AI Studio">
+                            <input type="password" id="geminiApiKey" autocomplete="new-password" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" placeholder="Masukkan Gemini API Key" class="bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 w-48 transition-colors" title="Masukkan lalu tekan Simpan; tidak disimpan di browser">
+                            <button type="button" id="saveGeminiApiKeyButton" onclick="saveApiKeyFromInput()" class="rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-2 text-xs font-black whitespace-nowrap">Simpan Key</button>
                         </div>
                     </div>
                     
@@ -867,10 +868,10 @@
                     <span class="rounded-full border border-amber-300/60 bg-amber-50 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-amber-900">Halaman khusus Master</span>
                 </div>
                 <div class="rounded-2xl bg-gradient-to-r from-slate-950 via-amber-950 to-slate-900 text-white p-6 shadow-lg border border-amber-400/40">
-                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4"><div><p class="text-amber-300 text-[11px] font-black tracking-[.2em] uppercase">GLORIA · MASTER ONLY</p><h2 class="text-2xl font-black mt-1">GAPOK — Data Gaji Pokok Karyawan</h2><p class="text-amber-100/80 text-sm mt-2">Data gaji pokok tersimpan terpisah, terhubung ke slip gaji Host Live dan karyawan lainnya.</p></div><div class="flex flex-wrap gap-2"><button onclick="changeGapokPassword()" class="px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-xs font-bold"><i class="ph ph-key mr-1"></i> Ganti Sandi</button><button onclick="lockGapokPage()" class="px-3 py-2 rounded-lg bg-rose-500/20 border border-rose-300/30 text-rose-100 text-xs font-bold"><i class="ph ph-lock mr-1"></i> Kunci GAPOK</button></div></div>
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4"><div><p class="text-amber-300 text-[11px] font-black tracking-[.2em] uppercase">GLORIA · MASTER ONLY</p><h2 class="text-2xl font-black mt-1">GAPOK — Data Gaji Pokok Karyawan</h2><p class="text-amber-100/80 text-sm mt-2">Pusat penyimpanan satu nominal gaji pokok aktif untuk setiap karyawan. Hanya Master yang dapat membuka dan mengubah data; nominal otomatis terhubung ke Slip Gaji Individu (Admin, Packing, PKL, dan divisi lain) serta Rekap Gaji Host.</p></div><div class="flex flex-wrap gap-2"><button onclick="changeGapokPassword()" class="px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-xs font-bold"><i class="ph ph-key mr-1"></i> Ganti Sandi</button><button onclick="lockGapokPage()" class="px-3 py-2 rounded-lg bg-rose-500/20 border border-rose-300/30 text-rose-100 text-xs font-bold"><i class="ph ph-lock mr-1"></i> Kunci GAPOK</button></div></div>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4"><div class="bg-white rounded-xl p-4 border border-slate-200"><p class="text-xs text-slate-500 font-semibold">Jumlah Karyawan</p><p id="gapokEmployeeCount" class="text-2xl font-black text-slate-900 mt-1">0</p></div><div class="bg-white rounded-xl p-4 border border-slate-200"><p class="text-xs text-slate-500 font-semibold">Gaji Pokok Sudah Diatur</p><p id="gapokConfiguredCount" class="text-2xl font-black text-emerald-700 mt-1">0</p></div><div class="bg-white rounded-xl p-4 border border-slate-200"><p class="text-xs text-slate-500 font-semibold">Belum Diatur</p><p id="gapokMissingCount" class="text-2xl font-black text-amber-700 mt-1">0</p></div><div class="bg-white rounded-xl p-4 border border-slate-200"><p class="text-xs text-slate-500 font-semibold">Karyawan dengan Perubahan Terjadwal</p><p id="gapokScheduledCount" class="text-2xl font-black text-indigo-700 mt-1">0</p></div></div>
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"><div class="p-5 border-b border-slate-100 flex flex-col gap-3"><div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3"><div><h3 class="font-black text-slate-900">Daftar Gaji Pokok</h3><p id="gapokSourceInfo" class="text-xs text-slate-500 mt-1">Daftar karyawan terhubung langsung dengan Data Karyawan aplikasi.</p><p class="text-xs text-slate-500 mt-1">Tambah nominal baru, atur tanggal efektif, edit data, dan telusuri riwayat perubahan. Rekening tetap mengikuti Data Karyawan.</p></div><div class="flex flex-wrap gap-2"><button onclick="openGapokEditor()" class="px-3 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-black"><i class="ph ph-plus-circle mr-1"></i> Tambah Data GAPOK</button><button onclick="loadGapokData()" class="px-3 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold"><i class="ph ph-arrows-clockwise mr-1"></i> Muat Ulang</button></div></div><div class="grid grid-cols-1 md:grid-cols-[1fr_220px] gap-2"><input id="gapokSearchInput" type="search" oninput="queueGapokRender()" placeholder="Cari nama, ID karyawan, atau divisi..." class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"><select id="gapokStatusFilter" onchange="gapokCurrentPage=1;renderGapokTable()" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white"><option value="all">Semua karyawan</option><option value="Aktif">Status Aktif</option><option value="Training">Status Training</option><option value="missing">Gaji belum diatur</option><option value="scheduled">Ada perubahan terjadwal</option></select></div></div><div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead class="bg-slate-50 text-slate-600 uppercase text-[11px]"><tr><th class="p-4">Nama Karyawan</th><th class="p-4">Divisi / Status</th><th class="p-4">Rekening</th><th class="p-4 min-w-[210px]">Gaji Pokok (Rp)</th><th class="p-4 text-right">Aksi</th></tr></thead><tbody id="gapokTableBody" class="divide-y divide-slate-100"><tr><td colspan="5" class="p-8 text-center text-slate-400">Masukkan kata sandi khusus GAPOK untuk memuat data.</td></tr></tbody></table></div><div id="gapokPagination" class="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100 px-4 py-3 text-xs text-slate-600"></div></div>
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"><div class="p-5 border-b border-slate-100 flex flex-col gap-3"><div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3"><div><h3 class="font-black text-slate-900">Daftar Gaji Pokok</h3><p id="gapokSourceInfo" class="text-xs text-slate-500 mt-1">Daftar karyawan terhubung langsung dengan Data Karyawan aplikasi.</p><p class="text-xs text-slate-500 mt-1">Ubah nominal kapan saja dari daftar karyawan. Data identitas dan rekening mengikuti Data Karyawan; nominal tersimpan di GAPOK. Riwayat perubahan tetap dipertahankan sebagai jejak audit.</p><p class="text-xs text-indigo-700 mt-1">PIN hanya diperlukan untuk membuka dan mengubah halaman GAPOK. Pengisian otomatis pada formulir gaji Master tidak meminta PIN kedua.</p></div><div class="flex flex-wrap gap-2"><button onclick="openGapokEditor()" class="px-3 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-black"><i class="ph ph-plus-circle mr-1"></i> Tambah Data GAPOK</button><button onclick="loadGapokData()" class="px-3 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold"><i class="ph ph-arrows-clockwise mr-1"></i> Muat Ulang</button></div></div><div class="grid grid-cols-1 md:grid-cols-[1fr_220px] gap-2"><input id="gapokSearchInput" type="search" oninput="queueGapokRender()" placeholder="Cari nama, ID karyawan, atau divisi..." class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"><select id="gapokStatusFilter" onchange="gapokCurrentPage=1;renderGapokTable()" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white"><option value="all">Semua karyawan</option><option value="Aktif">Status Aktif</option><option value="Training">Status Training</option><option value="missing">Gaji belum diatur</option><option value="scheduled">Ada perubahan terjadwal</option></select></div></div><div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead class="bg-slate-50 text-slate-600 uppercase text-[11px]"><tr><th class="p-4">Nama Karyawan</th><th class="p-4">Divisi / Status</th><th class="p-4">Rekening</th><th class="p-4 min-w-[210px]">Gaji Pokok (Rp)</th><th class="p-4 text-right">Aksi</th></tr></thead><tbody id="gapokTableBody" class="divide-y divide-slate-100"><tr><td colspan="5" class="p-8 text-center text-slate-400">Masukkan kata sandi khusus GAPOK untuk memuat data.</td></tr></tbody></table></div><div id="gapokPagination" class="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100 px-4 py-3 text-xs text-slate-600"></div></div>
             </div>
 
             <!-- 3. Attendance Input View -->
@@ -1296,7 +1297,7 @@
                         <label class="text-sm font-semibold text-slate-700">Tanggal Mulai<input type="date" id="salaryStartDate" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-3 bg-white" required></label>
                         <label class="text-sm font-semibold text-slate-700">Tanggal Akhir<input type="date" id="salaryEndDate" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-3 bg-white" required></label>
                         <label class="text-sm font-semibold text-slate-700">Pilih Karyawan<select id="salaryEmployee" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-3 bg-white"><option value="">-- Pilih Karyawan --</option></select></label>
-                        <label class="text-sm font-semibold text-slate-700">Gaji Pokok per 26 Hari (Rp)<input type="number" id="salaryBasicInput" min="0" max="1000000000000" step="1" placeholder="Contoh: 3900000" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-3 bg-white" required><p id="salaryGapokHint" class="text-[11px] text-slate-500 mt-1">Gaji pokok dapat diisi manual. Master dapat mengisinya otomatis dari GAPOK.</p></label>
+                        <div><label for="salaryBasicInput" class="text-sm font-semibold text-slate-700">Gaji Pokok per 26 Hari (Rp)</label><input type="number" id="salaryBasicInput" min="0" max="1000000000000" step="1" placeholder="Contoh: 3900000" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-3 bg-white" required><div class="flex flex-wrap items-center justify-between gap-2 mt-1"><p id="salaryGapokHint" class="text-[11px] text-slate-500">Master mengambil nominal aktif dari GAPOK otomatis. Nilai formulir tetap dapat diubah manual.</p><button type="button" onclick="useGapokSalaryForField('salaryBasicInput')" class="text-[11px] font-bold text-indigo-700 hover:text-indigo-900 underline">Ambil dari GAPOK</button></div></div>
                     </div>
                     <div id="salaryMethodWrap" class="hidden max-w-sm"><label class="text-sm font-semibold text-slate-700">Metode Komisi — Khusus Host Live<select id="salaryHostCommissionMethod" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-3 bg-white"><option value="GMV">GMV</option><option value="RESI">Resi / Pesanan</option></select></label></div>
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 bg-amber-50/70 border border-amber-200 rounded-xl p-3"><p class="text-xs text-amber-900"><b>Rumus:</b> Gaji sehari = Pokok ÷ 26; Izin/Sakit 1 hari, Izin/Sakit mendadak atau sesi Tidak Selesai ½ hari. Libur 0 potongan. Angka hasil dibulatkan ke Rupiah terdekat.</p><button onclick="generateSalarySlip()" class="bg-indigo-700 hover:bg-indigo-800 text-white font-extrabold px-6 py-3 rounded-xl shrink-0 shadow">Hitung Slip Gaji <i class="ph ph-arrow-right ml-1"></i></button></div>
@@ -1487,8 +1488,8 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Gaji Pokok Awal / 26 Hari Kerja (Rp)</label>
-                            <input type="number" id="calcHostBase" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-blue-500 bg-white" placeholder="Contoh: 3000000">
-                            <p id="calcHostGapokHint" class="text-[11px] text-slate-500 mt-1">Master dapat mengisi otomatis dari GAPOK setelah membuka kunci.</p>
+                            <input type="number" id="calcHostBase" min="0" max="1000000000000" step="1" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-blue-500 bg-white" placeholder="Contoh: 3000000">
+                            <div class="flex flex-wrap items-center justify-between gap-2 mt-1"><p id="calcHostGapokHint" class="text-[11px] text-slate-500">Master mengambil nominal aktif dari GAPOK otomatis. Nilai formulir tetap dapat diubah manual.</p><button type="button" onclick="useGapokSalaryForField('calcHostBase')" class="text-[11px] font-bold text-indigo-700 hover:text-indigo-900 underline">Ambil dari GAPOK</button></div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Target / Bonus (Rp)</label>
@@ -2205,8 +2206,8 @@
     // GitHub Pages: URL /exec di gloria-config.js; komunikasi melalui iframe bridge Apps Script.
     // Hosting langsung Apps Script tetap memakai google.script.run tanpa URL.
     const GAS_URL = String(window.GLORIA_CONFIG?.gasWebAppUrl || '').trim();
-    const EXPECTED_BACKEND_BUILD_ID = 'GLORIA-2026.11.16.05';
-    const EXPECTED_BACKEND_SCHEMA = '2026.11.16.5'; 
+    const EXPECTED_BACKEND_BUILD_ID = 'GLORIA-2026.11.16.06';
+    const EXPECTED_BACKEND_SCHEMA = '2026.11.16.6'; 
     
     let state = {
         user: null,
@@ -2247,6 +2248,7 @@
     let gapokPinUpgradePending = false;
     let gapokAutoLockTimer = null;
     const gapokAutoFilledFields = new Set();
+    const gapokManualOverrides = new Set();
 
     const initialEmployees = [
         { name: "Dewi", division: "Host Live" }, { name: "Nova", division: "Host Live" },
@@ -2255,12 +2257,19 @@
         { name: "Meri", division: "Host Live" }
     ];
 
+    let gloriaToastHideTimer = null;
+    let gloriaToastExitTimer = null;
     window.showMessage = (text, type = 'info') => {
         const box = document.getElementById('messageBox');
         const content = document.getElementById('msgBoxContent');
         const icon = document.getElementById('msgIcon');
-        
-        document.getElementById('msgText').innerText = text;
+        const msgText = document.getElementById('msgText');
+        if (!box || !content || !icon || !msgText) return;
+
+        if (gloriaToastHideTimer) { clearTimeout(gloriaToastHideTimer); gloriaToastHideTimer = null; }
+        if (gloriaToastExitTimer) { clearTimeout(gloriaToastExitTimer); gloriaToastExitTimer = null; }
+
+        msgText.innerText = String(text || '');
         content.className = `px-6 py-3 rounded-lg shadow-lg flex items-center transform transition-all duration-300 ease-out ${
             type === 'error' ? 'bg-red-600 text-white' : type === 'success' ? 'bg-green-600 text-white' : 'bg-gray-800 text-white'
         }`;
@@ -2273,10 +2282,14 @@
         content.classList.remove('-translate-y-4', 'opacity-0');
         content.classList.add('translate-y-0', 'opacity-100');
 
-        setTimeout(() => {
+        gloriaToastHideTimer = setTimeout(() => {
+            gloriaToastHideTimer = null;
             content.classList.remove('translate-y-0', 'opacity-100');
             content.classList.add('-translate-y-4', 'opacity-0');
-            setTimeout(() => box.classList.add('hidden'), 300);
+            gloriaToastExitTimer = setTimeout(() => {
+                gloriaToastExitTimer = null;
+                box.classList.add('hidden');
+            }, 320);
         }, 3000);
     };
 
@@ -2877,13 +2890,13 @@
             gapokAccessToken='';gapokAccessExpiresAt=0;gapokRows=[];gapokPendingFill=null;
             if(gapokAutoLockTimer){clearTimeout(gapokAutoLockTimer);gapokAutoLockTimer=null;}
             gapokAutoFilledFields.forEach(id=>{const input=document.getElementById(id);if(input)input.value='';});
-            gapokAutoFilledFields.clear();
+            gapokAutoFilledFields.clear();gapokManualOverrides.clear();
             ['salaryBasicInput','calcHostBase'].forEach(id=>{const input=document.getElementById(id);if(input)input.value='';});
             const gapokBody=document.getElementById('gapokTableBody');
             if(gapokBody)gapokBody.innerHTML='<tr><td colspan="5" class="p-8 text-center text-slate-400">GAPOK terkunci.</td></tr>';
             document.getElementById('gapokView')?.classList.add('hidden');
         }
-        const geminiKey=document.getElementById('geminiApiKey'); if(geminiKey&&geminiKey.parentElement){geminiKey.parentElement.classList.toggle('hidden',!isOwner); geminiKey.parentElement.classList.toggle('md:flex',isOwner);}
+        const geminiKey=document.getElementById('geminiApiKey'); if(geminiKey&&geminiKey.parentElement){geminiKey.parentElement.classList.toggle('hidden',!isOwner); geminiKey.parentElement.classList.toggle('md:flex',isOwner); if(!isOwner)geminiKey.value='';}
         const authorizedHostEmails=['bettyartanita@gmail.com','mohammadziky2@gmail.com','ysdd@gmail.com']; const isHost=authorizedHostEmails.includes(String(email||'').toLowerCase());
         ['dashboardHostAuth','dashboardHostExcelAuth','sidebarHostAuth','mobileHostAuth'].forEach(id=>{const el=document.getElementById(id);if(!el)return;if(isHost){el.classList.remove('hidden');el.classList.add('flex');}else{el.classList.add('hidden');el.classList.remove('flex');}});
         ['quickScheduleCard','quickHostReportCard','quickHostRankingCard'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.toggle('hidden',!isHost);});
@@ -2966,7 +2979,7 @@
     window.handleLogout = async () => {
         gapokAccessToken='';gapokAccessExpiresAt=0;gapokRows=[];gapokPendingFill=null;
         if(gapokAutoLockTimer){clearTimeout(gapokAutoLockTimer);gapokAutoLockTimer=null;}
-        gapokAutoFilledFields.forEach(id=>{const input=document.getElementById(id);if(input)input.value='';});gapokAutoFilledFields.clear();
+        gapokAutoFilledFields.forEach(id=>{const input=document.getElementById(id);if(input)input.value='';});gapokAutoFilledFields.clear();gapokManualOverrides.clear();
         ['salaryBasicInput','calcHostBase'].forEach(id=>{const input=document.getElementById(id);if(input)input.value='';});
         const gapokBody=document.getElementById('gapokTableBody');if(gapokBody)gapokBody.innerHTML='<tr><td colspan="5" class="p-8 text-center text-slate-400">GAPOK terkunci.</td></tr>';
         document.getElementById('gapokView')?.classList.add('hidden');
@@ -4129,9 +4142,11 @@
     window.generateSalarySlip = async () => {
         const startDate=document.getElementById('salaryStartDate').value,endDate=document.getElementById('salaryEndDate').value;
         const empSelect=document.getElementById('salaryEmployee');
-        const rawBase=document.getElementById('salaryBasicInput').value;
         if(!startDate||!endDate||startDate>endDate||!empSelect.value){showMessage('Pilih karyawan dan rentang tanggal yang benar.','error');return;}
-        if(rawBase.trim()===''||!/^\d+$/.test(rawBase)||Number(rawBase)>1000000000000){showMessage('Masukkan gaji pokok bulat dalam Rupiah.','error');return;}
+        if(!String(document.getElementById('salaryBasicInput')?.value||'').trim()&&isMasterAccount())
+            await autoFillGapokSalary(empSelect.value,'salaryBasicInput');
+        const rawBase=String(document.getElementById('salaryBasicInput')?.value||'').trim();
+        if(rawBase===''||!/^\d+$/.test(rawBase)||Number(rawBase)>1000000000000){showMessage('Gaji pokok belum tersedia. Periksa GAPOK atau masukkan gaji pokok bulat dalam Rupiah.','error');return;}
         const basicSalary=Number(rawBase);
         const method=document.getElementById('salaryHostCommissionMethod')?.value||'GMV';
         try{
@@ -4477,8 +4492,11 @@
         const attStart=document.getElementById('calcHostAttStart').value, attEnd=document.getElementById('calcHostAttEnd').value;
         const perfStart=document.getElementById('calcHostPerfStart').value, perfEnd=document.getElementById('calcHostPerfEnd').value;
         const empId=document.getElementById('calcHostEmployee').value;
-        const baseText=document.getElementById('calcHostBase').value,bonusText=document.getElementById('calcHostBonus').value;
-        if(baseText.trim()===''||!/^\d+$/.test(baseText)||Number(baseText)>1000000000000|| (bonusText!=='' && (!/^\d+$/.test(bonusText)||Number(bonusText)>1000000000000)))return showMessage('Gaji pokok wajib diisi dalam Rupiah bulat. Bonus tidak boleh negatif.','error');
+        if(!String(document.getElementById('calcHostBase')?.value||'').trim()&&isMasterAccount()&&empId)
+            await autoFillGapokSalary(empId,'calcHostBase');
+        const baseText=String(document.getElementById('calcHostBase')?.value||'').trim(),bonusText=document.getElementById('calcHostBonus').value;
+        if(!empId)return showMessage('Pilih Host Live terlebih dahulu.','error');
+        if(baseText.trim()===''||!/^\d+$/.test(baseText)||Number(baseText)>1000000000000|| (bonusText!=='' && (!/^\d+$/.test(bonusText)||Number(bonusText)>1000000000000)))return showMessage('Gaji pokok belum tersedia. Periksa GAPOK atau masukkan nominal Rupiah bulat. Bonus tidak boleh negatif.','error');
         const base=Number(baseText),bonus=bonusText===''?0:Number(bonusText);
         const method=document.getElementById('calcHostCommissionMethod').value||'GMV';
         if(!attStart||!attEnd||!perfStart||!perfEnd||!empId){showMessage('Mohon lengkapi semua rentang tanggal dan pilih host.','error');return;}
@@ -4713,8 +4731,8 @@
         try{
             const r=await apiCall('saveGapokSalary',{employeeId,basicSalary:Number(raw),effectiveFrom:gapokTodayYmd(),notes:'Pembaruan cepat dari daftar GAPOK; berlaku mulai hari ini.',gapokToken:gapokAccessToken});
             await loadGapokData();
-            if(String(document.getElementById('salaryEmployee')?.value)===String(employeeId)&&r.currentBasicSalary!==null){document.getElementById('salaryBasicInput').value=String(r.currentBasicSalary);gapokAutoFilledFields.add('salaryBasicInput');}
-            if(String(document.getElementById('calcHostEmployee')?.value)===String(employeeId)&&r.currentBasicSalary!==null){document.getElementById('calcHostBase').value=String(r.currentBasicSalary);gapokAutoFilledFields.add('calcHostBase');}
+            if(String(document.getElementById('salaryEmployee')?.value)===String(employeeId)&&r.currentBasicSalary!==null){fillGapokSalary(employeeId,'salaryBasicInput',{basicSalary:r.currentBasicSalary,effectiveFrom:r.effectiveFrom});}
+            if(String(document.getElementById('calcHostEmployee')?.value)===String(employeeId)&&r.currentBasicSalary!==null){fillGapokSalary(employeeId,'calcHostBase',{basicSalary:r.currentBasicSalary,effectiveFrom:r.effectiveFrom});}
             showMessage('Gaji pokok berhasil disimpan. Riwayat perubahan ikut tercatat.','success');
         }catch(e){showMessage(e.message||'Gagal menyimpan gaji pokok.','error');}
     };
@@ -4789,8 +4807,8 @@
             closeModal('gapokEditorModal');
             await loadGapokData();
             if(r.appliedAsCurrent&&r.currentBasicSalary!==null){
-                if(String(document.getElementById('salaryEmployee')?.value)===employeeId){document.getElementById('salaryBasicInput').value=String(r.currentBasicSalary);gapokAutoFilledFields.add('salaryBasicInput');}
-                if(String(document.getElementById('calcHostEmployee')?.value)===employeeId){document.getElementById('calcHostBase').value=String(r.currentBasicSalary);gapokAutoFilledFields.add('calcHostBase');}
+                if(String(document.getElementById('salaryEmployee')?.value)===employeeId){fillGapokSalary(employeeId,'salaryBasicInput',{basicSalary:r.currentBasicSalary,effectiveFrom:r.effectiveFrom});}
+                if(String(document.getElementById('calcHostEmployee')?.value)===employeeId){fillGapokSalary(employeeId,'calcHostBase',{basicSalary:r.currentBasicSalary,effectiveFrom:r.effectiveFrom});}
             }
             showMessage(r.appliedAsCurrent?'Data gaji berhasil disimpan dan berlaku untuk GAPOK saat ini.':(r.isFutureEffective?'Data gaji berhasil disimpan sebagai perubahan terjadwal.':'Riwayat gaji berhasil diperbarui. Nominal aktif tidak berubah.'),'success');
         }catch(err){showMessage(err.message||'Gagal menyimpan data GAPOK.','error');}
@@ -4841,6 +4859,30 @@
             btn.textContent=gapokAuthMode==='unlock'?'Buka GAPOK':gapokAuthMode==='setup'?'Buat dan Buka GAPOK':'Simpan PIN Baru';
         }
     });
+    function gapokHintElement_(targetInputId){
+        return document.getElementById(targetInputId==='salaryBasicInput'?'salaryGapokHint':'calcHostGapokHint');
+    }
+    function resetGapokFieldForEmployeeChange_(targetInputId){
+        gapokPayrollRequestSeq[targetInputId]=(gapokPayrollRequestSeq[targetInputId]||0)+1;
+        gapokManualOverrides.delete(targetInputId);
+        gapokAutoFilledFields.delete(targetInputId);
+        const input=document.getElementById(targetInputId);if(input)input.value='';
+        const hint=gapokHintElement_(targetInputId);
+        if(hint)hint.textContent='Memuat gaji pokok tersimpan dari GAPOK...';
+    }
+    function markGapokManualOverride_(targetInputId){
+        const input=document.getElementById(targetInputId);if(!input)return;
+        const hint=gapokHintElement_(targetInputId);
+        if(!String(input.value||'').trim()){
+            gapokManualOverrides.delete(targetInputId);
+            gapokAutoFilledFields.delete(targetInputId);
+            if(hint)hint.textContent='Nominal dikosongkan. Sistem akan mencoba mengambil nilai GAPOK saat menghitung.';
+            return;
+        }
+        gapokManualOverrides.add(targetInputId);
+        gapokAutoFilledFields.delete(targetInputId);
+        if(hint)hint.textContent='Nominal diubah manual untuk perhitungan ini. Data GAPOK utama tidak berubah.';
+    }
     function fillGapokSalary(employeeId,targetInputId,record){
         if(!isMasterAccount())return;
         const input=document.getElementById(targetInputId);if(!input)return;
@@ -4849,58 +4891,101 @@
         if(amount===null||!Number.isFinite(amount)){
             if(gapokAutoFilledFields.has(targetInputId))input.value='';
             gapokAutoFilledFields.delete(targetInputId);
-            const hint=document.getElementById(targetInputId==='salaryBasicInput'?'salaryGapokHint':'calcHostGapokHint');
-            if(hint)hint.textContent='Gaji pokok belum diatur di GAPOK. Masukkan manual atau atur melalui halaman GAPOK.';
+            const hint=gapokHintElement_(targetInputId);
+            if(hint)hint.textContent='Belum ada gaji pokok tersimpan di GAPOK untuk karyawan ini. Isi manual atau simpan nominalnya di halaman GAPOK.';
             return;
         }
-        input.value=String(amount);gapokAutoFilledFields.add(targetInputId);
-        const hint=document.getElementById(targetInputId==='salaryBasicInput'?'salaryGapokHint':'calcHostGapokHint');
-        if(hint)hint.textContent='Gaji pokok terisi otomatis dari data GAPOK'+(record.effectiveFrom?' · berlaku sejak '+formatGapokDate(record.effectiveFrom):'')+'.';
+        input.value=String(amount);
+        gapokAutoFilledFields.add(targetInputId);
+        gapokManualOverrides.delete(targetInputId);
+        const hint=gapokHintElement_(targetInputId);
+        if(hint)hint.textContent='Terisi otomatis dari GAPOK (nominal aktif)'+(record.effectiveFrom?' · tercatat sejak '+formatGapokDate(record.effectiveFrom):'')+'. Dapat diubah manual untuk perhitungan ini.';
     }
     const gapokPayrollRequestSeq={salaryBasicInput:0,calcHostBase:0};
-    async function autoFillGapokSalary(employeeId,targetInputId){
-        if(!isMasterAccount()||!employeeId)return;
-        const input=document.getElementById(targetInputId);if(!input)return;
-        const asOfDate=targetInputId==='salaryBasicInput'
-            ?(document.getElementById('salaryStartDate')?.value||gapokTodayYmd())
-            :(document.getElementById('calcHostPerfStart')?.value||gapokTodayYmd());
+    async function autoFillGapokSalary(employeeId,targetInputId,force=false){
+        if(!isMasterAccount()||!employeeId)return null;
+        const input=document.getElementById(targetInputId);if(!input)return null;
+        if(gapokManualOverrides.has(targetInputId)&&!force)return null;
+        if(force)gapokManualOverrides.delete(targetInputId);
+        const dateInputId=targetInputId==='salaryBasicInput'?'salaryStartDate':'calcHostAttStart';
+        const asOfDate=document.getElementById(dateInputId)?.value||gapokTodayYmd();
         const seq=(gapokPayrollRequestSeq[targetInputId]||0)+1;
         gapokPayrollRequestSeq[targetInputId]=seq;
-        const hint=document.getElementById(targetInputId==='salaryBasicInput'?'salaryGapokHint':'calcHostGapokHint');
-        if(hint)hint.textContent='Mengambil gaji pokok karyawan...';
+        const hint=gapokHintElement_(targetInputId);
+        if(hint)hint.textContent='Mengambil nominal aktif dari GAPOK...';
         try{
             const result=await apiCall('getGapokSalaryForPayroll',{employeeId:String(employeeId),asOfDate:asOfDate});
-            if(gapokPayrollRequestSeq[targetInputId]!==seq)return;
-            if(String(document.getElementById(targetInputId==='salaryBasicInput'?'salaryEmployee':'calcHostEmployee')?.value)!==String(employeeId))return;
+            if(gapokPayrollRequestSeq[targetInputId]!==seq)return null;
+            const selectId=targetInputId==='salaryBasicInput'?'salaryEmployee':'calcHostEmployee';
+            if(String(document.getElementById(selectId)?.value)!==String(employeeId))return null;
             fillGapokSalary(employeeId,targetInputId,result);
+            return result;
         }catch(e){
-            if(gapokPayrollRequestSeq[targetInputId]!==seq)return;
-            if(hint)hint.textContent='Gaji pokok otomatis belum dapat dimuat. Kakak masih dapat memasukkan nominal secara manual.';
-            showMessage(e.message||'Gagal mengambil gaji pokok.','error');
+            if(gapokPayrollRequestSeq[targetInputId]!==seq)return null;
+            if(hint)hint.textContent='Data GAPOK belum dapat dimuat. Periksa koneksi atau isi nominal secara manual; data utama tidak berubah.';
+            return null;
         }
     }
+    window.useGapokSalaryForField=(targetInputId)=>{
+        if(!['salaryBasicInput','calcHostBase'].includes(targetInputId))return;
+        if(!isMasterAccount())return showMessage('Pengambilan otomatis GAPOK hanya tersedia untuk Master.','error');
+        const selectId=targetInputId==='salaryBasicInput'?'salaryEmployee':'calcHostEmployee';
+        const employeeId=String(document.getElementById(selectId)?.value||'');
+        if(!employeeId)return showMessage('Pilih karyawan terlebih dahulu.','info');
+        gapokManualOverrides.delete(targetInputId);
+        gapokAutoFilledFields.delete(targetInputId);
+        const input=document.getElementById(targetInputId);if(input)input.value='';
+        autoFillGapokSalary(employeeId,targetInputId,true);
+    };
+    document.getElementById('salaryBasicInput')?.addEventListener('input',()=>markGapokManualOverride_('salaryBasicInput'));
+    document.getElementById('calcHostBase')?.addEventListener('input',()=>markGapokManualOverride_('calcHostBase'));
+    document.getElementById('salaryEmployee')?.addEventListener('change',()=>{
+        resetGapokFieldForEmployeeChange_('salaryBasicInput');
+        updateSalaryDivisionUI();
+        autoFillGapokSalary(document.getElementById('salaryEmployee').value,'salaryBasicInput');
+    });
+    document.getElementById('calcHostEmployee')?.addEventListener('change',()=>{
+        resetGapokFieldForEmployeeChange_('calcHostBase');
+        autoFillGapokSalary(document.getElementById('calcHostEmployee').value,'calcHostBase');
+    });
     document.getElementById('salaryStartDate')?.addEventListener('change',()=>{
         const emp=document.getElementById('salaryEmployee')?.value;
-        if(emp&&isMasterAccount())autoFillGapokSalary(emp,'salaryBasicInput');
+        if(emp&&isMasterAccount()&&!gapokManualOverrides.has('salaryBasicInput'))autoFillGapokSalary(emp,'salaryBasicInput');
     });
-    document.getElementById('calcHostPerfStart')?.addEventListener('change',()=>{
+    document.getElementById('calcHostAttStart')?.addEventListener('change',()=>{
         const emp=document.getElementById('calcHostEmployee')?.value;
-        if(emp&&isMasterAccount())autoFillGapokSalary(emp,'calcHostBase');
+        if(emp&&isMasterAccount()&&!gapokManualOverrides.has('calcHostBase'))autoFillGapokSalary(emp,'calcHostBase');
     });
+    ['salaryEndDate','salaryBasicInput','salaryHostCommissionMethod'].forEach(id=>{
+        document.getElementById(id)?.addEventListener('change',()=>document.getElementById('salaryResult')?.classList.add('hidden'));
+    });
+
     function renderTrainingDates(containerId,countId,listId,dates){
         const container=document.getElementById(containerId),count=document.getElementById(countId),list=document.getElementById(listId);if(!container||!count||!list)return;
         const rows=(dates||[]).slice().sort();count.textContent=rows.length+' hari';list.innerHTML=rows.length?rows.map(d=>`<div class="rounded-lg bg-white/80 border border-amber-200 px-3 py-2 font-semibold"><i class="ph-fill ph-calendar-check mr-2 text-amber-600"></i>${escapeLateHtml(window.formatDetailedDate(d))} · Training (1 hari)</div>`).join(''):'<div class="text-xs text-amber-800">Tidak ada catatan training dalam periode ini.</div>';container.classList.toggle('hidden',!rows.length);
         if(containerId==='slipTrainingContainer'){const badge=document.getElementById('slipTrainingCountBadge');if(badge)badge.textContent=rows.length+' hari';}
     }
 
-    window.saveApiKey = async (val) => {
-        const key=String(val||'').trim();
-        if(!key) return;
+    let gloriaGeminiKeySavePending = false;
+    window.saveApiKeyFromInput = async () => {
+        if(!isMasterAccount()) return showMessage('Hanya akun Master yang dapat memperbarui API Key Gemini.','error');
+        const input=document.getElementById('geminiApiKey');
+        const button=document.getElementById('saveGeminiApiKeyButton');
+        const key=String(input?.value||'').trim();
+        if(!key) return showMessage('Masukkan API Key Gemini terlebih dahulu.','info');
+        if(gloriaGeminiKeySavePending)return;
+        gloriaGeminiKeySavePending=true;
+        if(button){button.disabled=true;button.textContent='Menyimpan...';}
         try{
             await apiCall('saveGeminiApiKey',{apiKey:key});
-            showMessage('API Key Gemini tersimpan aman di backend.','success');
-            const input=document.getElementById('geminiApiKey'); if(input) input.value='';
-        }catch(e){showMessage(e.message||'Gagal menyimpan API Key Gemini.','error');}
+            if(input)input.value='';
+            showMessage('API Key Gemini berhasil disimpan.','success');
+        }catch(e){
+            showMessage(e.message||'Gagal menyimpan API Key Gemini.','error');
+        }finally{
+            gloriaGeminiKeySavePending=false;
+            if(button){button.disabled=false;button.textContent='Simpan Key';}
+        }
     };
 
     window.sendGloriaAIQuery = async () => {
