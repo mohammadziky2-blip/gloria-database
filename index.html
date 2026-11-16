@@ -868,10 +868,10 @@
                     <span class="rounded-full border border-amber-300/60 bg-amber-50 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-amber-900">Halaman khusus Master</span>
                 </div>
                 <div class="rounded-2xl bg-gradient-to-r from-slate-950 via-amber-950 to-slate-900 text-white p-6 shadow-lg border border-amber-400/40">
-                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4"><div><p class="text-amber-300 text-[11px] font-black tracking-[.2em] uppercase">GLORIA · MASTER ONLY</p><h2 class="text-2xl font-black mt-1">GAPOK — Data Gaji Pokok Karyawan</h2><p class="text-amber-100/80 text-sm mt-2">Pusat penyimpanan satu nominal gaji pokok aktif untuk setiap karyawan. Hanya Master yang dapat membuka dan mengubah data; nominal otomatis terhubung ke Slip Gaji Individu (Admin, Packing, PKL, dan divisi lain) serta Rekap Gaji Host.</p></div><div class="flex flex-wrap gap-2"><button onclick="changeGapokPassword()" class="px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-xs font-bold"><i class="ph ph-key mr-1"></i> Ganti Sandi</button><button onclick="lockGapokPage()" class="px-3 py-2 rounded-lg bg-rose-500/20 border border-rose-300/30 text-rose-100 text-xs font-bold"><i class="ph ph-lock mr-1"></i> Kunci GAPOK</button></div></div>
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4"><div><p class="text-amber-300 text-[11px] font-black tracking-[.2em] uppercase">GLORIA · MASTER ONLY · BUILD .09</p><h2 class="text-2xl font-black mt-1">GAPOK — Data Gaji Pokok Karyawan</h2><p class="text-amber-100/80 text-sm mt-2">Pusat penyimpanan satu nominal gaji pokok aktif untuk setiap karyawan. Hanya Master yang dapat membuka dan mengubah data; nominal otomatis terhubung ke Slip Gaji Individu (Admin, Packing, PKL, dan divisi lain) serta Rekap Gaji Host.</p></div><div class="flex flex-wrap gap-2"><button onclick="changeGapokPassword()" class="px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-xs font-bold"><i class="ph ph-key mr-1"></i> Ganti Sandi</button><button onclick="lockGapokPage()" class="px-3 py-2 rounded-lg bg-rose-500/20 border border-rose-300/30 text-rose-100 text-xs font-bold"><i class="ph ph-lock mr-1"></i> Kunci GAPOK</button></div></div>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4"><div class="bg-white rounded-xl p-4 border border-slate-200"><p class="text-xs text-slate-500 font-semibold">Jumlah Karyawan</p><p id="gapokEmployeeCount" class="text-2xl font-black text-slate-900 mt-1">0</p></div><div class="bg-white rounded-xl p-4 border border-slate-200"><p class="text-xs text-slate-500 font-semibold">Gaji Pokok Sudah Diatur</p><p id="gapokConfiguredCount" class="text-2xl font-black text-emerald-700 mt-1">0</p></div><div class="bg-white rounded-xl p-4 border border-slate-200"><p class="text-xs text-slate-500 font-semibold">Belum Diatur</p><p id="gapokMissingCount" class="text-2xl font-black text-amber-700 mt-1">0</p></div><div class="bg-white rounded-xl p-4 border border-slate-200"><p class="text-xs text-slate-500 font-semibold">Karyawan dengan Perubahan Terjadwal</p><p id="gapokScheduledCount" class="text-2xl font-black text-indigo-700 mt-1">0</p></div></div>
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"><div class="p-5 border-b border-slate-100 flex flex-col gap-3"><div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3"><div><h3 class="font-black text-slate-900">Daftar Gaji Pokok</h3><p id="gapokSourceInfo" class="text-xs text-slate-500 mt-1">Daftar karyawan terhubung langsung dengan Data Karyawan aplikasi.</p><p class="text-xs text-slate-500 mt-1">Ubah nominal kapan saja dari daftar karyawan. Data identitas dan rekening mengikuti Data Karyawan; nominal tersimpan di GAPOK. Riwayat perubahan tetap dipertahankan sebagai jejak audit.</p><p class="text-xs text-indigo-700 mt-1">PIN hanya diperlukan untuk membuka dan mengubah halaman GAPOK. Pengisian otomatis pada formulir gaji Master tidak meminta PIN kedua.</p></div><div class="flex flex-wrap gap-2"><button onclick="openGapokEditor()" class="px-3 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-black"><i class="ph ph-plus-circle mr-1"></i> Tambah Data GAPOK</button><button onclick="syncGapokEmployeeRoster()" class="px-3 py-2 rounded-lg border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold"><i class="ph ph-users-three mr-1"></i> Sinkronkan Data Karyawan</button><button onclick="loadGapokData()" class="px-3 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold"><i class="ph ph-arrows-clockwise mr-1"></i> Muat Ulang</button></div></div><div class="grid grid-cols-1 md:grid-cols-[1fr_220px] gap-2"><input id="gapokSearchInput" type="search" oninput="queueGapokRender()" placeholder="Cari nama, ID karyawan, atau divisi..." class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"><select id="gapokStatusFilter" onchange="gapokCurrentPage=1;renderGapokTable()" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white"><option value="all">Semua karyawan</option><option value="Aktif">Status Aktif</option><option value="Training">Status Training</option><option value="missing">Gaji belum diatur</option><option value="scheduled">Ada perubahan terjadwal</option></select></div></div><div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead class="bg-slate-50 text-slate-600 uppercase text-[11px]"><tr><th class="p-4">Nama Karyawan</th><th class="p-4">Divisi / Status</th><th class="p-4">Rekening</th><th class="p-4 min-w-[210px]">Gaji Pokok (Rp)</th><th class="p-4 text-right">Aksi</th></tr></thead><tbody id="gapokTableBody" class="divide-y divide-slate-100"><tr><td colspan="5" class="p-8 text-center text-slate-400">Masukkan kata sandi khusus GAPOK untuk memuat data.</td></tr></tbody></table></div><div id="gapokPagination" class="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100 px-4 py-3 text-xs text-slate-600"></div></div>
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"><div class="p-5 border-b border-slate-100 flex flex-col gap-3"><div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3"><div><h3 class="font-black text-slate-900">Daftar Gaji Pokok</h3><p id="gapokSourceInfo" class="text-xs text-slate-500 mt-1">Memuat daftar karyawan langsung dari sumber Employees… dengan Data Karyawan aplikasi.</p><p class="text-xs text-slate-500 mt-1">Ubah nominal kapan saja dari daftar karyawan. Data identitas dan rekening mengikuti Data Karyawan; nominal tersimpan di GAPOK. Riwayat perubahan tetap dipertahankan sebagai jejak audit.</p><p class="text-xs text-indigo-700 mt-1">PIN hanya diperlukan untuk membuka dan mengubah halaman GAPOK. Pengisian otomatis pada formulir gaji Master tidak meminta PIN kedua.</p></div><div class="flex flex-wrap gap-2"><button onclick="openGapokEditor()" class="px-3 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-black"><i class="ph ph-plus-circle mr-1"></i> Tambah Data GAPOK</button><button onclick="syncGapokEmployeeRoster()" class="px-3 py-2 rounded-lg border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold"><i class="ph ph-users-three mr-1"></i> Sinkronkan Data Karyawan</button><button onclick="loadGapokData()" class="px-3 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold"><i class="ph ph-arrows-clockwise mr-1"></i> Muat Ulang</button></div></div><div class="grid grid-cols-1 md:grid-cols-[1fr_220px] gap-2"><input id="gapokSearchInput" type="search" oninput="queueGapokRender()" placeholder="Cari nama, ID karyawan, atau divisi..." class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"><select id="gapokStatusFilter" onchange="gapokCurrentPage=1;renderGapokTable()" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white"><option value="all">Semua karyawan</option><option value="Aktif">Status Aktif</option><option value="Training">Status Training</option><option value="missing">Gaji belum diatur</option><option value="scheduled">Ada perubahan terjadwal</option></select></div></div><div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead class="bg-slate-50 text-slate-600 uppercase text-[11px]"><tr><th class="p-4">Nama Karyawan</th><th class="p-4">Divisi / Status</th><th class="p-4">Rekening</th><th class="p-4 min-w-[210px]">Gaji Pokok (Rp)</th><th class="p-4 text-right">Aksi</th></tr></thead><tbody id="gapokTableBody" class="divide-y divide-slate-100"><tr><td colspan="5" class="p-8 text-center text-slate-400">Masukkan kata sandi khusus GAPOK untuk memuat data.</td></tr></tbody></table></div><div id="gapokPagination" class="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100 px-4 py-3 text-xs text-slate-600"></div></div>
             </div>
 
             <!-- 3. Attendance Input View -->
@@ -2206,8 +2206,8 @@
     // GitHub Pages: URL /exec di gloria-config.js; komunikasi melalui iframe bridge Apps Script.
     // Hosting langsung Apps Script tetap memakai google.script.run tanpa URL.
     const GAS_URL = String(window.GLORIA_CONFIG?.gasWebAppUrl || '').trim();
-    const EXPECTED_BACKEND_BUILD_ID = 'GLORIA-2026.11.16.07';
-    const EXPECTED_BACKEND_SCHEMA = '2026.11.16.7'; 
+    const EXPECTED_BACKEND_BUILD_ID = 'GLORIA-2026.11.16.09';
+    const EXPECTED_BACKEND_SCHEMA = '2026.11.16.9'; 
     
     let state = {
         user: null,
@@ -2507,7 +2507,7 @@
     // Cache memori hanya untuk permintaan baca. Semua cache dihapus setelah mutasi sukses.
     const GLORIA_READ_TTL = {
         getMonthlyBackup:12000, getHostPerformance:20000, getHostSchedule:12000,
-        getGapokData:5000, getGapokHistory:7000, getGapokSalaryForPayroll:8000, getHostSalaryDrafts:10000, getSalary:10000
+        getGapokData:30000, getGapokHistory:7000, getGapokSalaryForPayroll:8000, getHostSalaryDrafts:10000, getSalary:10000
     };
     const GLORIA_WRITE_ACTIONS = new Set([
         'addEmployee','updateEmployee','deleteEmployee','editEmployeeBank',
@@ -2540,7 +2540,7 @@
         const endpoint = await getGloriaBridge();
         const id = `gloria_${Date.now()}_${++gloriaBridgeCounter}`;
         return new Promise((resolve, reject) => {
-            const timeoutMs = action === 'backupDatabase' ? 180000 : (action === 'getData' ? 45000 : 30000);
+            const timeoutMs = action === 'backupDatabase' ? 180000 : (action === 'getData' ? 45000 : (action === 'getGapokData' ? 60000 : 30000));
             const timeout = setTimeout(() => {
                 gloriaPendingRequests.delete(id);
                 reject(new Error('Server tidak merespons permintaan ' + action + ' dalam '+Math.round(timeoutMs/1000)+' detik. Periksa Apps Script > Executions dan koneksi Web App.'));
@@ -4581,71 +4581,66 @@
     }
     function mergeGapokRowsWithApplicationEmployees(serverRows, salaryByEmployee){
         const serverList=Array.isArray(serverRows)?serverRows.filter(x=>x&&typeof x==='object'):[];
+        const appList=Array.isArray(state.employees)?state.employees.filter(x=>x&&typeof x==='object'):[];
+        // Regresi Build .08 dikoreksi: bila endpoint GAPOK kosong, gunakan roster yang
+        // sudah berhasil dimuat oleh getData agar daftar karyawan tidak hilang dari layar.
+        // Setiap aksi simpan tetap diverifikasi ulang oleh backend terhadap Employees.
+        const useAppFallback=serverList.length===0&&appList.length>0;
+        const source=useAppFallback?appList:serverList;
         const serverMap=new Map();
         serverList.forEach(row=>{
             const id=String(row.employeeId??row.id??'').trim();
             if(id&&!serverMap.has(id))serverMap.set(id,row);
         });
         const salaryMap=salaryByEmployee&&typeof salaryByEmployee==='object'?salaryByEmployee:{};
-        const appList=Array.isArray(state.employees)?state.employees.filter(x=>x&&typeof x==='object'):[];
-        const source=appList.length?appList:serverList;
-        const appIdCounts=new Map();
-        appList.forEach(emp=>{const id=String(emp.id??emp.employeeId??'').trim();if(id)appIdCounts.set(id,(appIdCounts.get(id)||0)+1);});
-        const serverIdCounts=new Map();
-        serverList.forEach(emp=>{const id=String(emp.employeeId??emp.id??'').trim();if(id)serverIdCounts.set(id,(serverIdCounts.get(id)||0)+1);});
-        const seen=new Set(),merged=[],unlinkedKeys=new Set();
-        function buildRow(emp,index,sourceName){
+        const appIdCounts=new Map(),serverIdCounts=new Map();
+        appList.forEach(emp=>{
             const id=String(emp.id??emp.employeeId??'').trim();
+            if(id)appIdCounts.set(id,(appIdCounts.get(id)||0)+1);
+        });
+        serverList.forEach(emp=>{
+            const id=String(emp.employeeId??emp.id??'').trim();
+            if(id)serverIdCounts.set(id,(serverIdCounts.get(id)||0)+1);
+        });
+        const seen=new Set(),merged=[];
+        function buildRow(emp,index){
+            const id=String(emp.employeeId??emp.id??'').trim();
             const server=id?(serverMap.get(id)||{}):{};
             const salary=id?(salaryMap[id]||server):server;
-            const name=String(emp.name||emp.employeeName||server.name||salary.name||'').trim();
-            const division=String(emp.division||server.division||salary.division||'').trim();
             let identityIssue='';
             if(!id)identityIssue='ID karyawan belum tersedia';
             else if((appIdCounts.get(id)||0)>1||(serverIdCounts.get(id)||0)>1)identityIssue='ID karyawan duplikat';
             return {
                 ...salary,...server,
                 employeeId:id,
-                rowKey:id?(identityIssue?'duplicate_'+encodeURIComponent(id)+'_'+index:encodeURIComponent(id)):'unlinked_'+sourceName+'_'+index,
-                name:name||'(Nama belum diisi)',division:division,
+                rowKey:id?(identityIssue?'duplicate_'+encodeURIComponent(id)+'_'+index:encodeURIComponent(id)):'unlinked_'+(useAppFallback?'app':'server')+'_'+index,
+                name:String(emp.name||emp.employeeName||server.name||salary.name||'').trim()||'(Nama belum diisi)',
+                division:String(emp.division||server.division||salary.division||'').trim(),
                 bankName:String(emp.bankName??server.bankName??''),
                 bankAccount:String(emp.bankAccount??server.bankAccount??''),
                 bankAccountName:String(emp.bankAccountName??server.bankAccountName??''),
                 employmentStatus:String(emp.employmentStatus||server.employmentStatus||'Aktif'),
                 basicSalary:Object.prototype.hasOwnProperty.call(salary,'basicSalary')?salary.basicSalary:
                     (Object.prototype.hasOwnProperty.call(server,'basicSalary')?server.basicSalary:null),
-                updatedAt:salary.updatedAt||server.updatedAt||'',updatedBy:salary.updatedBy||server.updatedBy||'',
+                updatedAt:salary.updatedAt||server.updatedAt||'',
+                updatedBy:salary.updatedBy||server.updatedBy||'',
                 currentRecordId:salary.currentRecordId||server.currentRecordId||'',
                 effectiveFrom:salary.effectiveFrom||server.effectiveFrom||'',
                 historyCount:Number(salary.historyCount??server.historyCount??0),
                 nextEffectiveFrom:salary.nextEffectiveFrom||server.nextEffectiveFrom||'',
                 nextBasicSalary:salary.nextBasicSalary??server.nextBasicSalary??null,
-                identityIssue:identityIssue
+                identityIssue:identityIssue,
+                rosterSource:useAppFallback?'application-state':'gapok-backend',
+                backendVerified:!useAppFallback
             };
         }
-        source.forEach((emp,index)=>{
-            const id=String(emp.id??emp.employeeId??'').trim();
-            if(id){
-                if(seen.has(id))return;
-                seen.add(id);
-                merged.push(buildRow(emp,index,'app'));
-            }else{
-                // Jangan hilangkan baris lama tanpa ID secara diam-diam. Tampilkan sebagai
-                // data perlu perbaikan, tetapi nonaktifkan semua aksi gaji agar tidak salah taut.
-                const key=[String(emp.name||emp.employeeName||'').trim().toLowerCase(),String(emp.division||'').trim().toLowerCase()].join('|');
-                const dedupeKey=key+'|'+index;
-                unlinkedKeys.add(dedupeKey);
-                merged.push(buildRow(emp,index,'app'));
-            }
-        });
-        serverList.forEach((row,index)=>{
+        source.forEach((row,index)=>{
             const id=String(row.employeeId??row.id??'').trim();
             if(id){
                 if(seen.has(id))return;
-                seen.add(id);merged.push(buildRow(row,index,'server'));
-            }else if(!appList.length){
-                merged.push(buildRow(row,index,'server'));
+                seen.add(id);
             }
+            merged.push(buildRow(row,index));
         });
         merged.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'id'));
         return merged;
@@ -4653,69 +4648,77 @@
     function validGapokEmployeeCount(){
         return (gapokRows||[]).filter(x=>String(x.employeeId||'').trim()&&!x.identityIssue).length;
     }
-    async function refreshGapokEmployeeSource_(){
-        const res=await apiCallRaw('getData',{});
-        if(!res||!res.success)throw new Error(res?.error||'Data Karyawan tidak berhasil disinkronkan.');
-        if(!state.isMockMode){
-            if(String(res.backendBuildId||'')!==EXPECTED_BACKEND_BUILD_ID)throw new Error('Backend belum diperbarui ke build '+EXPECTED_BACKEND_BUILD_ID+'.');
-            if(String(res.schemaVersion||'')!==EXPECTED_BACKEND_SCHEMA)throw new Error('Schema backend tidak sesuai. Ditemukan '+String(res.schemaVersion||'-')+'.');
-        }
-        applyServerData(res);
-        return Array.isArray(state.employees)?state.employees:[];
-    }
+    // GAPOK hanya membaca endpoint khusus yang sudah mengembalikan roster Employees
+    // beserta rekening/status dan ringkasan gaji. Jangan memanggil getData di sini:
+    // getData memicu render ulang Dashboard, attendance, audit log, blocked users, dll.
+    // Render global tersebut tidak diperlukan untuk membuka GAPOK dan dapat membekukan tab
+    // bila riwayat operasional sudah besar.
+    let gapokLoadPromise=null;
+    let gapokOpenPromise=null;
     async function loadGapokData(asOfDate,options={}){
         if(!isMasterAccount())throw new Error('Akses GAPOK hanya untuk Master.');
         if(!gapokTokenValid()){gapokAccessToken='';gapokAccessExpiresAt=0;throw new Error('Sesi keamanan GAPOK berakhir. Buka kembali dengan kata sandi khusus.');}
-        const hasValidRoster=Array.isArray(state.employees)&&state.employees.some(emp=>String(emp?.id??emp?.employeeId??'').trim());
-        if(options.forceRosterRefresh||!hasValidRoster){
-            await refreshGapokEmployeeSource_();
-        }
-        const payload={gapokToken:gapokAccessToken};
-        if(asOfDate)payload.asOfDate=asOfDate;
-        let r=options.forceApiRefresh?await apiCallRaw('getGapokData',payload):await apiCall('getGapokData',payload);
-        const serverRows=Array.isArray(r.data)?r.data:(Array.isArray(r.employees)?r.employees:(Array.isArray(r.data?.employees)?r.data.employees:[]));
-        gapokSourceDiagnostics=r.employeeDiagnostics&&typeof r.employeeDiagnostics==='object'?r.employeeDiagnostics:{};
-        gapokRows=mergeGapokRowsWithApplicationEmployees(serverRows,r.salaryByEmployee);
-        // Jika kedua sumber kosong, lakukan satu kali sinkronisasi penuh dan baca ulang tanpa cache.
-        if(!gapokRows.length&&!options._retried){
-            await refreshGapokEmployeeSource_();
-            r=await apiCallRaw('getGapokData',payload);
-            const retryRows=Array.isArray(r.data)?r.data:(Array.isArray(r.employees)?r.employees:(Array.isArray(r.data?.employees)?r.data.employees:[]));
-            gapokSourceDiagnostics=r.employeeDiagnostics&&typeof r.employeeDiagnostics==='object'?r.employeeDiagnostics:gapokSourceDiagnostics;
-            gapokRows=mergeGapokRowsWithApplicationEmployees(retryRows,r.salaryByEmployee);
-        }
-        gapokCurrentPage=1;
-        const sourceInfo=document.getElementById('gapokSourceInfo');
-        const diag=gapokSourceDiagnostics||{};
-        if(sourceInfo){
-            const appCount=Array.isArray(state.employees)?state.employees.length:0;
-            const apiCount=Number(r.employeeCount??serverRows.length);
+        if(gapokLoadPromise)return gapokLoadPromise;
+        const task=(async()=>{
+            const payload={gapokToken:gapokAccessToken};
+            if(asOfDate)payload.asOfDate=asOfDate;
+            if(options.forceApiRefresh)payload.forceRefresh=true;
+            const r=options.forceApiRefresh
+                ?await apiCallRaw('getGapokData',payload)
+                :await apiCall('getGapokData',payload);
+            if(!r||r.success===false)throw new Error(r?.error||'Data GAPOK tidak berhasil dimuat.');
+            const serverRows=Array.isArray(r.data)?r.data:
+                (Array.isArray(r.employees)?r.employees:
+                (Array.isArray(r.data?.employees)?r.data.employees:[]));
+            gapokSourceDiagnostics=r.employeeDiagnostics&&typeof r.employeeDiagnostics==='object'
+                ?r.employeeDiagnostics:{};
+            const appRoster=Array.isArray(state.employees)?state.employees:[];
+            const usedFallback=serverRows.length===0&&appRoster.length>0;
+            gapokRows=mergeGapokRowsWithApplicationEmployees(serverRows,r.salaryByEmployee);
+            gapokCurrentPage=1;
+            const sourceInfo=document.getElementById('gapokSourceInfo');
+            const diag=gapokSourceDiagnostics||{};
             const validCount=validGapokEmployeeCount();
             const invalidCount=gapokRows.length-validCount;
-            sourceInfo.textContent=gapokRows.length
-                ?`Terhubung dengan ${gapokRows.length.toLocaleString('id-ID')} baris karyawan · ${validCount.toLocaleString('id-ID')} ID valid · ${invalidCount.toLocaleString('id-ID')} perlu perbaikan identitas. Data nominal dan riwayat berasal dari database GAPOK.`
-                :`Belum ada baris karyawan yang dapat dimuat. Sheet: ${diag.sheetName||'Employees'} · Baris data: ${Number(diag.rawDataRows||0)} · Data terbaca backend: ${Number(diag.parsedRows??apiCount)} · Data aplikasi: ${appCount}.`;
-            if(Number(diag.missingIdRows||0)>0||Number(diag.duplicateIdGroups||0)>0||Number(diag.missingNameRows||0)>0){
-                sourceInfo.textContent+=` Perlu pemeriksaan: ${Number(diag.missingIdRows||0)} baris tanpa ID, ${Number(diag.duplicateIdGroups||0)} kelompok ID ganda, ${Number(diag.missingNameRows||0)} baris tanpa nama.`;
-                sourceInfo.classList.add('text-amber-700');
-            }else sourceInfo.classList.remove('text-amber-700');
-        }
-        renderGapokTable();
-        if(!gapokRows.length){
-            const body=document.getElementById('gapokTableBody');
-            if(body)body.innerHTML='<tr><td colspan="5" class="p-8 text-center text-amber-700">Data karyawan belum berhasil dimuat dari sumber aplikasi. Tekan “Sinkronkan Data Karyawan”. Jika tetap kosong, periksa sheet Employees dan deployment backend.</td></tr>';
-        }
-        return gapokRows;
+            const rawRows=Number(diag.rawDataRows||0);
+            const parsedRows=Number(diag.parsedRows??r.employeeCount??serverRows.length);
+            const backendBuild=String(r.buildId||r.backendBuildId||'tidak dilaporkan');
+            if(sourceInfo){
+                if(usedFallback){
+                    sourceInfo.textContent=`PERLU PEMERIKSAAN · Build ${backendBuild} · Backend GAPOK: ${serverRows.length} baris; Data Karyawan aplikasi: ${appRoster.length} baris. Daftar aplikasi ditampilkan sementara agar nama tidak hilang. Setiap penyimpanan tetap diperiksa backend. Sheet ${diag.sheetName||'Employees'}: ${rawRows} baris data, ${parsedRows} terbaca.`;
+                    sourceInfo.classList.add('text-amber-700');
+                }else if(gapokRows.length){
+                    sourceInfo.textContent=`Build ${backendBuild} · Sumber ${diag.spreadsheetName||'database GLORIA'} / sheet ${diag.sheetName||'Employees'} · ${gapokRows.length.toLocaleString('id-ID')} karyawan · ${validCount.toLocaleString('id-ID')} ID valid · ${invalidCount.toLocaleString('id-ID')} perlu perbaikan identitas.`;
+                    sourceInfo.classList.remove('text-amber-700');
+                }else{
+                    const headers=Array.isArray(diag.headers)?diag.headers.filter(Boolean).join(' | '):'tidak tersedia';
+                    sourceInfo.textContent=`BELUM ADA ROSTER · Build ${backendBuild} · Spreadsheet ${diag.spreadsheetName||'tidak diketahui'} (ID akhir ${diag.spreadsheetIdSuffix||'-'}) · Sheet ${diag.sheetName||'Employees'} ada: ${diag.sheetExists?'ya':'tidak'} · Baris data: ${rawRows} · Terbaca: ${parsedRows} · Header: ${headers}. Bandingkan dengan menu Data Karyawan dan pastikan deployment memakai spreadsheet yang sama.`;
+                    sourceInfo.classList.add('text-rose-700');
+                }
+                if(Number(diag.missingIdRows||0)>0||Number(diag.duplicateIdGroups||0)>0||Number(diag.missingNameRows||0)>0){
+                    sourceInfo.textContent+=` Pemeriksaan backend: ${Number(diag.validIdRows||0)} ID terisi, ${Number(diag.missingIdRows||0)} baris tanpa ID, ${Number(diag.duplicateIdGroups||0)} kelompok ID ganda, ${Number(diag.missingNameRows||0)} baris tanpa nama.`;
+                }
+            }
+            renderGapokTable();
+            if(!gapokRows.length){
+                const body=document.getElementById('gapokTableBody');
+                if(body)body.innerHTML='<tr><td colspan="5" class="p-8 text-center text-amber-700">Backend GAPOK tidak menemukan data karyawan. Gunakan Sinkronkan Data Karyawan untuk membaca ulang sumber Employees. Jika tetap kosong, periksa spreadsheet ID dan header sheet Employees.</td></tr>';
+            }
+            return gapokRows;
+        })();
+        gapokLoadPromise=task;
+        try{return await task;}
+        finally{if(gapokLoadPromise===task)gapokLoadPromise=null;}
     }
     window.syncGapokEmployeeRoster=async()=>{
         if(!isMasterAccount()||!gapokTokenValid())return showMessage('Buka kunci GAPOK terlebih dahulu.','error');
         const buttons=Array.from(document.querySelectorAll('#gapokView button[onclick="syncGapokEmployeeRoster()"]'));
         buttons.forEach(btn=>{btn.disabled=true;btn.dataset.oldText=btn.innerHTML;btn.innerHTML='<i class="ph ph-spinner animate-spin mr-1"></i> Menyinkronkan...';});
         try{
-            await loadGapokData(null,{forceRosterRefresh:true,forceApiRefresh:true});
+            await loadGapokData(null,{forceApiRefresh:true});
             const valid=validGapokEmployeeCount(),invalid=Math.max(0,gapokRows.length-valid);
-            if(valid)showMessage(`${valid} karyawan berhasil disinkronkan ke GAPOK.${invalid?' '+invalid+' baris perlu perbaikan ID.':''}`,'success');
-            else showMessage('Sinkronisasi selesai, tetapi belum ada karyawan dengan ID valid. Periksa keterangan sumber data di halaman GAPOK.','error');
+            if(valid)showMessage(`${valid} karyawan berhasil dibaca langsung dari Employees.${invalid?' '+invalid+' baris perlu perbaikan ID.':''}`,'success');
+            else showMessage('Pembacaan selesai, tetapi backend tidak menemukan karyawan dengan ID valid. Periksa keterangan sumber data.','error');
         }catch(e){showMessage(e.message||'Sinkronisasi karyawan gagal.','error');}
         finally{buttons.forEach(btn=>{btn.disabled=false;btn.innerHTML=btn.dataset.oldText||'<i class="ph ph-users-three mr-1"></i> Sinkronkan Data Karyawan';delete btn.dataset.oldText;});}
     };
@@ -4804,8 +4807,18 @@
 
     window.openGapokPage=async()=>{
         if(!isMasterAccount()){showMessage('Halaman GAPOK hanya untuk akun Master.','error');return;}
-        if(gapokTokenValid()){try{await loadGapokData();return;}catch(e){window.lockGapokPage(true);}}else if(gapokAccessToken){window.lockGapokPage(true);}
-        try{await requestGapokUnlock(null);}catch(e){showMessage(e.message||'Gagal memeriksa keamanan GAPOK.','error');}
+        if(gapokOpenPromise)return gapokOpenPromise;
+        const task=(async()=>{
+            if(gapokTokenValid()){
+                try{await loadGapokData();return;}
+                catch(e){window.lockGapokPage(true);showMessage(e.message||'Gagal memuat GAPOK.','error');return;}
+            }
+            if(gapokAccessToken)window.lockGapokPage(true);
+            try{await requestGapokUnlock(null);}
+            catch(e){showMessage(e.message||'Gagal memeriksa keamanan GAPOK.','error');}
+        })();
+        gapokOpenPromise=task;
+        try{await task;}finally{if(gapokOpenPromise===task)gapokOpenPromise=null;}
     };
     window.loadGapokData=async()=>{try{await loadGapokData();showMessage('Data GAPOK berhasil dimuat.','success');}catch(e){showMessage(e.message||'Gagal memuat GAPOK.','error');if(/sesi keamanan/i.test(e.message||''))requestGapokUnlock(null).catch(()=>{});}};
     window.saveGapokSalary=async(employeeId,inputId='')=>{
@@ -4836,7 +4849,7 @@
             }
             const select=document.getElementById('gapokEditEmployee');
             const selectableEmployees=gapokRows.filter(emp=>String(emp.employeeId||'').trim()&&!emp.identityIssue);
-            if(!selectableEmployees.length)throw new Error('Belum ada karyawan dengan ID valid. Sinkronkan Data Karyawan dan perbaiki ID yang bermasalah terlebih dahulu.');
+            if(!selectableEmployees.length){const d=gapokSourceDiagnostics||{};throw new Error(`Belum ada karyawan yang dapat dipilih. Data Karyawan di aplikasi: ${(state.employees||[]).length}; data yang diterima GAPOK: ${gapokRows.length}; ID valid: ${validGapokEmployeeCount()}; baris sheet Employees: ${Number(d.rawDataRows||0)}; terbaca backend: ${Number(d.parsedRows||0)}. Periksa keterangan sumber data di atas tabel.`);}
             select.innerHTML='<option value="">-- Pilih Karyawan --</option>'+selectableEmployees.map(emp=>`<option value="${escapeLateHtml(emp.employeeId)}">${escapeLateHtml(emp.name)} · ${escapeLateHtml(emp.division)}</option>`).join('');
             select.value=String(employeeId||record?.employeeId||'');
             select.disabled=!!record;
