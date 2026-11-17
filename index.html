@@ -2261,8 +2261,8 @@
     // GitHub Pages: URL /exec di gloria-config.js; komunikasi melalui iframe bridge Apps Script.
     // Hosting langsung Apps Script tetap memakai google.script.run tanpa URL.
     const GAS_URL = String(window.GLORIA_CONFIG?.gasWebAppUrl || '').trim();
-    const EXPECTED_BACKEND_BUILD_ID = 'GLORIA-2026.11.16.10';
-    const EXPECTED_BACKEND_SCHEMA = '2026.11.16.10'; 
+    const EXPECTED_BACKEND_BUILD_ID = 'GLORIA-2026.11.16.11';
+    const EXPECTED_BACKEND_SCHEMA = '2026.11.16.11'; 
     
     let state = {
         user: null,
@@ -4629,6 +4629,11 @@
         if(!/^\d{4}-\d{2}-\d{2}$/.test(s))return 'Tanggal belum tercatat';
         return s.slice(8,10)+'/'+s.slice(5,7)+'/'+s.slice(0,4);
     }
+    function gapokEmployeeId_(employee){
+        if(!employee||typeof employee!=='object')return '';
+        const raw=employee.employeeId??employee.employeeID??employee.employee_id??employee.empId??employee.id??employee.ID??employee['ID Karyawan']??employee['Employee ID']??'';
+        return String(raw==null?'':raw).trim();
+    }
     function mergeGapokRowsWithApplicationEmployees(serverRows, salaryByEmployee){
         const serverList=Array.isArray(serverRows)?serverRows.filter(x=>x&&typeof x==='object'):[];
         const appList=Array.isArray(state.employees)?state.employees.filter(x=>x&&typeof x==='object'):[];
@@ -4639,22 +4644,22 @@
         const source=useAppFallback?appList:serverList;
         const serverMap=new Map();
         serverList.forEach(row=>{
-            const id=String(row.employeeId??row.id??'').trim();
+            const id=gapokEmployeeId_(row);
             if(id&&!serverMap.has(id))serverMap.set(id,row);
         });
         const salaryMap=salaryByEmployee&&typeof salaryByEmployee==='object'?salaryByEmployee:{};
         const appIdCounts=new Map(),serverIdCounts=new Map();
         appList.forEach(emp=>{
-            const id=String(emp.id??emp.employeeId??'').trim();
+            const id=gapokEmployeeId_(emp);
             if(id)appIdCounts.set(id,(appIdCounts.get(id)||0)+1);
         });
         serverList.forEach(emp=>{
-            const id=String(emp.employeeId??emp.id??'').trim();
+            const id=gapokEmployeeId_(emp);
             if(id)serverIdCounts.set(id,(serverIdCounts.get(id)||0)+1);
         });
         const seen=new Set(),merged=[];
         function buildRow(emp,index){
-            const id=String(emp.employeeId??emp.id??'').trim();
+            const id=gapokEmployeeId_(emp);
             const server=id?(serverMap.get(id)||{}):{};
             const salary=id?(salaryMap[id]||server):server;
             let identityIssue='';
@@ -4685,7 +4690,7 @@
             };
         }
         source.forEach((row,index)=>{
-            const id=String(row.employeeId??row.id??'').trim();
+            const id=gapokEmployeeId_(row);
             if(id){
                 if(seen.has(id))return;
                 seen.add(id);
@@ -4744,6 +4749,11 @@
                     const headers=Array.isArray(diag.headers)?diag.headers.filter(Boolean).join(' | '):'tidak tersedia';
                     sourceInfo.textContent=`BELUM ADA ROSTER · Build ${backendBuild} · Spreadsheet ${diag.spreadsheetName||'tidak diketahui'} (ID akhir ${diag.spreadsheetIdSuffix||'-'}) · Sheet ${diag.sheetName||'Employees'} ada: ${diag.sheetExists?'ya':'tidak'} · Baris data: ${rawRows} · Terbaca: ${parsedRows} · Header: ${headers}. Bandingkan dengan menu Data Karyawan dan pastikan deployment memakai spreadsheet yang sama.`;
                     sourceInfo.classList.add('text-rose-700');
+                }
+                if(diag.idColumnNumber){
+                    let n=Number(diag.idColumnNumber),columnLetter='';
+                    while(n>0){const remainder=(n-1)%26;columnLetter=String.fromCharCode(65+remainder)+columnLetter;n=Math.floor((n-1)/26);}
+                    sourceInfo.textContent+=` Pemetaan ID: kolom ${columnLetter}${diag.idColumnHeader?' ('+diag.idColumnHeader+')':''}${diag.idColumnDetected?' berdasarkan header':' memakai posisi lama'}.`;
                 }
                 if(Number(diag.missingIdRows||0)>0||Number(diag.duplicateIdGroups||0)>0||Number(diag.missingNameRows||0)>0){
                     sourceInfo.textContent+=` Pemeriksaan backend: ${Number(diag.validIdRows||0)} ID terisi, ${Number(diag.missingIdRows||0)} baris tanpa ID, ${Number(diag.duplicateIdGroups||0)} kelompok ID ganda, ${Number(diag.missingNameRows||0)} baris tanpa nama.`;
