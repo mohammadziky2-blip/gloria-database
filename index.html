@@ -2459,6 +2459,9 @@
     let gloriaBridgeIframe = null;
     let gloriaBridgeOrigin = '';
     let gloriaBridgeCounter = 0;
+    // Diagnostik handshake: bedakan bridge versi lama, origin tak dikenal, dan iframe yang tidak termuat.
+    let gloriaBridgeLastDiagnostic = '';
+    let gloriaBridgeFrameLoaded = false;
     const gloriaPendingRequests = new Map();
 
     function gloriaGoogleBridgeOrigin(origin) {
@@ -2476,13 +2479,20 @@
 
     function gloriaOnBridgeMessage(event) {
         const message = event.data;
-        if (!message || message.channel !== GLORIA_BRIDGE_CHANNEL || !gloriaGoogleBridgeOrigin(event.origin)) return;
+        if (!message || message.channel !== GLORIA_BRIDGE_CHANNEL) return;
+        // Abaikan pesan dari frame lain sebelum memproses status apa pun.
+        if (!gloriaBridgeIframe || event.source !== gloriaBridgeIframe.contentWindow) return;
+        if (!gloriaGoogleBridgeOrigin(event.origin)) {
+            gloriaBridgeLastDiagnostic = 'Origin iframe Bridge tidak dikenali: ' + String(event.origin || '(opaque/null)');
+            return;
+        }
         if (message.kind === 'ready') {
-            // Hanya iframe bridge yang benar-benar dibuat oleh aplikasi yang boleh menyelesaikan handshake.
-            // Pesan ready dari iframe Apps Script lain tidak boleh menerima token/sandi pengguna.
-            if (!gloriaBridgePromise || gloriaBridgeEndpoint || !gloriaBridgeIframe || event.source !== gloriaBridgeIframe.contentWindow) return;
+            if (!gloriaBridgePromise || gloriaBridgeEndpoint) return;
             if (message.buildId !== EXPECTED_BACKEND_BUILD_ID || message.schemaVersion !== EXPECTED_BACKEND_SCHEMA) {
-                // Build lama akan dilaporkan saat menunggu bridge selesai.
+                const actualBuild = String(message.buildId || '(tidak dikirim)');
+                const actualSchema = String(message.schemaVersion || '(tidak dikirim)');
+                gloriaBridgeLastDiagnostic = 'Versi Bridge/Backend tidak cocok. Frontend mengharapkan build ' + EXPECTED_BACKEND_BUILD_ID + ' dan schema ' + EXPECTED_BACKEND_SCHEMA + ', tetapi menerima build ' + actualBuild + ' dan schema ' + actualSchema + '. Deploy ulang Apps Script sebagai New version dan pastikan file GloriaBridge.html terbaru ikut tersimpan.';
+                window.dispatchEvent(new CustomEvent('gloria-bridge-error', {detail: gloriaBridgeLastDiagnostic}));
                 return;
             }
             gloriaBridgeEndpoint = event.source;
@@ -2505,13 +2515,16 @@
         if (!gloriaValidGasUrl()) return Promise.reject(new Error('URL backend belum diisi / tidak valid. Edit file gloria-config.js di GitHub dan isi URL deployment Apps Script yang berakhir /exec.'));
         if (gloriaBridgePromise) return gloriaBridgePromise;
         gloriaBridgePromise = new Promise((resolve, reject) => {
-            // Handler ready didaftarkan lebih dulu agar tidak kehilangan pesan cepat.
+            // Handler ready/error didaftarkan lebih dulu agar tidak kehilangan pesan cepat.
             let completed = false;
+            gloriaBridgeLastDiagnostic = '';
+            gloriaBridgeFrameLoaded = false;
             const finish = (error) => {
                 if (completed) return;
                 completed = true;
                 clearTimeout(timeout);
                 window.removeEventListener('gloria-bridge-ready', onReady);
+                window.removeEventListener('gloria-bridge-error', onBridgeError);
                 if (error) {
                     gloriaBridgePromise = null;
                     gloriaBridgeEndpoint = null;
@@ -2521,8 +2534,20 @@
                 } else resolve(gloriaBridgeEndpoint);
             };
             const onReady = () => finish(null);
+            const onBridgeError = (event) => finish(new Error(String(event.detail || gloriaBridgeLastDiagnostic || 'Versi Bridge/Backend tidak cocok.')));
             window.addEventListener('gloria-bridge-ready', onReady);
-            const timeout = setTimeout(() => finish(new Error('Jembatan Google Apps Script tidak merespons. Periksa deployment /exec, file GloriaBridge.html, izin akses "Anyone", dan kemungkinan iframe diblokir browser.')), 35000);
+            window.addEventListener('gloria-bridge-error', onBridgeError);
+            const timeout = setTimeout(() => {
+                let detail;
+                if (gloriaBridgeLastDiagnostic) {
+                    detail = gloriaBridgeLastDiagnostic;
+                } else if (gloriaBridgeFrameLoaded) {
+                    detail = 'Iframe Apps Script berhasil dimuat, tetapi tidak mengirim sinyal siap. Periksa apakah deployment Web App memakai versi terbaru dan aksesnya Anyone. Jika muncul halaman login Google, ubah izin akses deployment.';
+                } else {
+                    detail = 'Iframe Apps Script tidak menyelesaikan pemuatan atau tidak mengirim sinyal siap. Periksa URL /exec, izin akses Anyone, deployment Web App, dan apakah browser/ekstensi memblokir iframe pihak ketiga.';
+                }
+                finish(new Error(detail));
+            }, 35000);
             const frame = document.createElement('iframe');
             gloriaBridgeIframe = frame;
             frame.src = GAS_URL.replace(/\/$/,'') + '?bridge=1';
@@ -2530,7 +2555,8 @@
             frame.setAttribute('title', 'GLORIA backend transport');
             frame.referrerPolicy = 'strict-origin-when-cross-origin';
             frame.style.cssText = 'position:absolute;left:-99999px;top:0;width:1px;height:1px;border:0;opacity:0;pointer-events:none';
-            frame.addEventListener('error', () => finish(new Error('Iframe Google Apps Script gagal dimuat.')));
+            frame.addEventListener('load', () => { gloriaBridgeFrameLoaded = true; });
+            frame.addEventListener('error', () => finish(new Error('Iframe Google Apps Script gagal dimuat. Periksa URL deployment /exec dan izin akses Anyone.')));
             document.body.appendChild(frame);
         });
         return gloriaBridgePromise;
