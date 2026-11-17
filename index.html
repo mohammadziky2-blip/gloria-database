@@ -2261,8 +2261,8 @@
     // GitHub Pages: URL /exec di gloria-config.js; komunikasi melalui iframe bridge Apps Script.
     // Hosting langsung Apps Script tetap memakai google.script.run tanpa URL.
     const GAS_URL = String(window.GLORIA_CONFIG?.gasWebAppUrl || '').trim();
-    const EXPECTED_BACKEND_BUILD_ID = 'GLORIA-2026.11.16.11';
-    const EXPECTED_BACKEND_SCHEMA = '2026.11.16.11'; 
+    const EXPECTED_BACKEND_BUILD_ID = 'GLORIA-2026.11.17.02';
+    const EXPECTED_BACKEND_SCHEMA = '2026.11.17.02'; 
     
     let state = {
         user: null,
@@ -2478,8 +2478,10 @@
         const message = event.data;
         if (!message || message.channel !== GLORIA_BRIDGE_CHANNEL || !gloriaGoogleBridgeOrigin(event.origin)) return;
         if (message.kind === 'ready') {
-            if (!gloriaBridgePromise || gloriaBridgeEndpoint) return;
-            if (message.buildId !== EXPECTED_BACKEND_BUILD_ID) {
+            // Hanya iframe bridge yang benar-benar dibuat oleh aplikasi yang boleh menyelesaikan handshake.
+            // Pesan ready dari iframe Apps Script lain tidak boleh menerima token/sandi pengguna.
+            if (!gloriaBridgePromise || gloriaBridgeEndpoint || !gloriaBridgeIframe || event.source !== gloriaBridgeIframe.contentWindow) return;
+            if (message.buildId !== EXPECTED_BACKEND_BUILD_ID || message.schemaVersion !== EXPECTED_BACKEND_SCHEMA) {
                 // Build lama akan dilaporkan saat menunggu bridge selesai.
                 return;
             }
@@ -2829,6 +2831,7 @@
             }
             if(boot){
                 if(String(boot.backendBuildId||'')!==EXPECTED_BACKEND_BUILD_ID) throw new Error('Backend belum diperbarui ke build '+EXPECTED_BACKEND_BUILD_ID+'.');
+                if(String(boot.schemaVersion||'')!==EXPECTED_BACKEND_SCHEMA && String(boot.schemaVersion||'')!==EXPECTED_BACKEND_SCHEMA+'-dewi') throw new Error('Schema backend tidak kompatibel. Ditemukan '+String(boot.schemaVersion||'-')+', diharapkan '+EXPECTED_BACKEND_SCHEMA+'.');
                 applyServerData(boot);
             }else{ await refreshData(true); }
             const email = String(state.user.email || savedEmail).toLowerCase();
@@ -2923,8 +2926,12 @@
         document.querySelectorAll('[data-gloria-limited-hidden]').forEach(el=>{
             el.classList.remove('hidden');delete el.dataset.gloriaLimitedHidden;
         });
-        const isOwner = String(email||'').toLowerCase() === 'mohammadziky2@gmail.com';
+        const isOwner = String(email||'').trim().toLowerCase() === 'mohammadziky2@gmail.com';
         const canViewBank = isOwner || String(email||'').trim().toLowerCase() === 'bettyartanita@gmail.com';
+        // Seluruh halaman penggajian (slip individu dan rekap gaji Host) hanya untuk Master.
+        document.querySelectorAll('.nav-btn[data-tab="salary"], .nav-btn[data-tab="hostSalary"]').forEach(el=>el.classList.toggle('hidden',!isOwner));
+        ['quickSalaryCard','dashboardHostAuth'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.toggle('hidden',!isOwner);});
+        if(!isOwner){document.getElementById('salaryView')?.classList.add('hidden');document.getElementById('hostSalaryView')?.classList.add('hidden');}
         document.getElementById('masterOwnPinBtn')?.classList.toggle('hidden',!isOwner);
         ['masterControlPanel','sidebarBankAuth','mobileBankAuth','dashboardBankAuth','sidebarGapokAuth','mobileGapokAuth','dashboardGapokAuth'].forEach(id=>{const el=document.getElementById(id);if(!el)return;const allow=id==='masterControlPanel'||id==='sidebarGapokAuth'||id==='mobileGapokAuth'||id==='dashboardGapokAuth'?isOwner:canViewBank;if(allow){el.classList.remove('hidden');if(id!=='masterControlPanel')el.classList.add('flex');}else{el.classList.add('hidden');el.classList.remove('flex');}});
         const bankDesc=document.getElementById('bankViewAccessDesc');if(bankDesc)bankDesc.textContent=isOwner?'Kelola data rekening bank seluruh karyawan (Akses Khusus Master)':'Lihat data rekening bank seluruh karyawan (hanya baca; perubahan khusus Master).';
@@ -2941,21 +2948,49 @@
         document.getElementById('newEmpStatusWrap')?.classList.toggle('hidden',!isOwner);
         document.getElementById('newEmpStatus')?.toggleAttribute('disabled',!isOwner);
         if(!isOwner){
+            state.salary=[];
+            currentHostSalaryDraftPayload=null;
+            lastHostSalarySnapshot=null;
+            document.getElementById('salaryResult')?.classList.add('hidden');
+            document.getElementById('hostSalaryResult')?.classList.add('hidden');
+            document.getElementById('hostSalaryDraftHistory')?.replaceChildren();
+            document.getElementById('salaryView')?.classList.add('hidden');
+            document.getElementById('hostSalaryView')?.classList.add('hidden');
+            document.getElementById('a4PreviewModal')?.classList.add('hidden');
+            document.getElementById('a4PreviewPage')?.replaceChildren();
+            [
+                'slipMonthDisplay','slipName','slipDivision','slipBankName','slipBankAccount','slipBankAccountName',
+                'slipHadir','slipIzin','slipSakit','slipLibur','slipTrainingCount','slipLemburAdmin',
+                'slipBaseInput','slipDayRate','slipDeductionDays','slipDeductionMoney','slipFinalBase',
+                'slipCommissionFinal','slipTotalFinal','slipLateTotal','slipTotalResi','slipTotalGMV',
+                'slipHostCommission','slipCommissionMethod','slipHostCommissionTier','slipHostCommissionRate',
+                'individualHostEvaluationTitle','individualHostEvaluationMessage',
+                'calcHostMonthDisplay','calcHostName','calcHostHadir','calcHostResi','calcHostGMV',
+                'calcHostInputBaseDisplay','calcHostDayRate','calcHostDeductionDays','calcHostDeductionTotal',
+                'calcHostBaseDisplay','calcHostBonusDisplay','calcHostCommissionMethodDisplay',
+                'calcHostCommissionDisplay','calcHostCommissionTier','calcHostCommissionRate',
+                'calcHostCommissionBasis','calcHostTotalDisplay','hostEvaluationTitle','hostEvaluationMessage',
+                'hostEvaluationNext','calcHostBankDetails'
+            ].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='';});
+            ['slipLateList','slipTrainingDates','salaryPayrollDailyDetail','salaryPayrollStats','calcHostPayrollDailyDetail','calcHostTrainingDates'].forEach(id=>document.getElementById(id)?.replaceChildren());
+            if(typeof hostChartInstance!=='undefined'&&hostChartInstance){hostChartInstance.destroy();hostChartInstance=null;}
+            if(typeof adminChartInstance!=='undefined'&&adminChartInstance){adminChartInstance.destroy();adminChartInstance=null;}
             document.getElementById('gapokQuestionModal')?.classList.add('hidden');document.getElementById('gapokQuestionForm')?.reset();
             gapokAccessToken='';gapokAccessExpiresAt=0;gapokRows=[];gapokPendingFill=null;
             if(gapokAutoLockTimer){clearTimeout(gapokAutoLockTimer);gapokAutoLockTimer=null;}
             gapokAutoFilledFields.forEach(id=>{const input=document.getElementById(id);if(input)input.value='';});
             gapokAutoFilledFields.clear();gapokManualOverrides.clear();
-            ['salaryBasicInput','calcHostBase'].forEach(id=>{const input=document.getElementById(id);if(input)input.value='';});
+            ['salaryBasicInput','calcHostBase','calcHostBonus'].forEach(id=>{const input=document.getElementById(id);if(input)input.value='';});
             const gapokBody=document.getElementById('gapokTableBody');
             if(gapokBody)gapokBody.innerHTML='<tr><td colspan="5" class="p-8 text-center text-slate-400">Bank Gaji Pokok terkunci.</td></tr>';
             document.getElementById('gapokView')?.classList.add('hidden');
         }
         const geminiKey=document.getElementById('geminiApiKey'); if(geminiKey&&geminiKey.parentElement){geminiKey.parentElement.classList.toggle('hidden',!isOwner); geminiKey.parentElement.classList.toggle('md:flex',isOwner); if(!isOwner)geminiKey.value='';}
         const authorizedHostEmails=['bettyartanita@gmail.com','mohammadziky2@gmail.com','ysdd@gmail.com']; const isHost=authorizedHostEmails.includes(String(email||'').toLowerCase());
-        ['dashboardHostAuth','dashboardHostExcelAuth','sidebarHostAuth','mobileHostAuth'].forEach(id=>{const el=document.getElementById(id);if(!el)return;if(isHost){el.classList.remove('hidden');el.classList.add('flex');}else{el.classList.add('hidden');el.classList.remove('flex');}});
+        ['dashboardHostExcelAuth','desktopHostExcelAuth','mobileHostExcelAuth'].forEach(id=>{const el=document.getElementById(id);if(!el)return;if(isHost){el.classList.remove('hidden');el.classList.add('flex');}else{el.classList.add('hidden');el.classList.remove('flex');}});
+        ['dashboardHostAuth','sidebarHostAuth','mobileHostAuth'].forEach(id=>{const el=document.getElementById(id);if(!el)return;el.classList.toggle('hidden',!isOwner);if(isOwner)el.classList.add('flex');else el.classList.remove('flex');});
         ['quickScheduleCard','quickHostReportCard','quickHostRankingCard'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.toggle('hidden',!isHost);});
-        document.querySelectorAll('.nav-btn[data-tab="schedule"],.nav-btn[data-tab="hostReport"],.nav-btn[data-tab="hostRanking"],.nav-btn[data-tab="hostSalary"],.nav-btn[data-tab="hostExcel"]').forEach(btn=>{btn.classList.toggle('hidden',!isHost);});
+        document.querySelectorAll('.nav-btn[data-tab="schedule"],.nav-btn[data-tab="hostReport"],.nav-btn[data-tab="hostRanking"],.nav-btn[data-tab="hostExcel"]').forEach(btn=>{btn.classList.toggle('hidden',!isHost);});
         document.getElementById('dashboardAISection')?.classList.toggle('hidden',!isHost);
         const quickEmployee=document.getElementById('quickEmployeeCard');if(quickEmployee)quickEmployee.classList.remove('hidden');
         const addEmployeeButton=document.querySelector('#employeesView button[onclick^="openModal"]');
@@ -3004,6 +3039,7 @@
             }
             if(res){
                 if(String(res.backendBuildId||'')!==EXPECTED_BACKEND_BUILD_ID) throw new Error('Backend belum diperbarui ke build '+EXPECTED_BACKEND_BUILD_ID+'.');
+                if(String(res.schemaVersion||'')!==EXPECTED_BACKEND_SCHEMA && String(res.schemaVersion||'')!==EXPECTED_BACKEND_SCHEMA+'-dewi') throw new Error('Schema backend tidak kompatibel. Ditemukan '+String(res.schemaVersion||'-')+', diharapkan '+EXPECTED_BACKEND_SCHEMA+'.');
                 applyServerData(res);
             }else{ await refreshData(true); }
             if(!res || res.success===false) throw new Error((res&&res.error)||'Data tidak dapat dimuat.');
@@ -3036,7 +3072,7 @@
         gapokAccessToken='';gapokAccessExpiresAt=0;gapokRows=[];gapokPendingFill=null;
         if(gapokAutoLockTimer){clearTimeout(gapokAutoLockTimer);gapokAutoLockTimer=null;}
         gapokAutoFilledFields.forEach(id=>{const input=document.getElementById(id);if(input)input.value='';});gapokAutoFilledFields.clear();gapokManualOverrides.clear();
-        ['salaryBasicInput','calcHostBase'].forEach(id=>{const input=document.getElementById(id);if(input)input.value='';});
+        ['salaryBasicInput','calcHostBase','calcHostBonus'].forEach(id=>{const input=document.getElementById(id);if(input)input.value='';});
         const gapokBody=document.getElementById('gapokTableBody');if(gapokBody)gapokBody.innerHTML='<tr><td colspan="5" class="p-8 text-center text-slate-400">Bank Gaji Pokok terkunci.</td></tr>';
         document.getElementById('gapokView')?.classList.add('hidden');
         const token = String(state.authToken || '').trim();
@@ -3598,7 +3634,7 @@
         catch(e){showMessage(e.message||'Health check gagal.','error');}
     };
     window.runDatabaseAudit = async () => {
-        try { const r=await apiCall('fullDatabaseAudit'); const el=document.getElementById('serverDiagnosticOutput'); el.textContent=JSON.stringify(r,null,2); el.classList.remove('hidden'); showMessage(r.ok ? (r.warnings&&r.warnings.length ? 'Audit lulus dengan catatan/peringatan.':'Audit database lulus.') : 'Audit menemukan masalah.', r.ok ? 'success' : 'error'); }
+        try { const r=await apiCall('fullDatabaseAudit'); const el=document.getElementById('serverDiagnosticOutput'); el.textContent=JSON.stringify(r,null,2); el.classList.remove('hidden'); const ready=r.readyForProduction===true; showMessage(!r.ok?'Audit menemukan masalah struktur atau konsistensi data.':(ready?'Audit dan pemeriksaan kesiapan produksi lulus.':'Struktur database lolos pemeriksaan dasar, tetapi belum dinyatakan siap produksi. Periksa catatan keamanan dan backup/restore.'),!r.ok?'error':(ready?'success':'info')); }
         catch(e){showMessage(e.message||'Audit database gagal.','error');}
     };
     window.runDatabaseBackup = async () => {
@@ -4196,6 +4232,7 @@
     });
 
     window.generateSalarySlip = async () => {
+        if(!requireMasterPayrollAccess('Akses Ditolak: pembuatan slip gaji hanya untuk akun Master.'))return;
         const startDate=document.getElementById('salaryStartDate').value,endDate=document.getElementById('salaryEndDate').value;
         const empSelect=document.getElementById('salaryEmployee');
         if(!startDate||!endDate||startDate>endDate||!empSelect.value){showMessage('Pilih karyawan dan rentang tanggal yang benar.','error');return;}
@@ -4447,15 +4484,15 @@
         }catch(e){showMessage(e.message||'Gagal membuka preview A4.','error');}
     }
     window.closeA4Preview=()=>document.getElementById('a4PreviewModal')?.classList.add('hidden');
-    window.previewSalaryA4=()=>openA4Preview('salary');window.previewHostSalaryA4=()=>openA4Preview('host');
+    window.previewSalaryA4=()=>{if(!requireMasterPayrollAccess())return;openA4Preview('salary')};window.previewHostSalaryA4=()=>{if(!requireMasterPayrollAccess())return;openA4Preview('host')};
     function openA4PrintWindow(type){
         const sheet=getA4SlipNode(type),popup=window.open('','_blank','width=880,height=920');
         if(!popup)throw new Error('Popup diblokir browser. Izinkan popup untuk GLORIA.');
         const doc=`<!doctype html><html lang="id"><head><meta charset="utf-8"><title>GLORIA - Slip Gaji A4</title><style>${GLORIA_A4_STYLE}</style></head><body>${sheet.outerHTML}<script>window.addEventListener('load',function(){var s=document.querySelector('.gloria-a4-sheet'),i=s.querySelector('.gloria-a4-inner'),cs=getComputedStyle(s),max=s.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom),h=i.scrollHeight;if(h>max){var z=Math.max(.1,(max-2)/h);i.style.width=(100/z)+'%';i.style.transform='scale('+z+')'}setTimeout(function(){window.focus();window.print()},180)});<\/script></body></html>`;
         popup.document.open();popup.document.write(doc);popup.document.close();
     }
-    window.printSalaryA4=()=>{try{openA4PrintWindow('salary')}catch(e){showMessage(e.message,'error')}};
-    window.printHostSalaryA4=()=>{try{openA4PrintWindow('host')}catch(e){showMessage(e.message,'error')}};
+    window.printSalaryA4=()=>{if(!requireMasterPayrollAccess())return;try{openA4PrintWindow('salary')}catch(e){showMessage(e.message,'error')}};
+    window.printHostSalaryA4=()=>{if(!requireMasterPayrollAccess())return;try{openA4PrintWindow('host')}catch(e){showMessage(e.message,'error')}};
     async function gloriaA4Canvas(type){
         const sheet=getA4SlipNode(type),holder=document.createElement('div');
         holder.style.cssText='position:fixed;left:-10000px;top:0;background:#fff;z-index:-9999;pointer-events:none;';
@@ -4482,16 +4519,17 @@
         pdf.addImage(canvas.toDataURL('image/jpeg',.94),'JPEG',0,0,210,297,undefined,'FAST');
         pdf.save(gloriaA4FileName(type,'pdf'));
     }
-    window.downloadSalaryA4PDF=async()=>{try{showMessage('Membuat PDF satu halaman A4...','info');await createA4PDF('salary');showMessage('PDF slip A4 satu halaman dibuat.','success')}catch(e){console.error(e);showMessage(e.message||'Gagal membuat PDF A4.','error')}};
-    window.downloadHostSalaryA4PDF=async()=>{try{showMessage('Membuat PDF satu halaman A4...','info');await createA4PDF('host');showMessage('PDF slip A4 satu halaman dibuat.','success')}catch(e){console.error(e);showMessage(e.message||'Gagal membuat PDF A4.','error')}};
+    window.downloadSalaryA4PDF=async()=>{if(!requireMasterPayrollAccess())return;try{showMessage('Membuat PDF satu halaman A4...','info');await createA4PDF('salary');showMessage('PDF slip A4 satu halaman dibuat.','success')}catch(e){console.error(e);showMessage(e.message||'Gagal membuat PDF A4.','error')}};
+    window.downloadHostSalaryA4PDF=async()=>{if(!requireMasterPayrollAccess())return;try{showMessage('Membuat PDF satu halaman A4...','info');await createA4PDF('host');showMessage('PDF slip A4 satu halaman dibuat.','success')}catch(e){console.error(e);showMessage(e.message||'Gagal membuat PDF A4.','error')}};
     async function gloriaDownloadA4PNG(type){
         try{showMessage('Membuat gambar A4 satu halaman...','info');const canvas=await gloriaA4Canvas(type);const a=document.createElement('a');a.download=gloriaA4FileName(type,'png');a.href=canvas.toDataURL('image/png');a.click();showMessage('Gambar A4 berhasil dibuat.','success')}
         catch(e){console.error(e);showMessage(e.message||'Gagal membuat gambar A4.','error')}
     }
-    window.downloadSlipImage=()=>gloriaDownloadA4PNG('salary');
-    window.downloadHostSalaryImage=()=>gloriaDownloadA4PNG('host');
+    window.downloadSlipImage=()=>{if(!requireMasterPayrollAccess())return;gloriaDownloadA4PNG('salary')};
+    window.downloadHostSalaryImage=()=>{if(!requireMasterPayrollAccess())return;gloriaDownloadA4PNG('host')};
 
     window.downloadSlipExcel = () => {
+        if(!requireMasterPayrollAccess('Akses Ditolak: ekspor slip gaji hanya untuk akun Master.'))return;
         const start=document.getElementById('salaryStartDate').value,end=document.getElementById('salaryEndDate').value,empId=document.getElementById('salaryEmployee').value;
         if(!start||!end||!empId)return showMessage('Pilih periode dan karyawan terlebih dahulu.','error');
         const slip=state.salary?.[0];
@@ -4518,6 +4556,7 @@
     let lastHostSalarySnapshot = null;
     ['calcHostAttStart','calcHostAttEnd','calcHostPerfStart','calcHostPerfEnd','calcHostEmployee','calcHostBase','calcHostBonus','calcHostCommissionMethod'].forEach(id=>{document.getElementById(id)?.addEventListener('change',()=>{currentHostSalaryDraftPayload=null;lastHostSalarySnapshot=null;document.getElementById('hostSalaryResult')?.classList.add('hidden');});});
     window.saveCurrentHostSalaryDraft = async () => {
+        if(!isMasterAccount()){showMessage('Akses Ditolak: penyimpanan rekap gaji Host hanya untuk akun Master.','error');return;}
         if(String(state.user?.email||'').toLowerCase()!=='mohammadziky2@gmail.com')return showMessage('Hanya Master boleh menyimpan draft gaji.','error');
         if(!currentHostSalaryDraftPayload)return showMessage('Hitung gaji Host terlebih dahulu.','error');
         if(!window.confirm('Simpan snapshot kalkulasi sebagai DRAFT permanen? Tidak ada gaji yang dibayarkan secara otomatis.'))return;
@@ -4529,6 +4568,7 @@
         finally{btn.disabled=false;}
     };
     window.loadHostSalaryDrafts = async () => {
+        if(!requireMasterPayrollAccess('Akses Ditolak: riwayat draft gaji Host hanya untuk akun Master.'))return;
         const el=document.getElementById('hostSalaryDraftHistory');
         try{
             const response=await apiCall('getHostSalaryDrafts',{});
@@ -4538,6 +4578,7 @@
         }catch(e){showMessage(e.message||'Gagal memuat draft gaji.','error');}
     };
     window.downloadHostSalarySummaryCSV=()=>{
+      if(!requireMasterPayrollAccess('Akses Ditolak: ekspor rekap gaji Host hanya untuk akun Master.'))return;
       const c=lastHostSalarySnapshot,p=currentHostSalaryDraftPayload;
       if(!c||!p)return showMessage('Hitung gaji Host sebelum membuat backup.','error');
       const rows=[['GLORIA — Rekap dan Evaluasi Host Live'],['Nama Host',c.employeeName],['Tanggal Mulai Kehadiran',p.attendanceStartDate],['Tanggal Akhir Kehadiran',p.attendanceEndDate],['Mulai Performa',p.startDate],['Akhir Performa',p.endDate],['Metode Komisi',c.method],['Total Resi',c.totalResi],['Total GMV (Rp)',c.totalGMV],['Hari Hadir',c.hadir],['Hari Training',Number(c.payroll?.trainingDays||0)],['Tanggal Training',(c.payroll?.trainingDates||[]).join('; ')||'-'],['Gaji Pokok Awal (Rp)',c.basicSalary],['Potongan Hari',c.deductionDays],['Potongan (Rp)',c.absenceDeduction],['Gaji Pokok Final (Rp)',c.finalBasicSalary],['Bonus (Rp)',c.bonus],['Komisi (Rp)',c.commission],['Total Gaji (Rp)',c.totalSalary],['Tarif Komisi',c.rateLabel],['Tier Komisi',c.tier],['Tingkat Evaluasi',c.evaluation.level],['Judul Evaluasi',c.evaluation.title],['Pesan Evaluasi',c.evaluation.message],['Target Berikutnya',c.evaluation.nextTarget==null?'Tingkat tertinggi':c.evaluation.nextTarget],['Status','Rekap perhitungan; bukan bukti pembayaran']];
@@ -4545,6 +4586,7 @@
     };
 
     window.calculateHostSalary = async () => {
+        if(!isMasterAccount()){showMessage('Akses Ditolak: perhitungan gaji Host hanya untuk akun Master.','error');return;}
         const attStart=document.getElementById('calcHostAttStart').value, attEnd=document.getElementById('calcHostAttEnd').value;
         const perfStart=document.getElementById('calcHostPerfStart').value, perfEnd=document.getElementById('calcHostPerfEnd').value;
         const empId=document.getElementById('calcHostEmployee').value;
@@ -4608,6 +4650,11 @@
     };
 
     function isMasterAccount(){return String(state.user?.email||'').trim().toLowerCase()==='mohammadziky2@gmail.com';}
+    function requireMasterPayrollAccess(message){
+        if(isMasterAccount())return true;
+        showMessage(message||'Akses Ditolak: seluruh fitur penggajian hanya untuk akun Master.','error');
+        return false;
+    }
     function gapokTokenValid(){return !!gapokAccessToken&&Date.now()<gapokAccessExpiresAt;}
     function showGapokQuestionModal(){
         const form=document.getElementById('gapokQuestionForm');
@@ -4701,7 +4748,7 @@
         return merged;
     }
     function validGapokEmployeeCount(){
-        return (gapokRows||[]).filter(x=>String(x.employeeId||'').trim()&&!x.identityIssue).length;
+        return (gapokRows||[]).filter(x=>x.backendVerified===true&&String(x.employeeId||'').trim()&&!x.identityIssue).length;
     }
     // GAPOK hanya membaca endpoint khusus yang sudah mengembalikan roster Employees
     // beserta rekening/status dan ringkasan gaji. Jangan memanggil getData di sini:
@@ -4734,7 +4781,7 @@
             const sourceInfo=document.getElementById('gapokSourceInfo');
             const diag=gapokSourceDiagnostics||{};
             const validCount=validGapokEmployeeCount();
-            const invalidCount=gapokRows.length-validCount;
+            const invalidCount=gapokRows.filter(x=>!String(x.employeeId||'').trim()||!!x.identityIssue).length;
             const rawRows=Number(diag.rawDataRows||0);
             const parsedRows=Number(diag.parsedRows??r.employeeCount??serverRows.length);
             const backendBuild=String(r.buildId||r.backendBuildId||'tidak dilaporkan');
@@ -4796,14 +4843,15 @@
         const body=document.getElementById('gapokTableBody');if(!body)return;
         const pagination=document.getElementById('gapokPagination');
         const rows=Array.isArray(gapokRows)?gapokRows:[];
-        const configured=rows.filter(x=>x.basicSalary!==null&&x.basicSalary!==undefined&&x.basicSalary!=='').length;
-        const scheduled=rows.filter(x=>!!x.nextEffectiveFrom).length;
-        const totalSalary=rows.reduce((sum,x)=>{const v=x.basicSalary;if(v===null||v===undefined||v==='')return sum;const n=Number(v);return Number.isFinite(n)&&n>=0?sum+n:sum;},0);
+        const verifiedRows=rows.filter(x=>x.backendVerified===true);
+        const configured=verifiedRows.filter(x=>x.basicSalary!==null&&x.basicSalary!==undefined&&x.basicSalary!=='').length;
+        const scheduled=verifiedRows.filter(x=>!!x.nextEffectiveFrom).length;
+        const totalSalary=verifiedRows.reduce((sum,x)=>{const v=x.basicSalary;if(v===null||v===undefined||v==='')return sum;const n=Number(v);return Number.isFinite(n)&&n>=0?sum+n:sum;},0);
         const validCount=validGapokEmployeeCount();
-        const invalidCount=rows.length-validCount;
+        const invalidCount=rows.filter(x=>!String(x.employeeId||'').trim()||!!x.identityIssue).length;
         const employeeCountEl=document.getElementById('gapokEmployeeCount');if(employeeCountEl)employeeCountEl.textContent=rows.length.toLocaleString('id-ID');
         const configuredEl=document.getElementById('gapokConfiguredCount');if(configuredEl)configuredEl.textContent=configured.toLocaleString('id-ID');
-        const missingEl=document.getElementById('gapokMissingCount');if(missingEl)missingEl.textContent=Math.max(0,rows.length-configured).toLocaleString('id-ID');
+        const missingEl=document.getElementById('gapokMissingCount');if(missingEl)missingEl.textContent=Math.max(0,verifiedRows.length-configured).toLocaleString('id-ID');
         const scheduledEl=document.getElementById('gapokScheduledCount');if(scheduledEl)scheduledEl.textContent=scheduled.toLocaleString('id-ID');
         const totalSalaryEl=document.getElementById('gapokTotalSalary');if(totalSalaryEl)totalSalaryEl.textContent='Rp '+totalSalary.toLocaleString('id-ID');
         const q=String(document.getElementById('gapokSearchInput')?.value||'').trim().toLowerCase();
@@ -4834,13 +4882,13 @@
             const id=encodeURIComponent(String(emp.employeeId||''));
             const recordId=encodeURIComponent(String(emp.currentRecordId||''));
             const rowKey='gapokSalary_'+(emp.employeeId?encodeURIComponent(String(emp.employeeId)):'unlinked')+'_'+globalIndex;
-            const canEdit=!!String(emp.employeeId||'').trim()&&!emp.identityIssue;
+            const canEdit=emp.backendVerified===true&&!!String(emp.employeeId||'').trim()&&!emp.identityIssue;
             const account=emp.bankName?`${escapeLateHtml(emp.bankName)}<div class="text-xs text-slate-500">${escapeLateHtml(emp.bankAccount||'-')} · a/n ${escapeLateHtml(emp.bankAccountName||'-')}</div>`:'<span class="text-xs italic text-slate-400">Rekening belum diatur</span>';
             const salary=emp.basicSalary===null||emp.basicSalary===undefined?'':String(emp.basicSalary);
             const effective=emp.effectiveFrom?`Berlaku sejak ${formatGapokDate(emp.effectiveFrom)}`:'Tanggal efektif data lama belum tercatat';
             const next=emp.nextEffectiveFrom?`<div class="text-[10px] text-indigo-700 mt-1 font-semibold">Terjadwal ${formatGapokDate(emp.nextEffectiveFrom)} · Rp ${Number(emp.nextBasicSalary||0).toLocaleString('id-ID')}</div>`:'';
             const statusClass=emp.employmentStatus==='Training'?'bg-amber-100 text-amber-800':'bg-emerald-100 text-emerald-800';
-            const identityWarning=emp.identityIssue?`<div class="text-[10px] font-bold text-rose-700 mt-1">${escapeLateHtml(emp.identityIssue)} · perbaiki di Data Karyawan sebelum menyimpan gaji.</div>`:'';
+            const identityWarning=emp.identityIssue?`<div class="text-[10px] font-bold text-rose-700 mt-1">${escapeLateHtml(emp.identityIssue)} · perbaiki di Data Karyawan sebelum menyimpan gaji.</div>`:(emp.backendVerified===false?'<div class="text-[10px] font-bold text-amber-700 mt-1">Data sementara dari tampilan aplikasi; tunggu sinkronisasi backend sebelum mengubah gaji.</div>':'');
             const editLabel=emp.currentRecordId?'Edit Aktif':'Tambah';
             const disabledAttr=canEdit?'':'disabled';
             const disabledClass=canEdit?'':' opacity-40 cursor-not-allowed';
@@ -5183,8 +5231,13 @@
         }
 
         const authorizedHostEmails = ['bettyartanita@gmail.com', 'mohammadziky2@gmail.com', 'ysdd@gmail.com'];
-        const hostOnlyTabs = new Set(['hostSalary','schedule','hostReport','hostRanking','hostExcel']);
+        const hostOnlyTabs = new Set(['schedule','hostReport','hostRanking','hostExcel']);
         if (hostOnlyTabs.has(tabId) && (!state.user || !authorizedHostEmails.includes(String(state.user.email||'').toLowerCase()))) { showMessage("Akses Ditolak: fitur Host Live hanya untuk akun yang diotorisasi.", "error"); return; }
+        // Tidak cukup hanya menyembunyikan menu: navigasi langsung juga ditolak.
+        if (['salary','hostSalary','gapok'].includes(tabId) && !isMasterAccount()) {
+            showMessage('Akses Ditolak: seluruh halaman penggajian hanya dapat diakses akun Master.','error');
+            return;
+        }
         
         if (tabId === 'bankAccount') {
             if (!state.user || !['mohammadziky2@gmail.com','bettyartanita@gmail.com'].includes(String(state.user.email||'').trim().toLowerCase())) {
