@@ -2458,9 +2458,12 @@
     let gloriaBridgeEndpoint = null;
     let gloriaBridgeIframe = null;
     let gloriaBridgeOrigin = '';
+    let gloriaBridgeCandidate = null;
+    let gloriaBridgeCandidateOrigin = '';
     let gloriaBridgeCounter = 0;
     let gloriaBridgeNonce = '';
-    // Diagnostik handshake: bedakan bridge versi lama, origin tak dikenal, dan iframe yang tidak termuat.
+    let gloriaBridgeAnnounceCount = 0;
+    // Diagnostik membedakan Bridge yang belum mengumumkan diri dan handshake yang gagal.
     let gloriaBridgeLastDiagnostic = '';
     let gloriaBridgeFrameLoaded = false;
     const gloriaPendingRequests = new Map();
@@ -2479,6 +2482,27 @@
         return /^https:\/\/(?:script\.google\.com|(?:(?:[a-z0-9-]+\.)*script\.googleusercontent\.com|[a-z0-9-]+-script\.googleusercontent\.com))$/.test(String(origin || ''));
     }
 
+    // Pastikan pesan berasal dari dokumen di dalam iframe Apps Script yang kita buat,
+    // bukan dari halaman Google lain yang kebetulan memakai origin googleusercontent.
+    function gloriaIsBridgeFrameSource(source) {
+        const root = gloriaBridgeIframe && gloriaBridgeIframe.contentWindow;
+        if (!root || !source) return false;
+        const stack = [{win: root, depth: 0}];
+        const seen = [];
+        while (stack.length) {
+            const item = stack.pop();
+            if (item.win === source) return true;
+            if (item.depth >= 8 || seen.indexOf(item.win) >= 0) continue;
+            seen.push(item.win);
+            let count = 0;
+            try { count = Number(item.win.frames.length) || 0; } catch (_) {}
+            for (let i = 0; i < count; i++) {
+                try { stack.push({win: item.win.frames[i], depth: item.depth + 1}); } catch (_) {}
+            }
+        }
+        return false;
+    }
+
     function gloriaValidGasUrl() {
         try {
             const url = new URL(GAS_URL);
@@ -2492,22 +2516,55 @@
         const message = event.data;
         if (!message || message.channel !== GLORIA_BRIDGE_CHANNEL) return;
         if (!gloriaGoogleBridgeOrigin(event.origin)) {
-            gloriaBridgeLastDiagnostic = 'Origin iframe Bridge tidak dikenali: ' + String(event.origin || '(opaque/null)');
+            gloriaBridgeLastDiagnostic = 'Origin Bridge tidak dikenali: ' + String(event.origin || '(opaque/null)');
             return;
         }
-        if (!gloriaBridgePromise || !gloriaBridgeNonce || message.nonce !== gloriaBridgeNonce) return;
+        if (!gloriaBridgePromise) return;
+        if (!gloriaIsBridgeFrameSource(event.source)) {
+            gloriaBridgeLastDiagnostic = 'Pesan diterima dari origin Google, tetapi sumbernya bukan iframe Bridge GLORIA yang sedang dibuka.';
+            return;
+        }
+
+        // Apps Script HTML Service dapat membungkus dokumen Bridge dalam iframe internal.
+        // Karena itu Bridge mengumumkan dirinya ke window.top; gunakan event.source
+        // (jendela Bridge yang sebenarnya), bukan frame.contentWindow (lapisan luar).
+        if (message.kind === 'announce') {
+            gloriaBridgeAnnounceCount++;
+            const announcedBuild = String(message.buildId || '(tidak dikirim)');
+            const announcedSchema = String(message.schemaVersion || '(tidak dikirim)');
+            if (announcedBuild !== EXPECTED_BACKEND_BUILD_ID || announcedSchema !== EXPECTED_BACKEND_SCHEMA) {
+                gloriaBridgeLastDiagnostic = 'Versi Bridge/Backend tidak cocok. Frontend mengharapkan build ' + EXPECTED_BACKEND_BUILD_ID + ' dan schema ' + EXPECTED_BACKEND_SCHEMA + ', tetapi menerima build ' + announcedBuild + ' dan schema ' + announcedSchema + '. Pastikan Code.gs dan GloriaBridge.html berada pada deployment yang sama.';
+                window.dispatchEvent(new CustomEvent('gloria-bridge-error', {detail: gloriaBridgeLastDiagnostic}));
+                return;
+            }
+            if (gloriaBridgeCandidate && event.source !== gloriaBridgeCandidate) return;
+            gloriaBridgeCandidate = event.source;
+            gloriaBridgeCandidateOrigin = event.origin;
+            try {
+                gloriaBridgeCandidate.postMessage({
+                    channel: GLORIA_BRIDGE_CHANNEL,
+                    kind: 'hello',
+                    nonce: gloriaBridgeNonce
+                }, gloriaBridgeCandidateOrigin);
+            } catch (error) {
+                gloriaBridgeLastDiagnostic = 'Gagal mengirim challenge ke jendela Bridge: ' + String(error && error.message || error);
+            }
+            return;
+        }
+
+        if (!gloriaBridgeNonce || message.nonce !== gloriaBridgeNonce) return;
 
         if (message.kind === 'ready') {
+            if (event.source !== gloriaBridgeCandidate || event.origin !== gloriaBridgeCandidateOrigin) return;
             if (gloriaBridgeEndpoint) return;
             if (message.buildId !== EXPECTED_BACKEND_BUILD_ID || message.schemaVersion !== EXPECTED_BACKEND_SCHEMA) {
-                const actualBuild = String(message.buildId || '(tidak dikirim)');
-                const actualSchema = String(message.schemaVersion || '(tidak dikirim)');
-                gloriaBridgeLastDiagnostic = 'Versi Bridge/Backend tidak cocok. Frontend mengharapkan build ' + EXPECTED_BACKEND_BUILD_ID + ' dan schema ' + EXPECTED_BACKEND_SCHEMA + ', tetapi menerima build ' + actualBuild + ' dan schema ' + actualSchema + '. Perbarui Code.gs dan GloriaBridge.html dalam deployment yang sama.';
+                gloriaBridgeLastDiagnostic = 'Versi Bridge/Backend tidak cocok. Frontend mengharapkan build ' + EXPECTED_BACKEND_BUILD_ID + ' dan schema ' + EXPECTED_BACKEND_SCHEMA + ', tetapi menerima build ' + String(message.buildId || '(tidak dikirim)') + ' dan schema ' + String(message.schemaVersion || '(tidak dikirim)') + '.';
                 window.dispatchEvent(new CustomEvent('gloria-bridge-error', {detail: gloriaBridgeLastDiagnostic}));
                 return;
             }
             gloriaBridgeEndpoint = event.source;
             gloriaBridgeOrigin = event.origin;
+            console.info('[GLORIA] Bridge handshake berhasil:', gloriaBridgeOrigin, message.buildId);
             window.dispatchEvent(new CustomEvent('gloria-bridge-ready'));
             return;
         }
@@ -2529,22 +2586,24 @@
 
         gloriaBridgePromise = new Promise((resolve, reject) => {
             let completed = false;
-            let handshakeRetryTimer = null;
-            let helloAttempts = 0;
             gloriaBridgeLastDiagnostic = '';
             gloriaBridgeFrameLoaded = false;
+            gloriaBridgeAnnounceCount = 0;
+            gloriaBridgeCandidate = null;
+            gloriaBridgeCandidateOrigin = '';
 
             const finish = (error) => {
                 if (completed) return;
                 completed = true;
                 clearTimeout(timeout);
-                if (handshakeRetryTimer) clearTimeout(handshakeRetryTimer);
                 window.removeEventListener('gloria-bridge-ready', onReady);
                 window.removeEventListener('gloria-bridge-error', onBridgeError);
                 if (error) {
                     gloriaBridgePromise = null;
                     gloriaBridgeEndpoint = null;
                     gloriaBridgeOrigin = '';
+                    gloriaBridgeCandidate = null;
+                    gloriaBridgeCandidateOrigin = '';
                     gloriaBridgeNonce = '';
                     if (gloriaBridgeIframe) {
                         gloriaBridgeIframe.remove();
@@ -2565,10 +2624,10 @@
                 let detail;
                 if (gloriaBridgeLastDiagnostic) {
                     detail = gloriaBridgeLastDiagnostic;
-                } else if (gloriaBridgeFrameLoaded && helloAttempts > 0) {
-                    detail = 'Iframe Apps Script berhasil dimuat, tetapi tidak membalas handshake dari GitHub Pages setelah ' + helloAttempts + ' percobaan. Pastikan GloriaBridge.html versi terbaru tersimpan pada deployment Web App yang sama.';
+                } else if (gloriaBridgeAnnounceCount > 0) {
+                    detail = 'Bridge sudah mengumumkan diri (' + gloriaBridgeAnnounceCount + ' pesan), tetapi challenge handshake tidak dibalas. Pastikan GloriaBridge.html FIX5 tersimpan dan deployment Web App memakai versi terbaru.';
                 } else if (gloriaBridgeFrameLoaded) {
-                    detail = 'Iframe Apps Script berhasil dimuat, tetapi handshake belum dapat dikirim. Periksa izin akses dan kebijakan browser.';
+                    detail = 'Iframe Apps Script berhasil dimuat, tetapi tidak menerima pengumuman Bridge. Pastikan GloriaBridge.html FIX5 tersimpan pada proyek Apps Script yang URL-nya dipakai GitHub dan deploy sebagai versi baru.';
                 } else {
                     detail = 'Iframe Apps Script tidak menyelesaikan pemuatan. Periksa URL /exec, izin akses Anyone, deployment Web App, dan pemblokiran iframe pihak ketiga.';
                 }
@@ -2582,7 +2641,6 @@
                 gloriaBridgeNonce = gloriaCreateBridgeNonce();
                 const bridgeUrl = new URL(GAS_URL);
                 bridgeUrl.searchParams.set('bridge', '1');
-                // Cache-buster agar deployment Bridge terbaru selalu diminta.
                 bridgeUrl.searchParams.set('clientBuild', EXPECTED_BACKEND_BUILD_ID);
                 bridgeUrl.searchParams.set('cb', String(Date.now()));
 
@@ -2591,29 +2649,10 @@
                 frame.referrerPolicy = 'strict-origin-when-cross-origin';
                 frame.style.cssText = 'position:absolute;left:-99999px;top:0;width:1px;height:1px;border:0;opacity:0;pointer-events:none';
 
-                const sendHello = () => {
-                    if (completed || gloriaBridgeEndpoint || !frame.contentWindow) return;
-                    helloAttempts++;
-                    try {
-                        // Target '*' diperlukan karena Apps Script dapat mengalihkan /exec
-                        // ke script.googleusercontent.com. Bridge wajib memvalidasi origin
-                        // pengirim dan nonce sebelum menjawab.
-                        frame.contentWindow.postMessage({
-                            channel: GLORIA_BRIDGE_CHANNEL,
-                            kind: 'hello',
-                            nonce: gloriaBridgeNonce
-                        }, '*');
-                    } catch (error) {
-                        gloriaBridgeLastDiagnostic = 'Gagal mengirim handshake ke iframe: ' + String(error && error.message || error);
-                    }
-                    if (helloAttempts < 12 && !completed && !gloriaBridgeEndpoint) {
-                        handshakeRetryTimer = setTimeout(sendHello, 500);
-                    }
-                };
-
+                // Jangan kirim HELLO ke frame.contentWindow. Pada HTML Service,
+                // jendela Bridge yang sesungguhnya akan mengumumkan diri ke window.top.
                 frame.addEventListener('load', () => {
                     gloriaBridgeFrameLoaded = true;
-                    sendHello();
                 });
                 frame.addEventListener('error', () => {
                     finish(new Error('Iframe Google Apps Script gagal dimuat. Periksa URL deployment /exec dan izin akses Anyone.'));
